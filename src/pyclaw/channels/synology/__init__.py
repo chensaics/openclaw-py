@@ -1,0 +1,1 @@
+"""Synology Chat channel plugin."""

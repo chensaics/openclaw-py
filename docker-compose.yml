@@ -1,0 +1,18 @@
+services:
+  pyclaw-gateway:
+    build: .
+    command: ["gateway"]
+    ports:
+      - "18789:18789"
+      - "18790:18790"
+    volumes:
+      - ~/.pyclaw:/root/.pyclaw
+    restart: unless-stopped
+
+  pyclaw-cli:
+    build: .
+    entrypoint: ["pyclaw"]
+    volumes:
+      - ~/.pyclaw:/root/.pyclaw
+    profiles:
+      - cli

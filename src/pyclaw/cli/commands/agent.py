@@ -1,0 +1,169 @@
+"""CLI command: run a single agent turn.
+
+Phase 39 notes:
+- Keep parameter semantics aligned with documented CLI surface.
+- Command name is provided by the top-level app (`pyclaw`), while this module
+  only handles execution behavior.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import sys
+
+import typer
+
+from pyclaw.agents.runner import run_agent
+from pyclaw.agents.session import SessionManager
+from pyclaw.agents.types import ModelConfig
+from pyclaw.config.paths import resolve_sessions_dir
+
+
+async def _run_agent_turn(
+    message: str,
+    provider: str,
+    model_id: str,
+    api_key: str | None,
+    base_url: str | None,
+    agent_id: str,
+    session_id: str,
+    output_json: bool,
+) -> None:
+    sessions_dir = resolve_sessions_dir(agent_id)
+    sessions_dir.mkdir(parents=True, exist_ok=True)
+    key = session_id or "cli-session"
+    session_file = sessions_dir / f"{key}.jsonl"
+
+    session = SessionManager.open(session_file)
+    if not session.messages:
+        session.write_header()
+
+    model = ModelConfig(
+        provider=provider,
+        model_id=model_id,
+        api_key=api_key,
+        base_url=base_url,
+    )
+
+    response_text = ""
+    usage_summary: dict[str, int] = {}
+
+    async for event in run_agent(prompt=message, session=session, model=model):
+        match event.type:
+            case "message_update":
+                if event.delta:
+                    response_text += event.delta
+                    if not output_json:
+                        sys.stdout.write(event.delta)
+                        sys.stdout.flush()
+            case "message_end":
+                if event.usage:
+                    usage_summary = {
+                        "input_tokens": event.usage.get("input_tokens", 0),
+                        "output_tokens": event.usage.get("output_tokens", 0),
+                    }
+                if output_json:
+                    typer.echo(
+                        json.dumps(
+                            {
+                                "ok": True,
+                                "agent_id": agent_id,
+                                "session_id": key,
+                                "provider": provider,
+                                "model": model_id,
+                                "message": response_text,
+                                "usage": usage_summary,
+                            },
+                            ensure_ascii=False,
+                        )
+                    )
+                else:
+                    sys.stdout.write("\n")
+                    tokens_in = usage_summary.get("input_tokens", 0)
+                    tokens_out = usage_summary.get("output_tokens", 0)
+                    typer.echo(
+                        f"[tokens: {tokens_in} in / {tokens_out} out]",
+                        err=True,
+                    )
+            case "error":
+                if output_json:
+                    typer.echo(json.dumps({"ok": False, "error": event.error}, ensure_ascii=False))
+                else:
+                    typer.echo(f"Error: {event.error}", err=True)
+
+
+def agent_command(
+    *,
+    message: str,
+    provider: str = "openai",
+    model: str = "gpt-4o",
+    api_key: str | None = None,
+    base_url: str | None = None,
+    agent_id: str = "main",
+    session_id: str = "",
+    to: str = "",
+    thinking: str = "",
+    verbose: str = "off",
+    channel: str = "",
+    local: bool = False,
+    deliver: bool = False,
+    output_json: bool = False,
+    timeout: int = 120,
+    resume: bool = False,
+) -> None:
+    """Run a single agent turn with the given message."""
+    _ = (to, thinking, verbose, channel, local, deliver, timeout)
+    if not api_key:
+        import os
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        if output_json:
+            typer.echo(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error": "No API key provided. Set --api-key or OPENAI_API_KEY env var.",
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        else:
+            typer.echo(
+                "Error: No API key provided. Set --api-key or OPENAI_API_KEY env var.", err=True
+            )
+        raise typer.Exit(1)
+
+    effective_session = session_id
+    if resume and not effective_session:
+        effective_session = _find_latest_session(agent_id)
+        if not output_json and effective_session:
+            typer.echo(f"Resuming session: {effective_session}", err=True)
+
+    asyncio.run(
+        _run_agent_turn(
+            message,
+            provider,
+            model,
+            api_key,
+            base_url,
+            agent_id,
+            effective_session,
+            output_json,
+        )
+    )
+
+
+def _find_latest_session(agent_id: str) -> str:
+    """Find the most recently modified session file for an agent."""
+    sessions_dir = resolve_sessions_dir(agent_id)
+    if not sessions_dir.is_dir():
+        return ""
+
+    sessions = sorted(
+        sessions_dir.glob("*.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    return sessions[0].stem if sessions else ""

@@ -1,0 +1,1 @@
+"""Zalo Bot channel plugin."""

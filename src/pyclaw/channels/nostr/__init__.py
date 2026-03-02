@@ -1,0 +1,1 @@
+"""Nostr channel plugin."""

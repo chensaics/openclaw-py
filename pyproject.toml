@@ -1,0 +1,138 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyclaw"
+version = "0.1.0"
+description = "Multi-channel AI gateway with extensible messaging integrations"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+    { name = "CHEN SAI", email = "cs@openclaw.dev" },
+]
+keywords = [
+    "ai", "agent", "gateway", "llm", "chatbot", "multi-channel",
+    "telegram", "discord", "slack", "mcp", "openai", "anthropic",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: Chat",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Framework :: FastAPI",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/openclaw/openclaw-py"
+Documentation = "https://github.com/openclaw/openclaw-py#readme"
+Repository = "https://github.com/openclaw/openclaw-py"
+Issues = "https://github.com/openclaw/openclaw-py/issues"
+Changelog = "https://github.com/openclaw/openclaw-py/releases"
+
+dependencies = [
+    # HTTP / WebSocket / async
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "websockets>=14",
+    "httpx>=0.28",
+    "uvloop>=0.21; sys_platform != 'win32'",
+    # CLI
+    "typer>=0.15",
+    "rich>=13",
+    # Data validation
+    "pydantic>=2.10",
+    # Config
+    "json5>=0.10",
+    "aiofiles>=24",
+    # Scheduling
+    "apscheduler>=3.10",
+    # Media
+    "Pillow>=11",
+    # AI / LLM
+    "openai>=1.60",
+    "anthropic>=0.42",
+    "google-generativeai>=0.8",
+    # TTS
+    "edge-tts>=7",
+    # Messaging channels
+    "aiogram>=3.17",
+    "discord.py>=2.4",
+    "slack-bolt>=1.22",
+    # Browser automation
+    "playwright>=1.50",
+    "flet>=0.81.0",
+]
+
+[project.optional-dependencies]
+ui = [
+    "flet>=0.81",
+    "pystray>=0.19",
+]
+matrix = [
+    "matrix-nio>=0.24",
+]
+whatsapp = [
+    "neonize>=0.3.14",
+]
+voice = [
+    "edge-tts>=7",
+]
+all = [
+    "pyclaw[ui,matrix,voice]",
+]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.25",
+    "pytest-cov>=6",
+    "ruff>=0.9",
+    "mypy>=1.14",
+]
+
+[project.scripts]
+pyclaw = "pyclaw.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyclaw"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+cov = "pytest --cov=pyclaw --cov-report=term-missing --cov-report=html {args:tests}"
+lint = "ruff check src tests"
+fmt = "ruff format src tests"
+typecheck = "mypy src/pyclaw"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["pyclaw"]
+omit = ["*/ui/*", "*/main.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 40
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__",
+    "@abstractmethod",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
