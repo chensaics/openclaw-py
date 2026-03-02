@@ -10,11 +10,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 authors = [
-    { name = "CHEN SAI", email = "cs@openclaw.dev" },
+    { name = "CHEN SAI", email = "chensai@gmail.com" },
 ]
 keywords = [
     "ai", "agent", "gateway", "llm", "chatbot", "multi-channel",
-    "telegram", "discord", "slack", "mcp", "openai", "anthropic",
+    "openclaw", "skills", "mcp", "openai", "anthropic",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -30,11 +30,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/openclaw/openclaw-py"
-Documentation = "https://github.com/openclaw/openclaw-py#readme"
-Repository = "https://github.com/openclaw/openclaw-py"
-Issues = "https://github.com/openclaw/openclaw-py/issues"
-Changelog = "https://github.com/openclaw/openclaw-py/releases"
+Homepage = "https://github.com/chensaics/openclaw-py"
+Documentation = "https://github.com/chensaics/openclaw-py#readme"
+Repository = "https://github.com/chensaics/openclaw-py"
+Issues = "https://github.com/chensaics/openclaw-py/issues"
+Changelog = "https://github.com/chensaics/openclaw-py/releases"
 
 dependencies = [
     # HTTP / WebSocket / async

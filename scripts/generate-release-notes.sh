@@ -71,4 +71,4 @@ fi
 
 echo "---"
 echo ""
-echo "**Full diff**: https://github.com/openclaw/openclaw-py/compare/${FROM_TAG}...${TO_TAG}"
+echo "**Full diff**: https://github.com/chensaics/openclaw-py/compare/${FROM_TAG}...${TO_TAG}"
