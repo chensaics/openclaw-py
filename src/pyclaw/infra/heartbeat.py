@@ -16,23 +16,66 @@ from typing import Any, Awaitable, Callable
 logger = logging.getLogger(__name__)
 
 DURATION_PATTERN = re.compile(r"^(\d+)(ms|s|m|h|d)$")
+COMPOUND_PATTERN = re.compile(
+    r"^(?:(?P<hours>\d+)h)?(?:(?P<minutes>\d+)m)?(?:(?P<seconds>\d+)s)?$",
+    re.IGNORECASE,
+)
 
 
 def parse_duration_ms(value: str) -> int:
-    """Parse a duration string (e.g. '30m', '2h') to milliseconds."""
-    m = DURATION_PATTERN.match(value.strip())
-    if not m:
-        return 30 * 60 * 1000  # default 30m
-    n, unit = int(m.group(1)), m.group(2)
-    multipliers = {"ms": 1, "s": 1000, "m": 60_000, "h": 3_600_000, "d": 86_400_000}
-    return n * multipliers[unit]
+    """Parse a duration string to milliseconds.
+
+    Supports both simple ('30m', '2h') and compound ('2h30m', '1h15m30s') formats.
+    """
+    value = value.strip()
+    if not value:
+        return 30 * 60 * 1000
+
+    # Try simple format first
+    m = DURATION_PATTERN.match(value)
+    if m:
+        n, unit = int(m.group(1)), m.group(2)
+        multipliers = {"ms": 1, "s": 1000, "m": 60_000, "h": 3_600_000, "d": 86_400_000}
+        return n * multipliers[unit]
+
+    # Try compound format (e.g. "2h30m", "1h15m30s")
+    cm = COMPOUND_PATTERN.match(value)
+    if cm and any(cm.group(g) for g in ("hours", "minutes", "seconds")):
+        hours = int(cm.group("hours") or 0)
+        minutes = int(cm.group("minutes") or 0)
+        seconds = int(cm.group("seconds") or 0)
+        total = hours * 3_600_000 + minutes * 60_000 + seconds * 1000
+        if total > 0:
+            return total
+
+    logger.warning("Invalid duration '%s', using default 30m", value)
+    return 30 * 60 * 1000
+
+
+def resolve_heartbeat_query(
+    config: "HeartbeatConfig",
+    workspace_root: Path | None = None,
+) -> str:
+    """Resolve the heartbeat prompt, reading from HEARTBEAT.md if configured."""
+    if config.query_file:
+        query_path = Path(config.query_file)
+        if not query_path.is_absolute() and workspace_root:
+            query_path = workspace_root / query_path
+        if query_path.is_file():
+            text = query_path.read_text(encoding="utf-8").strip()
+            if text:
+                return text
+            logger.debug("HEARTBEAT.md exists but is empty, using default prompt")
+
+    return config.prompt or "Check in — anything to report?"
 
 
 @dataclass
 class HeartbeatConfig:
     every: str = "30m"
     prompt: str = ""
-    target: str = ""
+    query_file: str = ""  # e.g. "HEARTBEAT.md" — overrides prompt if file exists
+    target: str = ""  # "" | "last" — dispatch to last active channel
     account_id: str = ""
     active_hours: str = ""  # e.g. "09:00-22:00"
     enabled: bool = True
@@ -82,16 +125,28 @@ def resolve_heartbeat_interval_ms(config: HeartbeatConfig) -> int:
 
 
 ReplyFn = Callable[[str, str], Awaitable[str | None]]
+DispatchFn = Callable[[str, str], Awaitable[None]]
 
 
 class HeartbeatRunner:
     """Manages periodic heartbeats for one or more agents."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, workspace_root: Path | None = None) -> None:
         self._summaries: dict[str, HeartbeatSummary] = {}
         self._tasks: dict[str, asyncio.Task[None]] = {}
         self._wake_handlers: dict[str, Callable[[], None]] = {}
         self._running = False
+        self._workspace_root = workspace_root
+        self._dispatch_fn: DispatchFn | None = None
+        self._last_channel: str = ""
+
+    def set_dispatch(self, dispatch_fn: DispatchFn) -> None:
+        """Set a function to dispatch replies to channels."""
+        self._dispatch_fn = dispatch_fn
+
+    def record_channel_activity(self, channel_id: str) -> None:
+        """Record which channel was last active (for target=last)."""
+        self._last_channel = channel_id
 
     def start(
         self,
@@ -182,15 +237,31 @@ class HeartbeatRunner:
         reply_fn: ReplyFn,
         summary: HeartbeatSummary,
     ) -> None:
-        prompt = config.prompt or "Check in — anything to report?"
+        prompt = resolve_heartbeat_query(config, self._workspace_root)
         try:
             reply = await reply_fn(agent_id, prompt)
             summary.last_run = time.time()
             summary.runs += 1
             if reply:
-                # dedupe against last heartbeat text
                 if reply != summary.last_text:
                     summary.last_text = reply
                     logger.info("Heartbeat[%s]: %s", agent_id, reply[:100])
+
+                    # Dispatch to last active channel if configured
+                    if (
+                        config.target.lower() == "last"
+                        and self._last_channel
+                        and self._dispatch_fn
+                    ):
+                        try:
+                            await self._dispatch_fn(self._last_channel, reply)
+                            logger.info(
+                                "Heartbeat[%s] dispatched to channel %s",
+                                agent_id, self._last_channel,
+                            )
+                        except Exception:
+                            logger.exception(
+                                "Heartbeat dispatch failed for %s", agent_id,
+                            )
         except Exception:
             logger.exception("Heartbeat reply error for %s", agent_id)

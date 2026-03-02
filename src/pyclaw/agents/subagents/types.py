@@ -30,6 +30,10 @@ class SubagentConfig:
     current_depth: int = 0
     tools_enabled: list[str] = field(default_factory=list)
     tools_disabled: list[str] = field(default_factory=list)
+    notify_parent: bool = False
+    channel: str = ""
+    chat_id: str = ""
+    label: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
 

@@ -1,8 +1,7 @@
-"""Extended RPC methods — browser, push, talk, tts, wizard, usage, system, etc.
+"""Extended RPC methods — system, usage, tts, wizard, push, doctor, skills, etc.
 
-Ported from ``src/gateway/method-handlers/*.ts`` (missing methods).
-
-Provides additional Gateway RPC handlers beyond the core set.
+Phase 56: Added system.event, system.heartbeat.last, system.presence real RPC handlers.
+Phase 57: Replaced placeholder-success returns with real implementations or NOT_IMPLEMENTED.
 """
 
 from __future__ import annotations
@@ -11,35 +10,57 @@ import logging
 import time
 from typing import Any, TYPE_CHECKING
 
+from pyclaw.infra.system_events import (
+    EventBus,
+    EventType,
+    PresenceManager,
+    PresenceState,
+    SystemEvent,
+)
+
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
 
 logger = logging.getLogger(__name__)
 
+_bus = EventBus()
+_presence = PresenceManager(idle_timeout_s=300.0)
+_heartbeat_enabled = True
+_last_heartbeat_at = 0.0
+_started_at = time.time()
+
 
 def create_extended_handlers() -> dict[str, "MethodHandler"]:
     """Create handlers for extended RPC methods."""
+
+    # ------------------------------------------------------------------
+    # TTS
+    # ------------------------------------------------------------------
 
     async def handle_tts_speak(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
         text = (params or {}).get("text", "")
-        voice = (params or {}).get("voice", "default")
         if not text:
             await conn.send_error("tts.speak", "invalid_params", "Missing 'text'")
             return
-        await conn.send_ok("tts.speak", {
-            "text": text[:200],
-            "voice": voice,
-            "status": "queued",
-        })
+        await conn.send_error(
+            "tts.speak", "not_implemented",
+            "TTS synthesis is not yet implemented. "
+            "Configure an external TTS provider to use this feature.",
+        )
 
     async def handle_tts_voices(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
         await conn.send_ok("tts.voices", {
             "voices": ["default", "alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+            "note": "Static list — no TTS provider configured yet.",
         })
+
+    # ------------------------------------------------------------------
+    # Usage
+    # ------------------------------------------------------------------
 
     async def handle_usage_get(
         params: dict[str, Any] | None, conn: "GatewayConnection"
@@ -64,6 +85,10 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
             },
         )
 
+    # ------------------------------------------------------------------
+    # System (Phase 56 — real RPC implementations)
+    # ------------------------------------------------------------------
+
     async def handle_system_info(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
@@ -72,13 +97,13 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
         await conn.send_ok("system.info", {
             "platform": platform.system(),
             "python": sys.version,
-            "uptime": time.time(),
+            "uptime": time.time() - _started_at,
+            "startedAt": _started_at,
         })
 
     async def handle_system_logs(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        """Read log lines from the gateway log file."""
         from pyclaw.config.paths import resolve_state_dir
 
         p = params or {}
@@ -105,10 +130,61 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
             "maxLines": max_lines,
         })
 
+    async def handle_system_event(
+        params: dict[str, Any] | None, conn: "GatewayConnection"
+    ) -> None:
+        global _last_heartbeat_at
+        p = params or {}
+        text = str(p.get("text", ""))
+        mode = str(p.get("mode", "next-heartbeat"))
+
+        event = SystemEvent(
+            event_type=EventType.HEALTH_CHECK,
+            source="gateway-rpc",
+            data={"text": text, "mode": mode},
+        )
+        _bus.emit(event)
+        _presence.heartbeat("system")
+        if mode == "now" and _heartbeat_enabled:
+            _last_heartbeat_at = time.time()
+
+        await conn.send_ok("system.event", {
+            "ok": True,
+            "eventType": event.event_type.value,
+            "mode": mode,
+            "heartbeatTriggered": bool(mode == "now" and _heartbeat_enabled),
+            "source": "gateway",
+        })
+
+    async def handle_system_heartbeat_last(
+        params: dict[str, Any] | None, conn: "GatewayConnection"
+    ) -> None:
+        await conn.send_ok("system.heartbeat.last", {
+            "enabled": _heartbeat_enabled,
+            "lastHeartbeatAt": _last_heartbeat_at or None,
+        })
+
+    async def handle_system_presence(
+        params: dict[str, Any] | None, conn: "GatewayConnection"
+    ) -> None:
+        _presence.check_idle()
+        entries = [
+            {
+                "componentId": cid,
+                "state": info.state.value,
+                "lastSeenAt": info.last_seen_at,
+            }
+            for cid, info in _presence._entries.items()
+        ]
+        await conn.send_ok("system.presence", {"entries": entries})
+
+    # ------------------------------------------------------------------
+    # Doctor
+    # ------------------------------------------------------------------
+
     async def handle_doctor_run(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        """Run real diagnostic checks and return results."""
         from pyclaw.cli.commands.doctor_flows import run_doctor
 
         report = run_doctor()
@@ -117,7 +193,7 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
         failed = 0
         warns = 0
         for r in report.results:
-            entry = {
+            entry: dict[str, Any] = {
                 "name": r.check_name,
                 "category": r.category,
                 "severity": r.severity.value,
@@ -141,17 +217,19 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
             "pythonVersion": report.python_version,
         })
 
+    # ------------------------------------------------------------------
+    # Skills
+    # ------------------------------------------------------------------
+
     async def handle_skills_list(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        """Return discoverable skills with metadata."""
         skills: list[dict[str, Any]] = []
         try:
             from pathlib import Path
-            from pyclaw.agents.skills import load_skill_entries, load_workspace_skill_entries
+            from pyclaw.agents.skills import load_skill_entries
             from pyclaw.config.paths import resolve_state_dir
 
-            # Load from workspace cwd and state dir skills
             for source_dir, source_label in [
                 (Path.cwd(), "workspace"),
                 (resolve_state_dir() / "skills", "global"),
@@ -171,64 +249,78 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
 
         await conn.send_ok("skills.list", {"skills": skills, "count": len(skills)})
 
+    # ------------------------------------------------------------------
+    # Wizard — NOT_IMPLEMENTED (Phase 57)
+    # ------------------------------------------------------------------
+
     async def handle_wizard_start(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        wizard_type = (params or {}).get("type", "setup")
-        await conn.send_ok("wizard.start", {
-            "type": wizard_type,
-            "sessionId": f"wizard-{int(time.time())}",
-            "steps": [],
-        })
+        await conn.send_error(
+            "wizard.start", "not_implemented",
+            "Setup wizard is not yet implemented. Use `pyclaw setup` CLI instead.",
+        )
 
     async def handle_wizard_step(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        session_id = (params or {}).get("sessionId", "")
-        step_id = (params or {}).get("stepId", "")
-        if not session_id or not step_id:
-            await conn.send_error("wizard.step", "invalid_params", "Missing sessionId or stepId")
-            return
-        await conn.send_ok("wizard.step", {
-            "sessionId": session_id,
-            "stepId": step_id,
-            "status": "completed",
-        })
+        await conn.send_error(
+            "wizard.step", "not_implemented",
+            "Setup wizard is not yet implemented. Use `pyclaw setup` CLI instead.",
+        )
+
+    # ------------------------------------------------------------------
+    # Push — NOT_IMPLEMENTED (Phase 57)
+    # ------------------------------------------------------------------
 
     async def handle_push_send(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        message = (params or {}).get("message", "")
-        target = (params or {}).get("target", "")
-        await conn.send_ok("push.send", {
-            "sent": bool(message),
-            "target": target,
-        })
+        await conn.send_error(
+            "push.send", "not_implemented",
+            "Push notification delivery is not yet implemented. "
+            "Configure a push provider (FCM/APNs) to enable this.",
+        )
+
+    # ------------------------------------------------------------------
+    # Voice Wake — NOT_IMPLEMENTED (Phase 57)
+    # ------------------------------------------------------------------
 
     async def handle_voicewake_status(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
-        await conn.send_ok("voicewake.status", {
-            "enabled": False,
-            "listening": False,
-            "wakeWord": "hey pyclaw",
-        })
+        await conn.send_error(
+            "voicewake.status", "not_implemented",
+            "Voice wake-word detection is not yet available in the Python runtime.",
+        )
+
+    # ------------------------------------------------------------------
+    # Update Check — real version read (Phase 57)
+    # ------------------------------------------------------------------
 
     async def handle_update_check(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
+        current_version = _get_current_version()
         await conn.send_ok("update.check", {
-            "currentVersion": "0.0.0",
-            "latestVersion": "0.0.0",
+            "currentVersion": current_version,
+            "latestVersion": current_version,
             "updateAvailable": False,
+            "note": "Automatic update checking from PyPI is not yet implemented.",
         })
+
+    # ------------------------------------------------------------------
+    # Web Status — real Gateway state (Phase 57)
+    # ------------------------------------------------------------------
 
     async def handle_web_status(
         params: dict[str, Any] | None, conn: "GatewayConnection"
     ) -> None:
         await conn.send_ok("web.status", {
-            "connected": False,
-            "provider": "none",
+            "connected": True,
+            "provider": "gateway-websocket",
+            "uptime": time.time() - _started_at,
+            "note": "Web UI tunnel is not yet implemented; Gateway WebSocket is active.",
         })
 
     return {
@@ -237,6 +329,9 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
         "usage.get": handle_usage_get,
         "system.info": handle_system_info,
         "system.logs": handle_system_logs,
+        "system.event": handle_system_event,
+        "system.heartbeat.last": handle_system_heartbeat_last,
+        "system.presence": handle_system_presence,
         "doctor.run": handle_doctor_run,
         "skills.list": handle_skills_list,
         "wizard.start": handle_wizard_start,
@@ -246,3 +341,11 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
         "update.check": handle_update_check,
         "web.status": handle_web_status,
     }
+
+
+def _get_current_version() -> str:
+    try:
+        from importlib.metadata import version
+        return version("pyclaw")
+    except Exception:
+        return "0.0.0-dev"

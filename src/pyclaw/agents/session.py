@@ -10,8 +10,10 @@ Compatible with the TypeScript SessionManager format:
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,74 @@ from pyclaw.agents.tokens import estimate_messages_tokens
 
 def _gen_id() -> str:
     return uuid.uuid4().hex[:12]
+
+
+# ---------------------------------------------------------------------------
+# Timeline types (F06 — message-level activity timeline)
+# ---------------------------------------------------------------------------
+
+
+class TimelineKind(str, Enum):
+    TOOL_CALL = "tool_call"
+    TOOL_RESULT = "tool_result"
+    STATUS = "status"
+    PLAN = "plan"
+    INTERRUPT = "interrupt"
+
+
+@dataclass
+class TimelineActivity:
+    """A discrete activity record within a message timeline."""
+
+    activity_type: str  # "tool_exec" | "plan_step" | "interrupt" | ...
+    summary: str
+    detail: str = ""
+    timestamp: float = field(default_factory=time.time)
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {
+            "type": self.activity_type,
+            "summary": self.summary,
+            "timestamp": self.timestamp,
+        }
+        if self.detail:
+            d["detail"] = self.detail
+        return d
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TimelineActivity:
+        return cls(
+            activity_type=data.get("type", ""),
+            summary=data.get("summary", ""),
+            detail=data.get("detail", ""),
+            timestamp=data.get("timestamp", 0.0),
+        )
+
+
+@dataclass
+class TimelineEntry:
+    """A single timeline entry embedding an activity into a message."""
+
+    kind: TimelineKind
+    activity: TimelineActivity
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind.value,
+            "activity": self.activity.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TimelineEntry:
+        return cls(
+            kind=TimelineKind(data.get("kind", "status")),
+            activity=TimelineActivity.from_dict(data.get("activity", {})),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Agent message
+# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -31,6 +101,7 @@ class AgentMessage:
     tool_call_id: str | None = None
     tool_calls: list[dict[str, Any]] | None = None
     name: str | None = None
+    timeline: list[TimelineEntry] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"role": self.role, "content": self.content}
@@ -40,16 +111,40 @@ class AgentMessage:
             d["tool_calls"] = self.tool_calls
         if self.name is not None:
             d["name"] = self.name
+        if self.timeline:
+            d["timeline"] = [e.to_dict() for e in self.timeline]
         return d
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AgentMessage:
+        timeline_raw = data.get("timeline")
+        timeline = (
+            [TimelineEntry.from_dict(e) for e in timeline_raw]
+            if timeline_raw
+            else None
+        )
         return cls(
             role=data["role"],
             content=data["content"],
             tool_call_id=data.get("tool_call_id"),
             tool_calls=data.get("tool_calls"),
             name=data.get("name"),
+            timeline=timeline,
+        )
+
+    def add_timeline(self, kind: TimelineKind, summary: str, **kwargs: Any) -> None:
+        """Append a timeline entry to this message."""
+        if self.timeline is None:
+            self.timeline = []
+        self.timeline.append(
+            TimelineEntry(
+                kind=kind,
+                activity=TimelineActivity(
+                    activity_type=kind.value,
+                    summary=summary,
+                    **kwargs,
+                ),
+            )
         )
 
 

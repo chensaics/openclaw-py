@@ -1,4 +1,7 @@
-"""CLI logs command — tail logs via Gateway RPC (preferred) or local file fallback."""
+"""CLI logs command — tail logs via Gateway RPC (preferred) or local file fallback.
+
+Phase 56: Explicit warning when falling back to local log file.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +13,8 @@ from pathlib import Path
 import typer
 
 from pyclaw.config.paths import resolve_state_dir
+
+_FALLBACK_MSG = "[warn] Gateway unreachable — reading local log file."
 
 
 def logs_command(
@@ -31,7 +36,8 @@ def logs_command(
                 typer.echo(line)
             return
 
-    # Fallback to local file
+    typer.echo(_FALLBACK_MSG, err=True)
+
     log_path = resolve_state_dir() / "logs" / "pyclaw.log"
     _print_log_lines(log_path, limit=limit, output_json=output_json, local_time=local_time)
     if follow:

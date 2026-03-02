@@ -1,4 +1,8 @@
-"""CLI system commands (event, heartbeat, presence) — RPC-first with local fallback."""
+"""CLI system commands (event, heartbeat, presence) — RPC-first with explicit fallback warnings.
+
+Phase 56: CLI now tells the user explicitly when it falls back to local execution
+instead of silently degrading.
+"""
 
 from __future__ import annotations
 
@@ -18,6 +22,8 @@ _BUS = EventBus()
 _PRESENCE = PresenceManager(idle_timeout_s=300.0)
 _HEARTBEAT_ENABLED = True
 _LAST_HEARTBEAT_AT = 0.0
+
+_FALLBACK_MSG = "[warn] Gateway unreachable — using local-only fallback."
 
 
 def _try_rpc(method: str, params: dict | None = None) -> dict | None:
@@ -53,6 +59,8 @@ def system_event_command(*, text: str, mode: str = "next-heartbeat", output_json
             typer.echo(f"System event queued via Gateway ({mode}).")
         return
 
+    typer.echo(_FALLBACK_MSG, err=True)
+
     event = SystemEvent(
         event_type=EventType.HEALTH_CHECK,
         source="pyclaw",
@@ -73,7 +81,7 @@ def system_event_command(*, text: str, mode: str = "next-heartbeat", output_json
     if output_json:
         typer.echo(json.dumps(payload, ensure_ascii=False))
         return
-    typer.echo(f"System event queued ({mode}).")
+    typer.echo(f"System event queued locally ({mode}).")
 
 
 def system_heartbeat_last_command(*, output_json: bool = False) -> None:
@@ -87,17 +95,20 @@ def system_heartbeat_last_command(*, output_json: bool = False) -> None:
             typer.echo(f"Last heartbeat: {int(ts)}" if ts else "No heartbeat yet.")
         return
 
+    typer.echo(_FALLBACK_MSG, err=True)
+
     payload = {
         "enabled": _HEARTBEAT_ENABLED,
         "lastHeartbeatAt": _LAST_HEARTBEAT_AT or None,
+        "source": "local",
     }
     if output_json:
         typer.echo(json.dumps(payload, ensure_ascii=False))
         return
     if _LAST_HEARTBEAT_AT:
-        typer.echo(f"Last heartbeat: {int(_LAST_HEARTBEAT_AT)}")
+        typer.echo(f"Last heartbeat (local): {int(_LAST_HEARTBEAT_AT)}")
     else:
-        typer.echo("No heartbeat yet.")
+        typer.echo("No heartbeat yet (local).")
 
 
 def system_heartbeat_enable_command(*, output_json: bool = False) -> None:
@@ -131,6 +142,8 @@ def system_presence_command(*, output_json: bool = False) -> None:
                     typer.echo(f"{entry.get('componentId', '?')}: {entry.get('state', '?')}")
         return
 
+    typer.echo(_FALLBACK_MSG, err=True)
+
     _PRESENCE.check_idle()
     entries = [
         {
@@ -141,10 +154,10 @@ def system_presence_command(*, output_json: bool = False) -> None:
         for cid, info in _PRESENCE._entries.items()
     ]
     if output_json:
-        typer.echo(json.dumps({"entries": entries}, ensure_ascii=False))
+        typer.echo(json.dumps({"entries": entries, "source": "local"}, ensure_ascii=False))
         return
     if not entries:
-        typer.echo("No presence entries.")
+        typer.echo("No presence entries (local).")
         return
     for entry in entries:
         typer.echo(f"{entry['componentId']}: {entry['state']}")

@@ -23,8 +23,10 @@ class SubagentManager:
 
     def __init__(self) -> None:
         self._active: dict[str, _SubagentEntry] = {}
+        self._completed: list[dict[str, Any]] = []
         self._semaphore = asyncio.Semaphore(self.MAX_CONCURRENT)
         self._on_event: Callable[..., Any] | None = None
+        self._on_parent_notify: Callable[..., Any] | None = None
 
     @property
     def active_count(self) -> int:
@@ -36,6 +38,10 @@ class SubagentManager:
 
     def set_event_handler(self, handler: Callable[..., Any]) -> None:
         self._on_event = handler
+
+    def set_parent_notify_handler(self, handler: Callable[..., Any]) -> None:
+        """Set the callback for notifying parent sessions on completion."""
+        self._on_parent_notify = handler
 
     async def spawn(
         self,
@@ -72,6 +78,19 @@ class SubagentManager:
 
                 entry.state = result.state
                 self._emit("subagent.completed", session_id=session_id, result=result)
+
+                self._completed.append({
+                    "session_id": session_id,
+                    "state": result.state.value,
+                    "label": config.label,
+                    "output_preview": (result.output or "")[:200],
+                })
+                if len(self._completed) > 100:
+                    self._completed = self._completed[-100:]
+
+                if config.notify_parent and config.parent_session_id:
+                    self._notify_parent(config, result)
+
                 return result
 
         except asyncio.CancelledError:
@@ -82,6 +101,25 @@ class SubagentManager:
             return SubagentResult(state=SubagentState.FAILED, error=str(e))
         finally:
             self._active.pop(session_id, None)
+
+    def _notify_parent(self, config: SubagentConfig, result: SubagentResult) -> None:
+        """Notify the parent session that a subagent has completed."""
+        if self._on_parent_notify:
+            try:
+                self._on_parent_notify(
+                    parent_session_id=config.parent_session_id,
+                    child_session_id=config.session_id,
+                    label=config.label,
+                    state=result.state.value,
+                    output=result.output,
+                )
+            except Exception:
+                pass
+        self._emit(
+            "subagent.parent_notified",
+            parent_session_id=config.parent_session_id,
+            child_session_id=config.session_id,
+        )
 
     async def kill(self, session_id: str) -> bool:
         """Abort a running subagent."""
@@ -113,14 +151,27 @@ class SubagentManager:
                 "agent_id": e.config.agent_id,
                 "state": e.state.value,
                 "depth": e.config.current_depth,
+                "label": e.config.label,
                 "prompt_preview": e.config.prompt[:100],
             }
             for e in self._active.values()
         ]
 
+    def list_running(self) -> list[dict[str, Any]]:
+        """Return info about currently running subagents only."""
+        return [
+            info for info in self.list_active()
+            if info["state"] == SubagentState.RUNNING.value
+        ]
+
+    def list_completed(self, *, limit: int = 20) -> list[dict[str, Any]]:
+        """Return recently completed subagent info."""
+        return list(reversed(self._completed[-limit:]))
+
     async def _run_default(self, entry: _SubagentEntry) -> SubagentResult:
         """Default subagent runner using the standard agent loop."""
         from pyclaw.agents.runner import run_agent
+        from pyclaw.agents.session import SessionManager
         from pyclaw.agents.types import ModelConfig
 
         config = entry.config
@@ -131,17 +182,21 @@ class SubagentManager:
             model_id=config.model or "gpt-4o",
         )
 
+        session = SessionManager.in_memory()
+
         output_parts: list[str] = []
         async for event in run_agent(
             prompt=config.prompt,
+            session=session,
             model=model_config,
             tools=[],
             system_prompt=f"You are a subagent (depth={config.current_depth}). Complete the task concisely.",
+            abort_event=entry.cancel_event,
         ):
             if entry.cancel_event.is_set():
                 return SubagentResult(state=SubagentState.ABORTED, error="Killed by parent")
 
-            if event.type == "text" and event.delta:
+            if event.type == "message_update" and event.delta:
                 output_parts.append(event.delta)
             elif event.type == "error":
                 return SubagentResult(

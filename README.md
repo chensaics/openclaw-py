@@ -12,9 +12,14 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 - Multi-provider LLM streaming (OpenAI, Anthropic, Google Gemini, Ollama, and 20+ more)
 - 20+ built-in tools: file I/O, grep, find, exec, web search/fetch, browser, memory, cron, TTS, etc.
 - MCP (Model Context Protocol) support — connect any stdio or HTTP MCP server
-- Sub-agent orchestration (spawn, steer, kill)
+- **Task planner** — multi-step Plan/Step decomposition with automatic step detection, pause/resume
+- **User interrupt system** — cancel or append context mid-generation (dual-mode: cancel/append)
+- **Intent analyzer** — bilingual (CN/EN) rule-based intent classification (stop/correction/append/continue)
+- **Message bus** — async session-level message routing with non-blocking peek for interrupt detection
+- **Runtime context injection** — channel/session context flows through to tool execution
+- Sub-agent orchestration (spawn, steer, kill) with parent notification and task tracking
 - SKILL.md-based skill injection with ClawHub marketplace
-- JSONL DAG session storage with compaction
+- JSONL DAG session storage with compaction and message-level timeline
 - Thinking mode (disabled / low / high)
 - 7-tier priority agent routing via bindings
 
@@ -27,7 +32,7 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 ### Gateway
 - FastAPI + WebSocket v3 bidirectional protocol
 - OpenAI-compatible HTTP API (`/v1/chat/completions`, `/v1/responses`, `/v1/models`)
-- 20+ RPC methods: chat, sessions, agents, channels, config, models, browser, cron, tools, etc.
+- 25+ RPC methods: chat, sessions, agents, channels, config, models, browser, cron, plan, backup, tools, etc.
 - Config hot-reload, channel health monitoring, control-plane rate limiting
 - Token and password authentication
 
@@ -48,7 +53,9 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 - Configuration security audit (`pyclaw security audit`)
 
 ### Infrastructure
-- Scheduled tasks (APScheduler) with isolated agent runner
+- Scheduled tasks (APScheduler) — cron / interval / one-time schedules, execution history, channel notification
+- **Daily summary service** — automated session consolidation and summarization to memory store
+- **Data backup/restore** — CLI and Gateway RPC for exporting and importing config, sessions, and memory
 - Heartbeat periodic wake-up
 - System service management (launchd / systemd / schtasks)
 - LAN discovery (mDNS/Bonjour) + Tailscale VPN integration
@@ -68,11 +75,33 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 ### Install
 
 ```bash
-# From source
+# One-line install (macOS / Linux)
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash
+
+# One-line install with local model support
+curl -fsSL .../install.sh | bash -s -- --extras llamacpp
+curl -fsSL .../install.sh | bash -s -- --extras mlx        # Apple Silicon only
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.ps1 | iex
+
+# From PyPI
+pip install pyclaw
+
+# Or via pipx (isolated environment, recommended for CLI usage)
+pipx install pyclaw
+
+# macOS via Homebrew
+brew install chensaics/tap/pyclaw
+
+# From source (development)
 pip install -e .
 
 # With all optional extras
 pip install -e ".[all]"
+
+# Docker
+docker run -it --rm -e OPENAI_API_KEY="sk-..." ghcr.io/chensaics/openclaw-py:latest pyclaw agent "Hello"
 ```
 
 Optional extras:
@@ -171,6 +200,13 @@ pyclaw ui --web --port 8550
 | `pyclaw skills remove <name>` | Uninstall a skill |
 | `pyclaw workspace sync` | Sync workspace templates |
 | `pyclaw workspace diff` | Compare workspace vs templates |
+
+### Data Backup
+
+| Command | Description |
+|---------|-------------|
+| `pyclaw backup export --output <path>` | Export config, sessions, summaries, memory to zip |
+| `pyclaw backup import <archive> [--force]` | Import and restore from a backup archive |
 
 ### Operations
 
@@ -392,7 +428,7 @@ The gateway exposes two API surfaces:
 
 ### WebSocket (port 18789)
 
-Full bidirectional protocol for real-time agent interaction, session management, and event streaming. Supports 20+ RPC methods:
+Full bidirectional protocol for real-time agent interaction, session management, and event streaming. Supports 25+ RPC methods:
 
 - `connect`, `health`, `status`
 - `chat.send`, `chat.abort`
@@ -401,7 +437,9 @@ Full bidirectional protocol for real-time agent interaction, session management,
 - `agents.list`, `agents.bindings`
 - `channels.list`, `channels.status`
 - `models.list`, `models.probe`
-- `browser.*`, `cron.*`, `tools.*`
+- `browser.*`, `cron.*`, `cron.history`, `tools.*`
+- `plan.list`, `plan.get`, `plan.resume`, `plan.delete`
+- `backup.export`, `backup.status`
 - And more
 
 ### HTTP (OpenAI-compatible)
@@ -479,15 +517,18 @@ openclaw-py/
 │   ├── agents/                  # Agent runtime
 │   │   ├── runner.py            # Core loop: prompt → LLM stream → tool exec → loop
 │   │   ├── stream.py            # Multi-provider streaming (OpenAI/Anthropic/Gemini/Ollama)
-│   │   ├── session.py           # JSONL DAG session storage + compaction
+│   │   ├── session.py           # JSONL DAG session storage + compaction + timeline
+│   │   ├── planner.py           # Task Plan/Step decomposition + step detection
+│   │   ├── interrupt.py         # User interrupt (cancel/append) context
+│   │   ├── intent.py            # Bilingual intent classification (rule-based)
 │   │   ├── auth_profiles/       # Multi-mode auth (API key, token, OAuth)
 │   │   ├── providers/           # 25+ LLM provider adapters
-│   │   ├── subagents/           # Sub-agent management (spawn/steer/kill)
+│   │   ├── subagents/           # Sub-agent management (spawn/steer/kill/notify)
 │   │   ├── skills/              # SKILL.md discovery + ClawHub marketplace
 │   │   ├── workspace_sync.py    # Workspace template sync
 │   │   ├── model_catalog.py     # Model registry (aliases, costs, capabilities)
 │   │   ├── tool_policy.py       # Tool access control (group/plugin allowlist)
-│   │   └── tools/               # 20+ built-in tools + MCP bridge
+│   │   └── tools/               # 20+ built-in tools + MCP bridge + runtime context
 │   │
 │   ├── mcp/                     # MCP (Model Context Protocol) client
 │   │   ├── client.py            # Server connection + tool discovery
@@ -499,7 +540,8 @@ openclaw-py/
 │   │   ├── server.py            # FastAPI + WebSocket v3 protocol
 │   │   ├── openai_compat.py     # /v1/chat/completions + /v1/models
 │   │   ├── openresponses_http.py # /v1/responses (streaming SSE)
-│   │   └── methods/             # 20+ RPC method handlers
+│   │   ├── message_bus.py       # Async dual-channel message bus
+│   │   └── methods/             # 25+ RPC method handlers (incl. plan, cron history, backup)
 │   │
 │   ├── channels/                # 25 messaging channels
 │   │   ├── base.py              # ChannelPlugin abstract interface
@@ -515,7 +557,8 @@ openclaw-py/
 │   │   ├── app.py               # Command registration
 │   │   └── commands/            # setup, doctor, agent, gateway, config, agents,
 │   │                            # channels, auth, models, devices, message, service,
-│   │                            # mcp, skills, workspace, sessions, browser, security, ...
+│   │                            # mcp, skills, workspace, sessions, browser, security,
+│   │                            # backup, ...
 │   │
 │   ├── config/                  # Configuration (Pydantic + JSON5)
 │   │   ├── schema.py            # PyClawConfig root model (30+ sections)
@@ -526,6 +569,7 @@ openclaw-py/
 │   │
 │   ├── memory/                  # Memory / RAG
 │   │   ├── store.py             # SQLite + FTS5 full-text search
+│   │   ├── daily_summary.py     # Automated daily session summarization
 │   │   ├── lancedb_backend.py   # LanceDB vector search
 │   │   ├── hybrid.py            # Vector + keyword merge
 │   │   ├── mmr.py               # MMR diversity re-ranking
@@ -539,7 +583,7 @@ openclaw-py/
 │   ├── plugins/                 # Plugin system (entry-point + extensions)
 │   ├── routing/                 # 7-tier priority message routing
 │   ├── media/                   # Media understanding (multi-provider)
-│   ├── cron/                    # APScheduler job runner
+│   ├── cron/                    # APScheduler job runner + execution history
 │   ├── infra/                   # Retry, rate-limit, heartbeat, mDNS, Tailscale
 │   ├── daemon/                  # System service (launchd/systemd/schtasks)
 │   ├── canvas/                  # Canvas host (HTTP + WebSocket live-reload)
@@ -639,8 +683,11 @@ flowchart TD
 
     subgraph agentCore [Agent Runtime]
         Runner["Agent Loop\n(prompt → stream → tool → loop)"]
-        Session["Session Store\n(JSONL DAG + compaction)"]
-        Subagents["Sub-agents\n(spawn / steer / kill)"]
+        Planner["Task Planner\n(Plan / Step decomposition)"]
+        Interrupt["Interrupt + Intent\n(cancel / append)"]
+        Session["Session Store\n(JSONL DAG + timeline)"]
+        Subagents["Sub-agents\n(spawn / steer / kill / notify)"]
+        MessageBus["Message Bus\n(async inbound / outbound)"]
     end
 
     subgraph tooling [Tools]
@@ -658,9 +705,11 @@ flowchart TD
     subgraph infra [Infrastructure]
         Config["Config\n(Pydantic + JSON5)\n~/.pyclaw/"]
         Memory["Memory\n(SQLite FTS5 + LanceDB)"]
+        DailySummary["Daily Summary\n(session consolidation)"]
         Security["Security\n(sandbox / exec approval / SSRF)"]
         Secrets["Secrets\n(env / file / exec refs)"]
-        Cron["Cron + Heartbeat\n(APScheduler)"]
+        Cron["Cron + Heartbeat\n(APScheduler + history)"]
+        Backup["Backup / Restore\n(export / import zip)"]
         Plugins["Plugins + Hooks\n(entry_points)"]
     end
 
@@ -677,6 +726,9 @@ flowchart TD
     ChannelMgr --> ExtCh
 
     RPCMethods --> Runner
+    Runner --> Planner
+    Runner --> Interrupt
+    Interrupt --> MessageBus
     Runner --> Session
     Runner --> Subagents
     Runner --> BuiltinTools
@@ -689,9 +741,13 @@ flowchart TD
 
     Config --> GatewayServer
     Memory --> Runner
+    DailySummary --> Memory
+    DailySummary --> Session
     Security --> Runner
     Secrets --> Config
     Cron --> Runner
+    Backup --> Config
+    Backup --> Session
     Plugins --> GatewayServer
 ```
 
@@ -699,13 +755,14 @@ flowchart TD
 
 | Metric | Value |
 |--------|-------|
-| Source files | ~398 .py files |
-| Source code | ~56,500 LOC |
-| Test files | 78 |
-| Tests | 1,848 |
+| Source files | ~439 .py files |
+| Source code | ~65,000 LOC |
+| Test files | 90 |
+| Tests | 1,932+ |
 | Channels | 25 |
 | LLM providers | 25+ |
 | Built-in tools | 20+ |
+| RPC methods | 25+ |
 | CLI commands | 25+ groups |
 
 ---

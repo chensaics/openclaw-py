@@ -136,4 +136,30 @@ def create_default_tools(
     registry.register(SocialJoinTool())
     registry.register(SocialStatusTool())
 
+    # Desktop screenshot (always available, gracefully degrades on headless)
+    from pyclaw.agents.tools.desktop_screenshot import DesktopScreenshotTool
+
+    registry.register(DesktopScreenshotTool())
+
+    # File sending
+    from pyclaw.agents.tools.send_file import SendFileTool
+
+    registry.register(SendFileTool())
+
+    # Office file tools (gracefully skip if optional deps not installed)
+    try:
+        from pyclaw.agents.tools.office_tools import (
+            ReadDocxTool,
+            ReadPdfTool,
+            ReadPptxTool,
+            ReadXlsxTool,
+        )
+
+        registry.register(ReadPdfTool())
+        registry.register(ReadDocxTool())
+        registry.register(ReadXlsxTool())
+        registry.register(ReadPptxTool())
+    except ImportError:
+        pass
+
     return registry

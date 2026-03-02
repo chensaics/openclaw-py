@@ -68,6 +68,39 @@ DEFAULT_HEARTBEAT_INTERVAL_API_KEY = "30m"
 DEFAULT_REDACT_SENSITIVE = "tools"
 
 
+# ---------------------------------------------------------------------------
+# Provider defaults — base_url and default model for OpenAI-compatible providers
+# ---------------------------------------------------------------------------
+
+_PROVIDER_DEFAULTS: dict[str, tuple[str, str]] = {
+    # provider_id -> (default_base_url, default_model)
+    "ollama": ("http://localhost:11434/v1", "llama3"),
+    "vllm": ("http://localhost:8000/v1", "default"),
+    "litellm": ("http://localhost:4000/v1", "gpt-4o"),
+    "deepseek": ("https://api.deepseek.com/v1", "deepseek-chat"),
+    "qwen": ("https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen-max"),
+    "moonshot": ("https://api.moonshot.cn/v1", "moonshot-v1-128k"),
+    "volcengine": ("https://ark.cn-beijing.volces.com/api/v3", "doubao-pro-256k"),
+    "zhipu": ("https://open.bigmodel.cn/api/paas/v4", "glm-4-plus"),
+    "minimax": ("https://api.minimax.chat/v1", "abab6.5s-chat"),
+    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
+    "together": ("https://api.together.xyz/v1", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
+    "openrouter": ("https://openrouter.ai/api/v1", "anthropic/claude-sonnet-4-6"),
+    "fireworks": ("https://api.fireworks.ai/inference/v1", "accounts/fireworks/models/llama-v3p3-70b-instruct"),
+    "perplexity": ("https://api.perplexity.ai", "sonar-pro"),
+    "xai": ("https://api.x.ai/v1", "grok-3"),
+}
+
+
+def get_provider_defaults(provider_id: str) -> tuple[str, str]:
+    """Return (default_base_url, default_model) for a known provider.
+
+    Returns ("", "") for unknown providers — callers should fall back
+    to OpenAI defaults or raise.
+    """
+    return _PROVIDER_DEFAULTS.get(provider_id, ("", ""))
+
+
 def resolve_model_alias(raw: str) -> str:
     """Resolve a model alias (e.g. ``"opus"``) to its full ref."""
     key = raw.strip().lower()

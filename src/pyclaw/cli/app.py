@@ -404,6 +404,49 @@ def models_auth_overview_cmd(
     models_auth_overview_command(output_json=output_json)
 
 
+@models_app.command("download")
+def models_download_cmd(
+    repo_id: str = typer.Argument(..., help="HuggingFace repo ID (e.g. Qwen/Qwen3-4B-GGUF)."),
+    filename: str = typer.Option("", "--filename", help="Specific file to download."),
+    backend: str = typer.Option("llamacpp", "--backend", help="Backend: llamacpp or mlx."),
+    source: str = typer.Option("huggingface", "--source", help="Source: huggingface or modelscope."),
+) -> None:
+    """Download a local model from HuggingFace or ModelScope."""
+    from pyclaw.cli.commands.local_models_cmd import local_models_download
+
+    local_models_download(repo_id, filename=filename, backend=backend, source=source)
+
+
+@models_app.command("local")
+def models_local_cmd(
+    output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """List downloaded local models."""
+    from pyclaw.cli.commands.local_models_cmd import local_models_list
+
+    local_models_list(output_json=output_json)
+
+
+@models_app.command("delete-local")
+def models_delete_local_cmd(
+    model_id: str = typer.Argument(..., help="Model ID to delete."),
+) -> None:
+    """Delete a downloaded local model."""
+    from pyclaw.cli.commands.local_models_cmd import local_models_delete
+
+    local_models_delete(model_id)
+
+
+@models_app.command("select")
+def models_select_cmd(
+    model_id: str = typer.Argument(..., help="Model ID to set as active."),
+) -> None:
+    """Set a local model as the active model for inference."""
+    from pyclaw.cli.commands.local_models_cmd import local_models_select
+
+    local_models_select(model_id)
+
+
 # ─── Devices subcommands ─────────────────────────────────────────────────
 
 devices_app = typer.Typer(name="devices", help="Manage paired devices.", no_args_is_help=True)
@@ -1210,3 +1253,34 @@ def workspace_diff_cmd() -> None:
     """Show differences between workspace files and templates."""
     from pyclaw.cli.commands.workspace_cmd import workspace_diff_command
     workspace_diff_command()
+
+
+# ─── Backup subcommands ──────────────────────────────────────────────
+
+from pyclaw.cli.commands.backup_cmd import backup_app
+app.add_typer(backup_app)
+
+
+# ─── Uninstall command ───────────────────────────────────────────────
+
+@app.command()
+def uninstall(
+    purge: bool = typer.Option(False, "--purge", help="Remove all data and config (irreversible)."),
+) -> None:
+    """Uninstall pyclaw. With --purge, removes all data and config."""
+    import shutil
+
+    from pyclaw.config.paths import resolve_config_dir, resolve_state_dir
+
+    if purge:
+        for d in (resolve_config_dir(), resolve_state_dir()):
+            if d.exists():
+                shutil.rmtree(d, ignore_errors=True)
+                typer.echo(f"Removed: {d}")
+        typer.echo("All pyclaw data and config purged.")
+    else:
+        typer.echo("To uninstall pyclaw:")
+        typer.echo("  pipx uninstall pyclaw")
+        typer.echo("  # or: pip uninstall pyclaw")
+        typer.echo("")
+        typer.echo("To also remove data and config, add --purge")

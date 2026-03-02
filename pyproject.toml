@@ -28,14 +28,6 @@ classifiers = [
     "Framework :: FastAPI",
     "Typing :: Typed",
 ]
-
-[project.urls]
-Homepage = "https://github.com/chensaics/openclaw-py"
-Documentation = "https://github.com/chensaics/openclaw-py#readme"
-Repository = "https://github.com/chensaics/openclaw-py"
-Issues = "https://github.com/chensaics/openclaw-py/issues"
-Changelog = "https://github.com/chensaics/openclaw-py/releases"
-
 dependencies = [
     # HTTP / WebSocket / async
     "fastapi>=0.115",
@@ -68,7 +60,16 @@ dependencies = [
     # Browser automation
     "playwright>=1.50",
     "flet>=0.81.0",
+    # Desktop screenshot
+    "mss>=9",
 ]
+
+[project.urls]
+Homepage = "https://github.com/chensaics/openclaw-py"
+Documentation = "https://github.com/chensaics/openclaw-py#readme"
+Repository = "https://github.com/chensaics/openclaw-py"
+Issues = "https://github.com/chensaics/openclaw-py/issues"
+Changelog = "https://github.com/chensaics/openclaw-py/releases"
 
 [project.optional-dependencies]
 ui = [
@@ -84,8 +85,22 @@ whatsapp = [
 voice = [
     "edge-tts>=7",
 ]
+llamacpp = [
+    "huggingface_hub>=0.20",
+    "llama-cpp-python>=0.3",
+]
+mlx = [
+    "huggingface_hub>=0.20",
+    "mlx-lm>=0.10",
+]
+office = [
+    "pypdf>=5",
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=1.0",
+]
 all = [
-    "pyclaw[ui,matrix,voice]",
+    "pyclaw[ui,matrix,voice,whatsapp,llamacpp,mlx,office]",
 ]
 dev = [
     "pytest>=8",

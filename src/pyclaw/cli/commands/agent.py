@@ -93,6 +93,55 @@ async def _run_agent_turn(
                     typer.echo(f"Error: {event.error}", err=True)
 
 
+def _resolve_from_config() -> tuple[str, str, str | None, str | None]:
+    """Read provider, model, api_key, base_url from ~/.pyclaw/pyclaw.json when set.
+    Returns (provider, model, api_key, base_url). api_key/base_url may be None.
+    """
+    from pyclaw.config.defaults import get_provider_defaults
+    from pyclaw.config.io import load_config_raw
+    from pyclaw.config.paths import resolve_config_path
+
+    path = resolve_config_path()
+    if not path.exists():
+        return ("openai", "gpt-4o", None, None)
+    raw = load_config_raw(path)
+    models = raw.get("models") or {}
+    providers = models.get("providers") or {}
+    if not providers:
+        return ("openai", "gpt-4o", None, None)
+
+    agents_cfg = raw.get("agents") or {}
+    defaults = agents_cfg.get("defaults") or {}
+    default_provider = defaults.get("provider")
+    default_model = defaults.get("model")
+
+    provider_id = default_provider or next(iter(providers))
+    prov = providers.get(provider_id)
+    if not prov or not isinstance(prov, dict):
+        return ("openai", "gpt-4o", None, None)
+
+    key = prov.get("apiKey")
+    if key is not None and not isinstance(key, str):
+        key = None
+    base = prov.get("baseUrl") or None
+    if base is not None and not isinstance(base, str):
+        base = None
+
+    default_base, default_model_id = get_provider_defaults(provider_id)
+
+    if not base and default_base:
+        base = default_base
+
+    model_id = default_model
+    if not model_id:
+        models_list = prov.get("models") or []
+        if models_list and isinstance(models_list[0], dict):
+            model_id = models_list[0].get("id")
+        if not model_id:
+            model_id = default_model_id or "gpt-4o"
+    return (provider_id, model_id, key, base)
+
+
 def agent_command(
     *,
     message: str,
@@ -113,25 +162,37 @@ def agent_command(
     resume: bool = False,
 ) -> None:
     """Run a single agent turn with the given message."""
-    _ = (to, thinking, verbose, channel, local, deliver, timeout)
-    if not api_key:
-        import os
+    import os
 
+    _ = (to, thinking, verbose, channel, local, deliver, timeout)
+
+    if not api_key:
         api_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        cfg_provider, cfg_model, cfg_key, cfg_base = _resolve_from_config()
+        if cfg_key or cfg_provider in ("ollama",):
+            api_key = cfg_key or "not-set"
+            if provider == "openai" and cfg_provider != "openai":
+                provider = cfg_provider
+                model = cfg_model
+            if base_url is None and cfg_base:
+                base_url = cfg_base
+
     if not api_key:
         if output_json:
             typer.echo(
                 json.dumps(
                     {
                         "ok": False,
-                        "error": "No API key provided. Set --api-key or OPENAI_API_KEY env var.",
+                        "error": "No API key provided. Set --api-key or OPENAI_API_KEY env var, or run 'pyclaw setup --wizard'.",
                     },
                     ensure_ascii=False,
                 )
             )
         else:
             typer.echo(
-                "Error: No API key provided. Set --api-key or OPENAI_API_KEY env var.", err=True
+                "Error: No API key provided. Set --api-key or OPENAI_API_KEY env var, or run 'pyclaw setup --wizard'.",
+                err=True,
             )
         raise typer.Exit(1)
 

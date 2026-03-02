@@ -91,10 +91,11 @@ ws://localhost:18789/ws
 
 | 方法 | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `chat.send` | `sessionId`, `message`, `model?` | `{ messageId }` | 发送消息 (触发 agent 回复) |
-| `chat.abort` | `sessionId` | `{ aborted }` | 中止当前生成 |
-| `chat.resend` | `sessionId`, `messageId` | `{ messageId }` | 重新生成回复 |
-| `chat.edit` | `sessionId`, `messageId`, `text` | `{ ok }` | 编辑已发送消息 |
+| `chat.send` | `message`, `agentId?`, `sessionId?`, `model?`, `provider?`, `systemPrompt?`, `attachments?`, `abortPrevious?`, `temperature?` | `{ completed }` | 发送消息 (触发 agent 回复)。自动进行参数校验、内容净化、时间上下文注入 |
+| `chat.abort` | `sessionId`, `agentId?` | `{ aborted }` | 中止当前生成 |
+| `chat.history` | `sessionId`, `agentId?` | `{ messages }` | 获取会话消息历史 |
+| `chat.resend` | `sessionId?`, `agentId?`, `provider?`, `model?` | `{ completed }` | 重新发送最后一条用户消息 (regenerate) |
+| `chat.edit` | `message`, `sessionId?`, `agentId?`, `provider?`, `model?` | `{ completed }` | 编辑最后一条用户消息并重新运行 |
 
 聊天过程中服务器推送以下事件：
 
@@ -149,11 +150,22 @@ ws://localhost:18789/ws
 
 | 方法 | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `browser.start` | `headless?` | `{ sessionId }` | 启动浏览器 |
-| `browser.navigate` | `url` | `{ ok }` | 导航 |
-| `browser.screenshot` | `format?` | `{ data }` (base64) | 截图 |
-| `browser.click` | `selector` | `{ ok }` | 点击元素 |
-| `browser.close` | (无) | `{ ok }` | 关闭浏览器 |
+| `browser.status` | `profile?` | `{ started, profile, tabCount, ... }` | 查看浏览器状态 |
+| `browser.start` | `profile?` | `{ started, sessionId }` | 启动 Playwright 浏览器 |
+| `browser.stop` | `profile?` | `{ started: false }` | 停止浏览器 |
+| `browser.tabs` | `profile?` | `{ tabs: [...] }` | 列出所有 tab |
+| `browser.open` | `url`, `profile?` | `{ opened, tabId, url, title }` | 新 tab 打开 URL |
+| `browser.navigate` | `url`, `profile?` | `{ navigated, url, title }` | 在当前 tab 导航 |
+| `browser.click` | `ref`, `profile?` | `{ clicked, ref }` | 点击元素 (CSS 选择器) |
+| `browser.type` | `ref`, `text`, `profile?` | `{ typed, ref }` | 向元素填入文本 |
+| `browser.screenshot` | `profile?`, `fullPage?` | `{ screenshotB64, mimeType, sizeBytes }` | 真实 Playwright 截图 |
+| `browser.snapshot` | `profile?` | `{ htmlLength, htmlPreview }` | DOM 快照 |
+| `browser.evaluate` | `fn`, `profile?` | `{ result }` | 在页面执行 JS |
+| `browser.profiles` | (无) | `{ profiles }` | 列出浏览器 Profile |
+| `browser.createProfile` | `name` | `{ created, profile }` | 创建 Profile |
+| `browser.deleteProfile` | `name` | `{ deleted }` | 删除 Profile |
+| `browser.focus` | `tabId`, `profile?` | `{ focused }` | 切换活跃 tab |
+| `browser.close` | `tabId`, `profile?` | `{ closed }` | 关闭 tab |
 
 #### 定时任务
 
@@ -181,7 +193,31 @@ ws://localhost:18789/ws
 
 | 方法 | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `logs.query` | `level?`, `limit?`, `since?` | `[{ ts, level, msg }]` | 查询日志 |
+| `logs.tail` | `limit?`, `json?`, `localTime?` | `{ lines, count, path }` | 读取最近日志行 |
+| `system.logs` | `lines?`, `level?` | `{ logs, count }` | 按级别过滤日志 |
+
+#### 系统
+
+| 方法 | 参数 | 返回 | 说明 |
+|------|------|------|------|
+| `system.info` | (无) | `{ platform, python, uptime }` | 系统信息 |
+| `system.event` | `text`, `mode?` | `{ ok, eventType, mode }` | 发送系统事件 |
+| `system.heartbeat.last` | (无) | `{ enabled, lastHeartbeatAt }` | 查询最近心跳 |
+| `system.presence` | (无) | `{ entries }` | 查询组件在线状态 |
+
+#### 扩展
+
+| 方法 | 参数 | 返回 | 说明 |
+|------|------|------|------|
+| `usage.get` | `days?` | `{ totalTokens, estimatedCost, ... }` | 使用量与费用统计 |
+| `doctor.run` | (无) | `{ checks, summary }` | 运行诊断检查 |
+| `skills.list` | (无) | `{ skills, count }` | 列出可用 Skills |
+| `tts.voices` | (无) | `{ voices }` | TTS 语音列表 |
+| `update.check` | (无) | `{ currentVersion, updateAvailable }` | 检查更新 |
+| `web.status` | (无) | `{ connected, uptime }` | 网页状态 |
+
+> **注意**: 以下方法当前返回 `NOT_IMPLEMENTED` 错误:
+> `tts.speak`, `wizard.start`, `wizard.step`, `push.send`, `voicewake.status`
 
 ---
 
@@ -305,6 +341,11 @@ OpenClaw-Py 作为 MCP **客户端**，连接外部 MCP 服务器。
 
 启动时自动调用每个 MCP 服务器的 `tools/list`，将发现的工具注册到 Agent 工具池。工具名称以 `mcp:<server>:<tool>` 格式标识。
 
+### 热重载
+
+MCP 配置支持热重载 — `McpConfigWatcher` 以固定间隔 (默认 5s) 轮询配置文件的 `tools.mcpServers` 段。
+当检测到变更时，自动断开旧连接并重新连接新配置的 MCP 服务器。
+
 ### CLI 检查
 
 ```bash
@@ -317,7 +358,94 @@ pyclaw mcp list-tools
 
 ---
 
-## 4. 错误码
+## 4. Gateway CLI 命令
+
+`pyclaw gateway` 子命令组提供网关的运维与调试能力。
+
+| 命令 | 说明 | 关键参数 |
+|------|------|----------|
+| `pyclaw gateway` (无子命令) | 启动 Gateway 服务器（等同 `run`） | `--port`, `--bind`, `--auth-token` |
+| `pyclaw gateway run` | 启动 Gateway 服务器 | `--port`, `--bind`, `--auth-token` |
+| `pyclaw gateway status` | 显示服务状态 + 可选 RPC 探测 | `--url`, `--token`, `--password`, `--timeout`, `--no-probe`, `--deep`, `--json` |
+| `pyclaw gateway probe` | 探测 Gateway 连通性 | `--url`, `--token`, `--password`, `--timeout`, `--json` |
+| `pyclaw gateway call` | 底层 RPC 调用 | `METHOD` (位置参数), `--params`, `--url`, `--token`, `--password`, `--timeout`, `--json` |
+| `pyclaw gateway discover` | 局域网发现 (mDNS/端口扫描) | `--timeout`, `--json` |
+
+### 示例
+
+```bash
+# 查看 Gateway 状态（含探测）
+pyclaw gateway status --deep --json
+
+# 探测连通性
+pyclaw gateway probe --url ws://192.168.1.100:18789
+
+# 调用任意 RPC 方法
+pyclaw gateway call health --params '{}'
+pyclaw gateway call chat.send --params '{"message": "Hello"}'
+
+# 局域网发现
+pyclaw gateway discover --json
+```
+
+---
+
+## 5. 本地模型管理 CLI
+
+`pyclaw models` 子命令组中新增的本地模型管理命令：
+
+| 命令 | 说明 | 关键参数 |
+|------|------|----------|
+| `pyclaw models download` | 从 HuggingFace/ModelScope 下载模型 | `REPO_ID`, `--filename`, `--backend` (llamacpp/mlx), `--source` |
+| `pyclaw models local` | 列出已下载的本地模型 | `--json` |
+| `pyclaw models delete-local` | 删除本地模型文件 | `MODEL_ID` |
+| `pyclaw models select` | 设置默认活跃模型 | `MODEL_ID` |
+
+### 支持后端
+
+| 后端 | 安装 | 说明 |
+|------|------|------|
+| `llamacpp` | `pip install 'pyclaw[llamacpp]'` | llama.cpp (GGUF 格式, CPU/GPU) |
+| `mlx` | `pip install 'pyclaw[mlx]'` | MLX (Apple Silicon 专用) |
+| `ollama` | 外部安装 Ollama | 通过 OpenAI 兼容 API 接入 |
+
+### 示例
+
+```bash
+# 下载 GGUF 模型
+pyclaw models download Qwen/Qwen3-4B-GGUF
+
+# 下载 MLX 模型 (Apple Silicon)
+pyclaw models download mlx-community/Llama-3-8B-4bit --backend mlx
+
+# 从 ModelScope 下载
+pyclaw models download qwen/Qwen3-4B-GGUF --source modelscope
+
+# 列出本地模型
+pyclaw models local
+
+# 设置默认模型
+pyclaw models select "Qwen/Qwen3-4B-GGUF/qwen3-4b-q4_k_m.gguf"
+```
+
+---
+
+## 6. Agent 工具扩展
+
+Phase 63-65 新增的 Agent 工具：
+
+| 工具 | 功能 | 注册方式 |
+|------|------|----------|
+| `desktop_screenshot` | 跨平台桌面截图 (mss) + macOS 窗口截图 | 默认注册 |
+| `send_file` | 向用户发送文件 (自动检测 MIME 类型) | 默认注册 |
+| `read_pdf` | PDF 文件文本提取 | 需 `pyclaw[office]` |
+| `read_docx` | Word 文档文本提取 | 需 `pyclaw[office]` |
+| `read_xlsx` | Excel 表格数据提取 | 需 `pyclaw[office]` |
+| `read_pptx` | PowerPoint 幻灯片文本提取 | 需 `pyclaw[office]` |
+
+---
+
+## 7. 错误码
 
 | 错误码 | 含义 |
 |--------|------|
@@ -329,3 +457,4 @@ pyclaw mcp list-tools
 | `METHOD_NOT_FOUND` | RPC 方法不存在 |
 | `ALREADY_EXISTS` | 资源已存在 |
 | `ABORTED` | 操作被中止 |
+| `NOT_IMPLEMENTED` | 方法已注册但尚未实现 |

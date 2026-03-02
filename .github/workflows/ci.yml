@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   test:
@@ -26,6 +26,8 @@ jobs:
         run: ruff check src tests
       - name: Test with coverage
         run: pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/
+      - name: Contract tests (docs-RPC parity)
+        run: pytest tests/test_rpc_contract_phase58.py tests/test_docs_parity_phase43.py tests/test_naming_parity_phase49.py -v
       - name: Upload coverage
         if: matrix.python-version == '3.13'
         uses: actions/upload-artifact@v4

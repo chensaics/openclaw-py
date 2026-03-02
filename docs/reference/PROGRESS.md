@@ -1,6 +1,6 @@
 # OpenClaw Python 重写 -- 执行进度
 
-> 最后更新: 2026-03-01
+> 最后更新: 2026-03-02
 > 项目路径: `/Users/cs/projects/openclaw-py/`
 
 ## 当前状态概览
@@ -61,10 +61,26 @@
 | Phase 49: 命名一致性 + 契约加固 | **已完成** | ACP `--token-file/--password-file` + `pyclaw` 文案统一 + docs parity 扩展测试 |
 | Phase 50: MCP + Docker 部署 | **已完成** | MCP 客户端 (stdio+HTTP) + McpToolAdapter + MCP CLI + Dockerfile + docker-compose.yml |
 | Phase 51: DingTalk + QQ + OAuth CLI + 技能市场 | **已完成** | DingTalk Stream 通道 + QQ WebSocket 通道 + OAuth/Device-Code CLI + ClawHub 技能搜索/安装 + Workspace 模板同步 |
+| Phase 52: Agent 社交网络 | **已完成** | 社交平台注册表 + Moltbook/ClawdChat 适配 + 社交技能包 + Agent 工具 |
+| Phase 53: Progress + 语音 | **已完成** | ProgressEvent + Gateway 广播 + 工具/技能嵌入 + Flet UI 进度条 + 语音转录 |
+| Phase 54: Browser RPC 真执行化 | **已完成** | Gateway browser 方法改为复用 Playwright 实际执行器 + profiles/createProfile/deleteProfile/focus/close RPC 实现 + 真实截图与 DOM 快照 |
+| Phase 55: Chat 主路径收敛 | **已完成** | chat.send 接入 chat_advanced 参数校验/内容净化/时间注入 + chat.edit/chat.resend 实现 + usage/abort 一致性 |
+| Phase 56: System/Logs RPC-first | **已完成** | system.event/heartbeat.last/presence Gateway RPC + CLI fallback 显式警告 |
+| Phase 57: Extended 去占位 | **已完成** | wizard/push/voicewake/tts 改为 NOT_IMPLEMENTED + update.check 读取真实版本 + web.status 反映真实 Gateway 状态 |
+| Phase 58: 文档基线重建 | **已完成** | docs/reference 差距与进度基线重建 + API 参考更新 + 契约测试 |
+| Phase 59: Gateway 控制面子命令补齐 | **已完成** | `gateway status/probe/call/discover` 已在 Phase 44 实现完毕，验证确认对齐 + api-reference 文档更新 |
+| Phase 60: 发布与分发最后一环 | **已完成** | Homebrew formula + 分发文档完善 (pipx/brew 安装路径) |
+| Phase 61: 契约与文档持续守护 | **已完成** | CI 独立契约测试 step + 季度复核 upstream 流程文档 + 自动化守护说明 |
+| Phase 62: 本地模型运行时 | **已完成** | llama.cpp + MLX 后端 + HuggingFace/ModelScope 下载 + manifest 管理 + CLI 命令 (download/local/delete-local/select) |
+| Phase 63: 桌面截图 + 文件发送 | **已完成** | mss 跨平台截图 + macOS screencapture + send_file 工具 + 工具注册 |
+| Phase 64: 一键安装脚本 | **已完成** | install.sh (macOS/Linux) + install.ps1 (Windows) + --extras 参数 + uninstall 命令 |
+| Phase 65: Office 文件技能包 | **已完成** | PDF/DOCX/XLSX/PPTX 读取工具 + SKILL.md + pyproject office extra |
+| Phase 66: Heartbeat 增强 | **已完成** | HEARTBEAT.md 文件驱动 + compound 间隔 (2h30m) + target=last 通道分发 + 活跃时段 |
+| Phase 67: MCP 热重载 | **已完成** | McpConfigWatcher 配置变更自动重连 + 文档更新 |
 
 ## 代码统计
 
-- 源码: **~56,500 行** (~398 个 .py 文件)
+- 源码: **~58,000 行** (~410 个 .py 文件)
 - 测试: **~17,300 行** (78 个测试文件, 1848 个测试)
 - 测试状态: **1848/1848 通过**
 - 通道总数: **25 个** (6 核心 + 7 P3 扩展 + 12 P4/P5 扩展)
@@ -628,7 +644,7 @@ openclaw-py/
 
 ## 当前状态
 
-Phase 0-49 均已完成。项目包含:
+Phase 0-58 均已完成。项目包含:
 
 - **~375 个 .py 源码文件** / **~51,000 LOC**
 - **63 个测试文件** / **1,681 个测试全部通过**
@@ -649,7 +665,20 @@ Phase 32-33 新增了 Cron 高级 (隔离代理/任务交错/会话收割)、TTS
 Phase 34-35 新增了 Browser 自动化 (Playwright 薄适配层: Session Manager/Navigation Guard/Agent Tools/Bridge Server/Screenshot) 和 Pi Embedded Runner (Run 循环/Session Manager/Thinking-Extensions/Tool Guards/Provider Helpers)。
 Phase 36-38 完成了 Channel Plugins 深度 (6 通道目录/Onboarding/Outbound/Status Issues)、Gateway Methods + Sessions (15 扩展 RPC + Chat 高级 + Sessions 高级 + Exec Approvals)、以及最终杂项 (Boot-MD/Extra Files/Command Logger/Model Probe-Scan/Wizard Session/Shell 补全/Discord Voice/VoiceWake/Respawn/6 额外 LLM 提供商)。
 Phase 39-43 已完成命令面与接线层对齐：CLI 主命令统一为 **`pyclaw`**（无 `openclaw` 兼容别名），ACP/Usage/Browser 关键路径已形成端到端可用链路，并加入文档-命令契约测试防回归。
+Phase 54-58 重点修复了"文档已完成但实现占位"的关键差距：Browser RPC 改为 Playwright 真执行、Chat 接入参数校验/净化/编辑/重发、System/Logs 补齐 Gateway RPC、Extended 占位方法改为 NOT_IMPLEMENTED 或真实状态。
+Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI 契约测试独立步骤与 upstream 持续对比流程。
 详见 [20260301_plan.md](reference/20260301_plan.md) 和 [20260301gap.md](reference/20260301gap.md)。
+
+### CoPaw 对比 (2026-03-02)
+
+基于 [agentscope-ai/CoPaw](https://github.com/agentscope-ai/CoPaw) v0.0.3 对比分析，识别出 6 项差异化能力 (Phase 62-67)，**已全部实现**：
+- **Phase 62**: 本地模型运行时 — llama.cpp / MLX 双后端 + HuggingFace/ModelScope 下载管理
+- **Phase 63**: 桌面截图 (`mss` 跨平台) + 通用文件发送 (`send_file`) 工具
+- **Phase 64**: 一键安装脚本 (`install.sh` / `install.ps1`) + `pyclaw uninstall` 命令
+- **Phase 65**: Office 文件技能包 — PDF/DOCX/XLSX/PPTX 读取工具 + SKILL 配置
+- **Phase 66**: Heartbeat 增强 — HEARTBEAT.md 文件驱动 + compound 间隔 + target=last 通道分发
+- **Phase 67**: MCP 热重载 — `McpConfigWatcher` 配置变更自动重连
+详见 [copaw_comparison_plan.md](reference/copaw_comparison_plan.md)。
 
 ## 参考文档
 
@@ -657,4 +686,5 @@ Phase 39-43 已完成命令面与接线层对齐：CLI 主命令统一为 **`pyc
 - 功能差距分析: [gap-analysis.md](reference/gap-analysis.md)
 - P0-P13 实施计划: [implement_plan_20260228.md](reference/implement_plan_20260228.md)
 - Phase 14+ 后续计划: [implement_plan_next.md](reference/implement_plan_next.md)
+- CoPaw 对比与集成计划: [copaw_comparison_plan.md](reference/copaw_comparison_plan.md)
 - 原始 TypeScript 项目: `openclaw/openclaw`

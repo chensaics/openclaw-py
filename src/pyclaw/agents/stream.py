@@ -11,6 +11,37 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from pyclaw.agents.types import AgentEvent, ModelConfig, ToolCall
+from pyclaw.config.defaults import get_provider_defaults
+
+
+def _apply_provider_defaults(model: ModelConfig) -> ModelConfig:
+    """Fill in default base_url (and api_key placeholder) when not provided."""
+    default_base, default_model = get_provider_defaults(model.provider)
+    needs_update = False
+    base_url = model.base_url
+    api_key = model.api_key
+    model_id = model.model_id
+
+    if not base_url and default_base:
+        base_url = default_base
+        needs_update = True
+    if not api_key and model.provider == "ollama":
+        api_key = "ollama"
+        needs_update = True
+    if (not model_id or model_id == "default") and default_model and default_model != "default":
+        model_id = default_model
+        needs_update = True
+
+    if not needs_update:
+        return model
+    return ModelConfig(
+        provider=model.provider,
+        model_id=model_id or model.model_id,
+        api_key=api_key,
+        base_url=base_url,
+        max_tokens=model.max_tokens,
+        temperature=model.temperature,
+    )
 
 
 async def stream_llm(
@@ -23,7 +54,7 @@ async def stream_llm(
     Dispatches to the appropriate provider based on model.provider.
     """
     match model.provider:
-        case "openai" | "openrouter" | "together" | "groq":
+        case "openai":
             async for event in _stream_openai(model, messages, tools):
                 yield event
         case "anthropic":
@@ -32,21 +63,8 @@ async def stream_llm(
         case "google" | "gemini":
             async for event in _stream_google(model, messages, tools):
                 yield event
-        case "ollama":
-            # Ollama exposes an OpenAI-compatible API
-            if not model.base_url:
-                model = ModelConfig(
-                    provider=model.provider,
-                    model_id=model.model_id,
-                    api_key=model.api_key or "ollama",
-                    base_url="http://localhost:11434/v1",
-                    max_tokens=model.max_tokens,
-                    temperature=model.temperature,
-                )
-            async for event in _stream_openai(model, messages, tools):
-                yield event
         case _:
-            # Default to OpenAI-compatible API
+            model = _apply_provider_defaults(model)
             async for event in _stream_openai(model, messages, tools):
                 yield event
 

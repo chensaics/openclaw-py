@@ -66,7 +66,7 @@ class ModelDefinitionConfig(_CamelModel):
 
 
 class ModelProviderConfig(_CamelModel):
-    base_url: str = Field(alias="baseUrl")
+    base_url: str = Field("", alias="baseUrl")
     api_key: SecretInput | None = Field(None, alias="apiKey")
     auth: str | None = None
     api: str | None = None

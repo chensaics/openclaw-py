@@ -11,15 +11,25 @@ from pathlib import Path
 
 import typer
 
+from pyclaw.cli.commands.auth_providers import PROVIDER_SPECS, AuthMethod
+from pyclaw.config.defaults import get_provider_defaults
 from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir, resolve_state_dir
 
+_SELF_HOSTED_PROVIDERS = {"ollama", "vllm", "litellm"}
 
-_PROVIDERS = [
-    ("anthropic", "Anthropic (Claude)", "ANTHROPIC_API_KEY"),
-    ("openai", "OpenAI (GPT)", "OPENAI_API_KEY"),
-    ("google", "Google (Gemini)", "GOOGLE_API_KEY"),
-    ("openrouter", "OpenRouter", "OPENROUTER_API_KEY"),
-    ("ollama", "Ollama (local)", None),
+_PROVIDER_GROUPS: list[tuple[str, list[str]]] = [
+    ("Global", [
+        "anthropic", "openai", "google", "xai", "openrouter",
+        "together", "groq", "perplexity", "fireworks", "huggingface",
+        "bedrock", "nvidia", "copilot",
+    ]),
+    ("China", [
+        "deepseek", "qwen", "moonshot", "volcengine", "zhipu",
+        "minimax", "qianfan", "byteplus", "xiaomi",
+    ]),
+    ("Self-hosted / Proxy", [
+        "ollama", "vllm", "litellm",
+    ]),
 ]
 
 
@@ -58,53 +68,97 @@ def setup_command(
     typer.echo(f"State directory: {state_dir}")
 
 
+def _build_provider_list() -> list[tuple[str, str, str]]:
+    """Build a flat (provider_id, display_name, env_var) list from groups."""
+    items: list[tuple[str, str, str]] = []
+    for _group, ids in _PROVIDER_GROUPS:
+        for pid in ids:
+            spec = PROVIDER_SPECS.get(pid)
+            if spec:
+                items.append((pid, spec.display_name, spec.env_var))
+    return items
+
+
 def _run_wizard(config_path: Path) -> None:
     """Interactive setup wizard."""
     import json
 
+    providers = _build_provider_list()
+
     typer.echo("\n  pyclaw Setup Wizard\n")
     typer.echo("  Select your AI provider:\n")
 
-    for i, (pid, label, _) in enumerate(_PROVIDERS, 1):
-        typer.echo(f"    {i}. {label}")
+    seq = 0
+    for group_name, ids in _PROVIDER_GROUPS:
+        typer.echo(f"    [{group_name}]")
+        for pid in ids:
+            spec = PROVIDER_SPECS.get(pid)
+            if not spec:
+                continue
+            seq += 1
+            typer.echo(f"      {seq:>2}. {spec.display_name}")
+        typer.echo("")
 
-    choice = typer.prompt("\n  Provider number", default="1")
+    choice = typer.prompt("  Provider number", default="1")
     try:
         idx = int(choice) - 1
-        if not (0 <= idx < len(_PROVIDERS)):
+        if not (0 <= idx < len(providers)):
             idx = 0
     except ValueError:
         idx = 0
 
-    provider_id, provider_label, env_var = _PROVIDERS[idx]
+    provider_id, provider_label, env_var = providers[idx]
+    spec = PROVIDER_SPECS[provider_id]
 
     config: dict = {}
 
-    if env_var:
-        # Check env first
+    provider_cfg: dict = {}
+
+    if spec.auth_method == AuthMethod.NONE:
+        typer.echo(f"\n  {provider_label} selected (no API key required).")
+    elif env_var:
         env_val = os.environ.get(env_var, "").strip()
         if env_val:
             typer.echo(f"\n  Found {env_var} in environment.")
             use_env = typer.confirm("  Use this key?", default=True)
             if use_env:
-                config["models"] = {"providers": {provider_id: {"apiKey": f"${{{env_var}}}"}}}
+                provider_cfg["apiKey"] = f"${{{env_var}}}"
             else:
                 api_key = typer.prompt(f"  Enter {provider_label} API key", hide_input=True)
-                config["models"] = {"providers": {provider_id: {"apiKey": api_key}}}
+                provider_cfg["apiKey"] = api_key
         else:
-            if provider_id != "ollama":
-                api_key = typer.prompt(f"\n  Enter {provider_label} API key", hide_input=True)
-                config["models"] = {"providers": {provider_id: {"apiKey": api_key}}}
+            api_key = typer.prompt(f"\n  Enter {provider_label} API key", hide_input=True)
+            provider_cfg["apiKey"] = api_key
     else:
-        # Ollama — no key needed
-        typer.echo(f"\n  {provider_label} selected (no API key required).")
-        config["models"] = {"providers": {provider_id: {}}}
+        api_key = typer.prompt(f"\n  Enter {provider_label} API key", hide_input=True)
+        provider_cfg["apiKey"] = api_key
 
-    # Gateway port
-    typer.echo("")
+    if spec.api_key_url:
+        typer.echo(f"  Get your key at: {spec.api_key_url}")
+
+    default_base, default_model = get_provider_defaults(provider_id)
+    if provider_id in _SELF_HOSTED_PROVIDERS and default_base:
+        base_url = typer.prompt(
+            f"\n  Base URL for {provider_label}",
+            default=default_base,
+        )
+        provider_cfg["baseUrl"] = base_url
+
+    if provider_id in _SELF_HOSTED_PROVIDERS:
+        hint = default_model or "your-model-name"
+        model_name = typer.prompt(
+            f"\n  Model name (e.g. the model served by {provider_label})",
+            default=hint,
+        )
+        if model_name and model_name != hint:
+            provider_cfg["models"] = [{"id": model_name, "name": model_name}]
+        elif model_name:
+            provider_cfg["models"] = [{"id": model_name, "name": model_name}]
+
+    config["models"] = {"providers": {provider_id: provider_cfg}}
+
     config["gateway"] = {"port": 18789}
 
-    # Write config
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config, indent=2) + "\n")
     typer.echo(f"\n  Config written to {config_path}")
@@ -121,11 +175,10 @@ def _run_non_interactive(config_path: Path, *, accept_risk: bool = False) -> Non
 
     config: dict = {"gateway": {"port": 18789}}
 
-    # Auto-detect provider from env
-    for provider_id, label, env_var in _PROVIDERS:
-        if env_var and os.environ.get(env_var, "").strip():
-            config["models"] = {"providers": {provider_id: {"apiKey": f"${{{env_var}}}"}}}
-            typer.echo(f"Detected {label} via {env_var}")
+    for spec in PROVIDER_SPECS.values():
+        if spec.env_var and os.environ.get(spec.env_var, "").strip():
+            config["models"] = {"providers": {spec.provider_id: {"apiKey": f"${{{spec.env_var}}}"}}}
+            typer.echo(f"Detected {spec.display_name} via {spec.env_var}")
             break
     else:
         typer.echo("Warning: no provider API key found in environment.")

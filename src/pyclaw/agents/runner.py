@@ -3,18 +3,29 @@
 Implements the fundamental loop:
   prompt -> stream LLM -> if tool_use: execute tools -> loop
   until the LLM stops requesting tools.
+
+Integrates:
+- Plan/Step tracking (F01)
+- Interrupt system (F02)
+- Intent analysis (F03)
+- Message bus peek (F04)
+- RuntimeContext injection (F10)
+- Message-level Timeline (F06)
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from pyclaw.agents.session import AgentMessage, SessionManager
+from pyclaw.agents.session import AgentMessage, SessionManager, TimelineKind
 from pyclaw.agents.stream import build_tool_definitions, stream_llm
 from pyclaw.agents.types import AgentEvent, AgentTool, ModelConfig, ToolCall, ToolResult
+
+logger = logging.getLogger(__name__)
 
 
 async def run_agent(
@@ -25,18 +36,92 @@ async def run_agent(
     system_prompt: str | None = None,
     max_turns: int = 50,
     abort_event: asyncio.Event | None = None,
+    *,
+    interrupt_ctx: Any | None = None,
+    plan: Any | None = None,
+    runtime_context: Any | None = None,
+    session_key: str = "",
 ) -> AsyncIterator[AgentEvent]:
     """Run the agent loop, yielding events as they occur.
 
     The loop continues until the LLM produces a response without tool calls,
     or max_turns is reached, or abort_event is set.
+
+    New optional parameters:
+    - ``interrupt_ctx``: An :class:`InterruptibleContext` for cancel/append support.
+    - ``plan``: An active :class:`Plan` to track multi-step execution.
+    - ``runtime_context``: A :class:`RuntimeContext` to inject into tools.
+    - ``session_key``: Session key for message bus peek.
     """
+    from pyclaw.agents.tools.runtime_context import RuntimeContext, set_runtime_context, reset_runtime_context
+
+    ctx_token = None
+    if runtime_context:
+        ctx_token = set_runtime_context(runtime_context)
+
+    interrupt_task: asyncio.Task[None] | None = None
+    if interrupt_ctx and session_key:
+        from pyclaw.agents.interrupt import check_incoming_messages
+        interrupt_task = asyncio.create_task(
+            check_incoming_messages(session_key, interrupt_ctx)
+        )
+
+    # Lazy-import planner components
+    step_detector = None
+    if plan:
+        from pyclaw.agents.planner import StepDetector
+        step_detector = StepDetector()
+
+    try:
+        async for event in _agent_loop(
+            prompt=prompt,
+            session=session,
+            model=model,
+            tools=tools,
+            system_prompt=system_prompt,
+            max_turns=max_turns,
+            abort_event=abort_event,
+            interrupt_ctx=interrupt_ctx,
+            plan=plan,
+            step_detector=step_detector,
+        ):
+            yield event
+    finally:
+        if interrupt_task and not interrupt_task.done():
+            interrupt_task.cancel()
+            try:
+                await interrupt_task
+            except asyncio.CancelledError:
+                pass
+
+        if ctx_token is not None:
+            reset_runtime_context(ctx_token)
+
+
+async def _agent_loop(
+    *,
+    prompt: str,
+    session: SessionManager,
+    model: ModelConfig,
+    tools: list[AgentTool] | None,
+    system_prompt: str | None,
+    max_turns: int,
+    abort_event: asyncio.Event | None,
+    interrupt_ctx: Any | None,
+    plan: Any | None,
+    step_detector: Any | None,
+) -> AsyncIterator[AgentEvent]:
     yield AgentEvent(type="agent_start")
 
     messages = session.get_messages_as_dicts()
 
-    if system_prompt and not any(m["role"] == "system" for m in messages):
-        messages.insert(0, {"role": "system", "content": system_prompt})
+    effective_system = system_prompt or ""
+    if plan and hasattr(plan, "to_context_string"):
+        plan_ctx = plan.to_context_string()
+        effective_system = f"{effective_system}\n\n{plan_ctx}" if effective_system else plan_ctx
+
+    if effective_system and not any(m["role"] == "system" for m in messages):
+        messages.insert(0, {"role": "system", "content": effective_system})
 
     messages.append({"role": "user", "content": prompt})
     session.append_message(AgentMessage(role="user", content=prompt))
@@ -50,6 +135,15 @@ async def run_agent(
             yield AgentEvent(type="error", error="aborted")
             break
 
+        if interrupt_ctx and interrupt_ctx.is_cancelled:
+            yield AgentEvent(type="error", error="interrupted")
+            break
+
+        if interrupt_ctx:
+            appended = interrupt_ctx.drain_appended()
+            for extra in appended:
+                messages.append({"role": "user", "content": f"[Additional context] {extra}"})
+
         turn += 1
         yield AgentEvent(type="message_start")
 
@@ -58,6 +152,9 @@ async def run_agent(
         usage: dict[str, int] | None = None
 
         async for event in stream_llm(model, messages, tool_defs):
+            if interrupt_ctx and interrupt_ctx.is_cancelled:
+                break
+
             if event.type == "message_update":
                 yield event
                 if event.delta:
@@ -78,10 +175,29 @@ async def run_agent(
                             )
                         )
 
-        # Build and persist the assistant message
-        assistant_msg = _build_assistant_message(completion_text, completion_tool_calls)
-        messages.append(assistant_msg)
-        session.append_message(AgentMessage.from_dict(assistant_msg))
+        if interrupt_ctx and interrupt_ctx.is_cancelled:
+            yield AgentEvent(type="error", error="interrupted")
+            break
+
+        assistant_msg_obj = AgentMessage.from_dict(
+            _build_assistant_message(completion_text, completion_tool_calls)
+        )
+
+        if plan and step_detector:
+            plan.iteration_count += 1
+            if step_detector.is_step_complete(completion_text, plan.iteration_count):
+                plan.advance_step(result=completion_text[:200])
+                assistant_msg_obj.add_timeline(
+                    TimelineKind.PLAN,
+                    f"Step advanced to {plan.current_step_index + 1}/{len(plan.steps)}",
+                )
+                yield AgentEvent(type="tool_end", name="plan_step", result={
+                    "step": plan.current_step_index,
+                    "progress": plan.generate_progress_summary(),
+                })
+
+        messages.append(assistant_msg_obj.to_dict())
+        session.append_message(assistant_msg_obj)
 
         if usage:
             try:
@@ -97,7 +213,6 @@ async def run_agent(
                     has_api_key=bool(model.api_key),
                 )
             except Exception:
-                # Usage persistence should never break the response loop.
                 pass
             yield AgentEvent(type="message_end", usage=usage)
         else:
@@ -106,7 +221,6 @@ async def run_agent(
         if not completion_tool_calls:
             break
 
-        # Execute tool calls
         for tc in completion_tool_calls:
             yield AgentEvent(type="tool_start", name=tc.name, tool_call_id=tc.id)
 
@@ -126,9 +240,18 @@ async def run_agent(
                 result={"content": result.content, "is_error": result.is_error},
             )
 
-            tool_msg = _build_tool_result_message(tc.id, result)
-            messages.append(tool_msg)
-            session.append_message(AgentMessage.from_dict(tool_msg))
+            tool_result_msg = AgentMessage.from_dict(_build_tool_result_message(tc.id, result))
+            tool_result_msg.add_timeline(
+                TimelineKind.TOOL_RESULT,
+                f"{tc.name}: {'error' if result.is_error else 'ok'}",
+            )
+            messages.append(tool_result_msg.to_dict())
+            session.append_message(tool_result_msg)
+
+    if plan and not plan.is_complete:
+        from pyclaw.agents.planner import PlanStatus
+        if all(s.status.value == "completed" for s in plan.steps):
+            plan.status = PlanStatus.COMPLETED
 
     yield AgentEvent(type="agent_end")
 

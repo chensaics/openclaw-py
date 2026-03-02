@@ -1,17 +1,32 @@
 """Cron scheduler — APScheduler-based scheduled task execution.
 
-Supports cron expressions for periodic agent tasks (e.g. daily summaries,
-periodic checks, scheduled messages).
+Supports three schedule types:
+- **cron**: Standard cron expressions (e.g. "0 9 * * *")
+- **every**: Periodic interval in seconds (e.g. every_seconds=300)
+- **once**: One-time execution at a specific datetime (ISO 8601 or HH:MM)
+
+Also integrates with :mod:`pyclaw.cron.history` for execution recording and
+optional channel notification on completion.
 """
 
 from __future__ import annotations
 
 import logging
+import time
+import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from enum import Enum
 from typing import Any
 
 logger = logging.getLogger("pyclaw.cron")
+
+
+class ScheduleType(str, Enum):
+    CRON = "cron"
+    EVERY = "every"
+    ONCE = "once"
 
 
 @dataclass
@@ -21,9 +36,16 @@ class CronJob:
     id: str
     name: str
     schedule: str  # cron expression (e.g. "0 9 * * *")
+    schedule_type: ScheduleType = ScheduleType.CRON
+    every_seconds: float = 0.0
+    at: str = ""  # ISO 8601 or "HH:MM" for once-type
     agent_id: str = "main"
     message: str = ""
     enabled: bool = True
+    channel: str = ""
+    chat_id: str = ""
+    deliver: bool = False
+    execution_mode: str = "auto"
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,20 +53,48 @@ class CronJob:
             "id": self.id,
             "name": self.name,
             "schedule": self.schedule,
+            "scheduleType": self.schedule_type.value,
+            "everySeconds": self.every_seconds,
+            "at": self.at,
             "agentId": self.agent_id,
             "message": self.message,
             "enabled": self.enabled,
+            "channel": self.channel,
+            "chatId": self.chat_id,
+            "deliver": self.deliver,
+            "executionMode": self.execution_mode,
             "metadata": self.metadata,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CronJob:
+        return cls(
+            id=data.get("id", str(uuid.uuid4())[:8]),
+            name=data.get("name", ""),
+            schedule=data.get("schedule", ""),
+            schedule_type=ScheduleType(data.get("scheduleType", "cron")),
+            every_seconds=float(data.get("everySeconds", 0)),
+            at=data.get("at", ""),
+            agent_id=data.get("agentId", "main"),
+            message=data.get("message", ""),
+            enabled=data.get("enabled", True),
+            channel=data.get("channel", ""),
+            chat_id=data.get("chatId", ""),
+            deliver=data.get("deliver", False),
+            execution_mode=data.get("executionMode", "auto"),
+            metadata=data.get("metadata", {}),
+        )
+
 
 class CronScheduler:
-    """Manages scheduled jobs using APScheduler."""
+    """Manages scheduled jobs using APScheduler with cron/every/once support."""
 
     def __init__(self) -> None:
         self._scheduler: Any = None
         self._jobs: dict[str, CronJob] = {}
         self._handler: Callable[..., Coroutine[Any, Any, Any]] | None = None
+        self._notify_handler: Callable[..., Coroutine[Any, Any, Any]] | None = None
+        self._history: Any = None
 
     def set_handler(self, handler: Callable[..., Coroutine[Any, Any, Any]]) -> None:
         """Set the async handler called when a job fires.
@@ -52,6 +102,14 @@ class CronScheduler:
         Signature: async def handler(job: CronJob) -> None
         """
         self._handler = handler
+
+    def set_notify_handler(self, handler: Callable[..., Coroutine[Any, Any, Any]]) -> None:
+        """Set the handler for delivering job results to channels."""
+        self._notify_handler = handler
+
+    def set_history(self, history: Any) -> None:
+        """Attach a HistoryStore for execution recording."""
+        self._history = history
 
     def start(self) -> None:
         """Start the APScheduler background scheduler."""
@@ -96,19 +154,8 @@ class CronScheduler:
         return self._jobs.get(job_id)
 
     def _add_apscheduler_job(self, job: CronJob) -> None:
-        from apscheduler.triggers.cron import CronTrigger
-
-        parts = job.schedule.split()
-        if len(parts) == 5:
-            trigger = CronTrigger(
-                minute=parts[0],
-                hour=parts[1],
-                day=parts[2],
-                month=parts[3],
-                day_of_week=parts[4],
-            )
-        else:
-            logger.warning("Invalid cron expression for job %s: %s", job.id, job.schedule)
+        trigger = self._build_trigger(job)
+        if trigger is None:
             return
 
         self._scheduler.add_job(
@@ -119,10 +166,110 @@ class CronScheduler:
             replace_existing=True,
         )
 
+    def _build_trigger(self, job: CronJob) -> Any:
+        """Build an APScheduler trigger based on schedule type."""
+        if job.schedule_type == ScheduleType.EVERY:
+            from apscheduler.triggers.interval import IntervalTrigger
+            seconds = job.every_seconds or 60.0
+            return IntervalTrigger(seconds=seconds)
+
+        if job.schedule_type == ScheduleType.ONCE:
+            from apscheduler.triggers.date import DateTrigger
+            run_date = parse_at_time(job.at)
+            if run_date is None:
+                logger.warning("Invalid 'at' time for job %s: %s", job.id, job.at)
+                return None
+            return DateTrigger(run_date=run_date)
+
+        # Default: cron expression
+        from apscheduler.triggers.cron import CronTrigger
+        parts = job.schedule.split()
+        if len(parts) == 5:
+            return CronTrigger(
+                minute=parts[0],
+                hour=parts[1],
+                day=parts[2],
+                month=parts[3],
+                day_of_week=parts[4],
+            )
+
+        logger.warning("Invalid cron expression for job %s: %s", job.id, job.schedule)
+        return None
+
     async def _execute_job(self, job: CronJob) -> None:
         logger.info("Executing cron job: %s (%s)", job.name, job.id)
-        if self._handler:
-            try:
+
+        record = None
+        if self._history:
+            from pyclaw.cron.history import ExecutionRecord, ExecutionStatus
+            record = ExecutionRecord(
+                id=uuid.uuid4().hex[:12],
+                job_id=job.id,
+                job_title=job.name,
+                status=ExecutionStatus.RUNNING,
+                started_at=time.time(),
+            )
+            self._history.add(record)
+
+        result_text = ""
+        error_text = ""
+        try:
+            if self._handler:
                 await self._handler(job)
+                result_text = "ok"
+        except Exception as e:
+            logger.exception("Cron job failed: %s", job.id)
+            error_text = str(e)
+
+        if record and self._history:
+            from pyclaw.cron.history import ExecutionStatus
+            record.ended_at = time.time()
+            record.status = ExecutionStatus.FAILED if error_text else ExecutionStatus.COMPLETED
+            record.output = result_text
+            record.error = error_text
+            self._history.update(record.id, ended_at=record.ended_at, status=record.status, output=result_text, error=error_text)
+
+        if job.deliver and self._notify_handler:
+            try:
+                msg = f"[Cron] {job.name}: {'OK' if not error_text else f'FAILED: {error_text}'}"
+                await self._notify_handler(job.channel, job.chat_id, msg)
             except Exception:
-                logger.exception("Cron job failed: %s", job.id)
+                logger.debug("Failed to deliver cron notification for %s", job.id)
+
+
+# ---------------------------------------------------------------------------
+# Time parsing for "at" / "once" schedules
+# ---------------------------------------------------------------------------
+
+def parse_at_time(at: str) -> datetime | None:
+    """Parse an 'at' time string into a datetime.
+
+    Supported formats:
+    - ISO 8601: ``2026-03-02T14:30:00``
+    - Date + time: ``2026-03-02 14:30``
+    - Time only: ``14:30`` (next occurrence, today or tomorrow)
+    """
+    if not at:
+        return None
+
+    at = at.strip()
+
+    # ISO 8601
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return datetime.strptime(at, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+
+    # Time-only (HH:MM)
+    import re
+    m = re.match(r"^(\d{1,2}):(\d{2})$", at)
+    if m:
+        hour, minute = int(m.group(1)), int(m.group(2))
+        now = datetime.now(timezone.utc)
+        target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if target <= now:
+            target += timedelta(days=1)
+        return target
+
+    return None

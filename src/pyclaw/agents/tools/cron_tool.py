@@ -25,9 +25,10 @@ class CronTool(BaseTool):
     def description(self) -> str:
         return (
             "Manage cron jobs and scheduled wake events. Use for setting reminders. "
-            "When scheduling a reminder, write the systemEvent text as something "
-            "that will read like a reminder when it fires. Include recent context "
-            "in reminder text if appropriate."
+            "Supports three schedule types: 'cron' (cron expression), 'every' "
+            "(interval in seconds), and 'once' (one-time at a specific time). "
+            "When scheduling a reminder, write the message text as something "
+            "that will read like a reminder when it fires."
         )
 
     @property
@@ -43,11 +44,23 @@ class CronTool(BaseTool):
                     "type": "string",
                     "description": "Job name (for add/remove).",
                 },
-                "cron_expr": {
+                "schedule": {
                     "type": "string",
                     "description": "Cron expression for 'add' (e.g. '0 9 * * *').",
                 },
-                "system_event": {
+                "schedule_type": {
+                    "type": "string",
+                    "description": "Schedule type: 'cron' (default), 'every', or 'once'.",
+                },
+                "every_seconds": {
+                    "type": "number",
+                    "description": "Interval in seconds (for schedule_type='every').",
+                },
+                "at": {
+                    "type": "string",
+                    "description": "Run time for schedule_type='once' (ISO 8601 or HH:MM).",
+                },
+                "message": {
                     "type": "string",
                     "description": "Text that will be delivered when the job fires.",
                 },
@@ -67,19 +80,49 @@ class CronTool(BaseTool):
             return ToolResult.text(json.dumps(items, indent=2))
 
         if action == "add":
+            import uuid
+            from pyclaw.cron.scheduler import CronJob, ScheduleType
+
             name = arguments.get("name", "")
-            cron_expr = arguments.get("cron_expr", "")
-            event = arguments.get("system_event", "")
-            if not name or not cron_expr:
+            schedule = arguments.get("schedule", arguments.get("cron_expr", ""))
+            message = arguments.get("message", arguments.get("system_event", ""))
+            stype_str = arguments.get("schedule_type", "cron")
+            every_seconds = float(arguments.get("every_seconds", 0))
+            at = arguments.get("at", "")
+
+            try:
+                stype = ScheduleType(stype_str)
+            except ValueError:
+                stype = ScheduleType.CRON
+
+            if stype == ScheduleType.CRON and not schedule:
                 return ToolResult.text(
-                    "Error: name and cron_expr are required for add.", is_error=True
+                    "Error: name and schedule are required for cron jobs.", is_error=True
                 )
+            if stype == ScheduleType.EVERY and not every_seconds:
+                return ToolResult.text(
+                    "Error: every_seconds is required for interval jobs.", is_error=True
+                )
+            if stype == ScheduleType.ONCE and not at:
+                return ToolResult.text(
+                    "Error: at is required for one-time jobs.", is_error=True
+                )
+            if not name:
+                return ToolResult.text("Error: name is required.", is_error=True)
 
-            from pyclaw.cron.scheduler import CronJob
-
-            job = CronJob(name=name, cron_expr=cron_expr, system_event=event)
+            job = CronJob(
+                id=uuid.uuid4().hex[:8],
+                name=name,
+                schedule=schedule,
+                schedule_type=stype,
+                every_seconds=every_seconds,
+                at=at,
+                message=message,
+            )
             self._scheduler.add_job(job)
-            return ToolResult.text(f"Cron job '{name}' added: {cron_expr}")
+
+            desc = schedule or f"every {every_seconds}s" if stype != ScheduleType.ONCE else f"at {at}"
+            return ToolResult.text(f"Cron job '{name}' added ({stype.value}): {desc}")
 
         if action == "remove":
             name = arguments.get("name", "")
