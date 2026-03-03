@@ -1,0 +1,75 @@
+name: pyclaw
+description: Multi-channel AI gateway client — Flutter native UI for pyclaw.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.5.0
+  flutter: ^3.24.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Networking
+  web_socket_channel: ^3.0.1
+  dio: ^5.7.0
+
+  # Routing
+  go_router: ^14.6.2
+
+  # UI
+  flutter_markdown: ^0.7.4+3
+  google_fonts: ^6.2.1
+  flutter_math_fork: ^0.7.2
+  photo_view: ^0.15.0
+  file_picker: ^8.1.6
+  shimmer: ^3.0.0
+  dynamic_color: ^1.7.0
+
+  # Storage
+  shared_preferences: ^2.3.4
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Code highlight
+  highlight: ^0.7.0
+
+  # Platform
+  url_launcher: ^6.3.1
+  path_provider: ^2.1.5
+
+  # Utils
+  uuid: ^4.5.1
+  intl: ^0.19.0
+  json_annotation: ^4.9.0
+  equatable: ^2.0.7
+  collection: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.6.3
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/fonts/
+
+  fonts:
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700

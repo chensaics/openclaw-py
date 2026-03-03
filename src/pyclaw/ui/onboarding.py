@@ -29,7 +29,7 @@ class OnboardingWizard(ft.Column):
                 ft.Container(expand=True),
                 self._step_label,
                 ft.Container(expand=True),
-                ft.ElevatedButton(t("onboarding.next"), on_click=self._handle_next),
+                ft.Button(t("onboarding.next"), on_click=self._handle_next),
             ]
         )
 
@@ -95,7 +95,7 @@ class OnboardingWizard(ft.Column):
             nav_row.controls[0].visible = self._step > 0
             # Change "Next" to "Finish" on last step
             finish_btn = nav_row.controls[-1]
-            if isinstance(finish_btn, ft.ElevatedButton):
+            if isinstance(finish_btn, ft.Button):
                 finish_btn.text = (
                     t("onboarding.finish") if self._step == total - 1 else t("onboarding.next")
                 )

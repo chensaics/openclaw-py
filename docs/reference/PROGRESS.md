@@ -680,11 +680,58 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 - **Phase 67**: MCP 热重载 — `McpConfigWatcher` 配置变更自动重连
 详见 [copaw_comparison_plan.md](reference/copaw_comparison_plan.md)。
 
+### maxclaw 对比 (2026-03-02)
+
+基于 `/mnt/g/chensai/maxclaw` (Go 项目) 对比分析，识别出 12 项可借鉴功能，**已全部实现** (Phase 68-69)：
+- **Phase 68**: 任务规划 (Plan/Step)、用户中断 (cancel/append)、意图分析 (双语规则引擎)、消息总线 (异步双通道)、运行时上下文 (contextvars 注入)、消息 Timeline、每日摘要服务、Cron 增强 (every/once/history/通知)、子代理增强 (notify_parent)、数据备份/恢复 (CLI + Gateway RPC)
+- **Phase 69**: Flet UI Phase 1 重构 — Gateway WebSocket Client (`ui/gateway_client.py`)、流式聊天 (逐 token 渲染)、中断按钮、消息编辑/重发、Plan/Cron/System 管理页面、Session 搜索/分组、Settings 增强 (动态模型/语言/主题色)、响应式布局、toolbar/menubar 接入、8 页导航
+- 新增 111 个单元测试 (84 Phase 68 + 27 Phase 69)
+详见 [maxclaw_comparison_plan.md](reference/maxclaw_comparison_plan.md) 和 [ui_upgrade_plan.md](reference/ui_upgrade_plan.md)。
+
+### Flutter App 搭建 (Phase 70, 2026-03-02)
+
+基于 [ui_upgrade_plan.md](reference/ui_upgrade_plan.md) Phase 2 方案，搭建了完整的 Flutter 原生客户端项目 `flutter_app/`：
+
+- **核心层**: Gateway Client (Dart WebSocket v3)、6 个数据模型 (Message/Session/Plan/CronJob/Agent/Channel)、5 个 Riverpod Provider、Material 3 主题系统 (ColorScheme.fromSeed + 动态配色)
+- **功能页面** (9 个): Chat (流式消息 + Markdown + 中断 + 编辑/重发)、Sessions (搜索 + 日期分组)、Agents (工具标签)、Channels (状态指示)、Plans (进度条 + Stepper)、Cron (添加表单 + 三种调度)、System (Doctor 诊断)、Backup (导出)、Settings (模型选择/主题切换/Gateway 连接)
+- **通用组件** (6 个): MessageBubble (头像 + 圆角气泡 + 阴影 + 呼吸动画)、ToolCallCard (ExpansionTile + 运行状态)、PlanProgress (线性指示器)、ModelSelector、CodeBlock (语法标签 + 一键复制)、ResponsiveShell (Desktop NavigationRail / Mobile NavigationBar 三端自适应)
+- **测试**: 30 个单元测试 (GatewayClient 7 + Models 23)
+- **技术栈**: Flutter 3.x + Riverpod 2.x + go_router + flutter_markdown + google_fonts + web_socket_channel + Material 3
+
+### Flutter App 完善 (Phase 71, 2026-03-02)
+
+对 Phase 70 搭建的 Flutter 客户端进行全面增强，补齐计划中的高级特性：
+
+- **动画系统**: Shimmer 骨架屏加载占位、Stagger 列表项依次出现动画、打字机光标闪烁效果 (staggered dot + blinking cursor)、Hero 转场 (Session avatar)、页面切换淡入淡出 (go_router CustomTransitionPage)、发送按钮弹性缩放动画
+- **LaTeX 公式**: `flutter_math_fork` 集成，支持 `$...$` 行内公式和 `$$...$$` 块级公式，含错误回退
+- **图片预览**: `photo_view` 全屏查看 + Hero 放大动画 + 手势缩放 + 加载/错误状态
+- **文件附件**: `file_picker` 多选上传 + 文件类型图标映射 (PDF/图片/音频/视频/Office/压缩包) + 附件预览条 + 删除标签
+- **离线缓存**: `Hive` 本地存储 (`LocalCache`) — 缓存 sessions/config/gateway_url/theme_mode/seed_color
+- **乐观更新**: Session 删除即时从 UI 移除，失败时回滚
+- **Dynamic Color**: `seedColorProvider` 实时切换主题色 + `ThemePicker` 8 色选择器 + 选中指示 + 持久化到 Hive
+- **独立 Provider**: `CronNotifier` (60s 自动刷新 + cron.executed 事件监听)、`SystemNotifier` (30s 自动刷新)
+- **PWA**: `web/manifest.json` + `web/index.html` (loading spinner + theme-color + standalone display)
+- **桌面窗口**: `DesktopWindow` 配置 (min/default 尺寸常量 + 平台检测)
+- **统计**: 46 个 Dart 源文件, ~4980 行代码, 4 个测试文件 49 个测试用例
+
+### Flet + Flutter 融合 (Phase 72, 2026-03-02)
+
+分析 Flet 与 Flutter 的关系后，发现 Flet 底层就是 Flutter 渲染引擎，维护两套独立 UI（Python-Flet + Dart-Flutter）
+造成代码冗余。决定以 Flet UI 为唯一客户端，将 Flutter App 的设计精华反哺到 Flet UI。
+
+- **文档更新**: README.md 项目统计 (440 .py + 46 .dart / 66,400 + 4,980 LOC)、20260302_todo.md Phase 72 分项 + 优先级表
+- **Flutter App 归档**: `flutter_app/ARCHIVE_NOTICE.md` 标记用途，README.md 标注 "[Archived]"
+- **Material 3 配色反哺**: `theme.py` 新增 `PRESET_SEED_COLORS` (8 预设色)、`StatusColors`、`RoleColors`、`CodeBlockColors`、`surface_container_high`、`primary_container`、`card_border_radius`、`input_border_radius`、`role_color()` 方法、`list_seed_presets()`
+- **Shimmer + 动画反哺**: 新建 `shimmer.py` — `ShimmerContainer` (脉冲动画)、`shimmer_chat_skeleton()` (聊天骨架)、`shimmer_list_tile()` (列表骨架)、`stagger_fade_in()` (交错淡入)
+- **ui_upgrade_plan.md 更新**: Phase 2 从 "Flutter 原生美化" 改为 "Flet 高级增强 + Flutter 设计反哺"，技术选型更新，里程碑状态更新
+- **flet build 配置**: `pyproject.toml` 新增 `[tool.flet]` 构建配置，`flet_app.py` 已支持 `flet build` + `flet run` 双模式
+- **构建脚本**: `scripts/build-desktop.sh` + `scripts/build-mobile.sh` 使用 `--module-name flet_app`
+
 ## 参考文档
 
 - 完整重写方案: [python-flet-rewrite-plan.md](reference/python-flet-rewrite-plan.md)
 - 功能差距分析: [gap-analysis.md](reference/gap-analysis.md)
 - P0-P13 实施计划: [implement_plan_20260228.md](reference/implement_plan_20260228.md)
 - Phase 14+ 后续计划: [implement_plan_next.md](reference/implement_plan_next.md)
-- CoPaw 对比与集成计划: [copaw_comparison_plan.md](reference/copaw_comparison_plan.md)
+- UI 升级计划: [ui_upgrade_plan.md](reference/ui_upgrade_plan.md)
 - 原始 TypeScript 项目: `openclaw/openclaw`

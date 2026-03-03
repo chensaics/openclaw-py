@@ -121,10 +121,11 @@ async def ensure_permission(kind: PermissionKind, page: Any = None) -> bool:
         try:
             import flet as ft  # type: ignore[import-untyped]
 
-            page.snack_bar = ft.SnackBar(
+            sb = ft.SnackBar(
                 ft.Text(f"Permission denied: {kind.value}"),
                 open=True,
             )
+            page.overlay.append(sb)
             page.update()
         except Exception:
             pass

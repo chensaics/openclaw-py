@@ -108,7 +108,6 @@ def build_voice_panel(
             status_text.value = t("voice.error", error=str(exc))
         status_text.update()
 
-    file_picker = ft.FilePicker()
     transcription_result = ft.TextField(
         label=t("voice.transcription_result", default="Transcription"),
         multiline=True,
@@ -117,10 +116,15 @@ def build_voice_panel(
         expand=True,
     )
 
-    async def handle_file_picked(e: ft.FilePickerResultEvent) -> None:
-        if not e.files:
+    async def handle_transcribe(e: Any) -> None:
+        files = await ft.FilePicker().pick_files(
+            dialog_title=t("voice.select_audio", default="Select audio file"),
+            allowed_extensions=["mp3", "wav", "ogg", "m4a", "flac", "webm", "mp4"],
+            allow_multiple=False,
+        )
+        if not files:
             return
-        picked = e.files[0]
+        picked = files[0]
         status_text.value = t("voice.transcribing", default="Transcribing...")
         status_text.update()
         try:
@@ -136,17 +140,8 @@ def build_voice_panel(
         status_text.update()
         transcription_result.update()
 
-    file_picker.on_result = handle_file_picked
-
-    async def handle_transcribe(e: Any) -> None:
-        file_picker.pick_files(
-            dialog_title=t("voice.select_audio", default="Select audio file"),
-            allowed_extensions=["mp3", "wav", "ogg", "m4a", "flac", "webm", "mp4"],
-            allow_multiple=False,
-        )
-
-    tts_btn = ft.ElevatedButton(t("voice.speak"), icon=ft.Icons.VOLUME_UP, on_click=handle_tts)
-    stt_btn = ft.ElevatedButton(
+    tts_btn = ft.Button(t("voice.speak"), icon=ft.Icons.VOLUME_UP, on_click=handle_tts)
+    stt_btn = ft.Button(
         t("voice.transcribe"), icon=ft.Icons.MIC, on_click=handle_transcribe
     )
 
@@ -157,7 +152,6 @@ def build_voice_panel(
             ft.Row([tts_btn, stt_btn]),
             transcription_result,
             status_text,
-            file_picker,
         ],
         spacing=12,
     )

@@ -47,8 +47,8 @@ def build_toolbar(
         width=220,
         dense=True,
         content_padding=ft.padding.symmetric(horizontal=8, vertical=4),
-        on_change=lambda e: _fire_model_change(e),
     )
+    model_dropdown.on_select = lambda e: _fire_model_change(e)
 
     async def _fire_model_change(e: Any) -> None:
         if on_model_change and e.control.value:

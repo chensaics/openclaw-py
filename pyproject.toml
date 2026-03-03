@@ -66,7 +66,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/chensaics/openclaw-py"
-Documentation = "https://github.com/chensaics/openclaw-py#readme"
+Documentation = "https://github.com/chensaics/openclaw-py/tree/main/docs"
 Repository = "https://github.com/chensaics/openclaw-py"
 Issues = "https://github.com/chensaics/openclaw-py/issues"
 Changelog = "https://github.com/chensaics/openclaw-py/releases"
@@ -147,6 +147,13 @@ exclude_lines = [
     "if __name__",
     "@abstractmethod",
 ]
+
+[tool.flet]
+module = "flet_app"
+project = "OpenClaw"
+org = "ai.openclaw"
+product = "OpenClaw"
+description = "Multi-channel AI gateway"
 
 [tool.mypy]
 python_version = "3.12"

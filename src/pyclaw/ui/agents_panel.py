@@ -125,7 +125,7 @@ def build_agents_panel(
                     detail_column.controls.append(
                         ft.Container(
                             content=ft.Text(cfg["systemPrompt"][:200], size=12),
-                            bgcolor=ft.Colors.SURFACE_VARIANT,
+                            bgcolor=ft.Colors.SURFACE_CONTAINER,
                             border_radius=6,
                             padding=8,
                         )
@@ -172,7 +172,7 @@ def build_agents_panel(
         if on_create:
             await on_create({"id": agent_path.name, "path": str(agent_path), **config})
 
-    create_btn = ft.ElevatedButton(
+    create_btn = ft.Button(
         t("agents.create", default="Create Agent"),
         icon=ft.Icons.ADD,
         on_click=_handle_create,

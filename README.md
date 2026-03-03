@@ -4,6 +4,8 @@ Multi-channel AI gateway with extensible messaging integrations — Python/Flet 
 
 pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discord, Slack, WhatsApp, DingTalk, QQ, and more) through a unified gateway, with **MCP tool integration**, **20+ built-in tools**, a **cross-platform desktop/mobile/web UI**, and an **OpenAI-compatible HTTP API**.
 
+> **[完整文档](docs/README.md)** — 快速开始、安装指南、配置详解、概念总览、故障排除等。
+
 ---
 
 ## Features
@@ -37,12 +39,17 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 - Token and password authentication
 
 ### Desktop / Mobile / Web UI
-- Flet-based cross-platform UI (macOS, Linux, Windows, iOS, Android, Web)
-- Chat view with Markdown rendering, tool call visualization
-- Settings panel, session management, channel status
-- Voice interaction (edge-tts + Whisper transcription)
-- System tray icon
-- Multi-language: English, 中文, 日本語
+- **Flet UI** — cross-platform Python UI (macOS, Linux, Windows, iOS, Android, Web)
+  - Chat with streaming, tool call cards, interrupt/edit/resend
+  - 8-page navigation: Chat, Agents, Channels, Plans, Cron, Voice, System, Settings
+  - Gateway WebSocket integration with local fallback
+  - Voice interaction (edge-tts + Whisper), system tray, multi-language (EN/中文/日本語)
+- **Flutter App** — archived reference design (`flutter_app/`, see `ARCHIVE_NOTICE.md`)
+  - 9 feature pages with Riverpod state management, go_router navigation
+  - UI/UX patterns (Shimmer, Material 3 theme, animations) backported to Flet UI
+  - Responsive shell: Desktop (NavigationRail) / Tablet (drawer) / Mobile (bottom bar)
+  - Dynamic theme color picker, dark/light/system mode, Google Fonts
+  - Gateway WebSocket v3 client (Dart), auto-reconnect, heartbeat
 
 ### Security
 - Command exec approval rules
@@ -594,13 +601,30 @@ openclaw-py/
 │   ├── pairing/                 # Device pairing (challenge/response)
 │   ├── terminal/                # ANSI tables, palette
 │   └── ui/                      # Flet UI
-│       ├── app.py               # Chat + Settings + Sessions
+│       ├── app.py               # Chat + Settings + Sessions + 8-page nav
+│       ├── gateway_client.py    # WebSocket v3 Gateway client (Python)
 │       ├── i18n.py              # Multi-language (en/zh-CN/ja)
 │       ├── voice.py             # Voice interaction (TTS + Whisper)
 │       ├── onboarding.py        # 4-step setup wizard
 │       └── tray.py              # System tray icon
 │
-├── tests/                       # 78 test files, 1848 tests
+├── flutter_app/                 # [Archived] Flutter reference design (Material 3)
+│   ├── lib/
+│   │   ├── main.dart            # Entry point
+│   │   ├── app.dart             # MaterialApp + go_router
+│   │   ├── core/
+│   │   │   ├── gateway_client.dart    # WebSocket v3 client (Dart)
+│   │   │   ├── models/          # Message, Session, Plan, CronJob, Agent, Channel
+│   │   │   ├── providers/       # Riverpod state (Gateway, Chat, Session, Config, Plan)
+│   │   │   └── theme/           # Material 3 theme, colors, typography
+│   │   ├── features/            # 9 pages: Chat, Sessions, Agents, Channels,
+│   │   │                        #   Plans, Cron, System, Backup, Settings
+│   │   └── widgets/             # MessageBubble, ToolCallCard, PlanProgress,
+│   │                            #   CodeBlock, ModelSelector, ResponsiveShell
+│   ├── test/                    # 49 unit tests
+│   └── pubspec.yaml             # Flutter 3.x + Riverpod 2.x + go_router
+│
+├── tests/                       # 78 test files, 1848+ tests
 ├── flet_app.py                  # Flet entry point (mobile/desktop build)
 ├── scripts/                     # build-desktop.sh, build-mobile.sh
 ├── Dockerfile                   # Multi-stage container build
@@ -625,7 +649,8 @@ openclaw-py/
 | LLM SDKs | openai, anthropic, google-generativeai |
 | Messaging | aiogram, discord.py, slack-bolt |
 | Browser | Playwright |
-| UI | Flet |
+| UI (Python) | Flet |
+| UI (Native) | Flutter 3.x + Riverpod 2.x + Material 3 |
 | TTS | edge-tts |
 | Scheduling | APScheduler |
 | Testing | pytest, pytest-asyncio, pytest-cov |
@@ -755,10 +780,10 @@ flowchart TD
 
 | Metric | Value |
 |--------|-------|
-| Source files | ~439 .py files |
-| Source code | ~65,000 LOC |
-| Test files | 90 |
-| Tests | 1,932+ |
+| Source files | ~440 .py + 46 .dart |
+| Source code | ~66,400 LOC (Python) + ~4,980 LOC (Dart) |
+| Test files | 92 (.py) + 4 (.dart) |
+| Tests | 1,932+ (Python) + 49 (Dart) |
 | Channels | 25 |
 | LLM providers | 25+ |
 | Built-in tools | 20+ |
