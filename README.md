@@ -83,14 +83,14 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 
 ```bash
 # One-line install (macOS / Linux)
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash
 
 # One-line install with local model support
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash -s -- --extras llamacpp
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash -s -- --extras mlx   # Apple Silicon only
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash -s -- --extras llamacpp
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash -s -- --extras mlx   # Apple Silicon only
 
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.ps1 | iex
 
 # From PyPI
 pip install pyclaw

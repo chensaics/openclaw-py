@@ -15,10 +15,10 @@
 
 ```bash
 # macOS / Linux 一键安装
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash
 
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.ps1 | iex
 
 # 通过 pip
 pip install pyclaw

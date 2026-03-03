@@ -1,6 +1,6 @@
 # pyclaw installer for Windows (PowerShell)
 # Usage:
-#   irm https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.ps1 | iex
 #
 # Options (set env vars before piping):
 #   $env:PYCLAW_EXTRAS = "llamacpp"        Install optional dependencies

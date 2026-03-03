@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pyclaw one-line installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash
 # Options:
 #   --extras ollama,llamacpp,mlx   Install optional dependencies
 #   --version 0.1.0                Install specific version

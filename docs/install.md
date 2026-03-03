@@ -15,23 +15,23 @@
 ### macOS / Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash
 ```
 
 附带本地模型支持：
 
 ```bash
 # llama.cpp 后端
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash -s -- --extras llamacpp
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash -s -- --extras llamacpp
 
 # MLX 后端（Apple Silicon）
-curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash -s -- --extras mlx
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.sh | bash -s -- --extras mlx
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-irm https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.ps1 | iex
 ```
 
 ## 通过包管理器安装
