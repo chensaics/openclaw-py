@@ -1,8 +1,9 @@
-"""Embedding providers — OpenAI, Gemini, Voyage, Mistral, and local."""
+"""Embedding providers — OpenAI, Gemini, Voyage, Mistral, Ollama, and local."""
 
 from __future__ import annotations
 
 import logging
+import os
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -10,7 +11,7 @@ from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-EmbeddingProviderId = Literal["openai", "gemini", "voyage", "mistral", "local", "auto"]
+EmbeddingProviderId = Literal["openai", "gemini", "voyage", "mistral", "local", "ollama", "auto"]
 
 
 @dataclass
@@ -133,6 +134,27 @@ class MistralEmbeddingProvider(EmbeddingProvider):
                 return [sanitize_and_normalize(e["embedding"]) for e in embeddings]
 
 
+class OllamaEmbeddingProvider(EmbeddingProvider):
+    """Embeddings via local Ollama API."""
+
+    def __init__(self, *, base_url: str = "http://localhost:11434", model: str = "nomic-embed-text") -> None:
+        super().__init__(id="ollama", model=model)
+        self._base_url = base_url.rstrip("/")
+
+    async def embed_query(self, text: str) -> list[float]:
+        import aiohttp
+
+        url = f"{self._base_url}/api/embed"
+        payload = {"model": self.model, "input": text}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as resp:
+                data = await resp.json()
+                if "error" in data:
+                    raise ValueError(f"Ollama embedding error: {data['error']}")
+                return sanitize_and_normalize(data["embeddings"][0])
+
+
 # ─── Factory ─────────────────────────────────────────────────────────────
 
 async def create_embedding_provider(
@@ -164,6 +186,17 @@ async def create_embedding_provider(
             key = resolve_api_key_for_provider("mistral", config=config)
             if key:
                 return MistralEmbeddingProvider(api_key=key, model=model or "mistral-embed")
+        elif pid == "ollama":
+            base_url = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+            try:
+                import urllib.request
+
+                req = urllib.request.Request(base_url)
+                with urllib.request.urlopen(req, timeout=2) as resp:
+                    if resp.status < 500:
+                        return OllamaEmbeddingProvider(base_url=base_url, model=model or "nomic-embed-text")
+            except Exception:
+                pass
         return None
 
     if provider != "auto":
@@ -177,8 +210,8 @@ async def create_embedding_provider(
             provider_unavailable_reason=f"No API key for {provider}",
         )
 
-    # Auto: try providers in preference order
-    for pid in ("openai", "gemini", "voyage", "mistral"):
+    # Auto: try providers in preference order (ollama last as local fallback)
+    for pid in ("openai", "gemini", "voyage", "mistral", "ollama"):
         p = _try_create(pid)
         if p:
             return EmbeddingProviderResult(provider=p, requested_provider="auto")

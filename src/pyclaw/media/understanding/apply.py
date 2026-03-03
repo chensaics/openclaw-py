@@ -33,6 +33,7 @@ class ApplyMediaUnderstandingResult:
     outputs: list[MediaUnderstandingOutput] = field(default_factory=list)
     body_additions: list[str] = field(default_factory=list)
     transcripts: list[str] = field(default_factory=list)
+    echo_transcript: str = ""
 
 
 def _capability_for_mime(mime: str) -> MediaCapability | None:
@@ -65,6 +66,7 @@ async def apply_media_understanding(
     image_prompt: str = "",
     audio_prompt: str = "",
     video_prompt: str = "",
+    echo_transcript: bool = False,
 ) -> ApplyMediaUnderstandingResult:
     """Process media attachments through understanding providers.
 
@@ -121,6 +123,9 @@ async def apply_media_understanding(
                 result.body_additions.append(f"[Image: {img_desc.text}]")
 
             elif capability == MediaCapability.AUDIO:
+                if len(buf) < 1000:
+                    logger.debug("Skipping tiny audio file (%d bytes)", len(buf))
+                    continue
                 audio_req = AudioTranscriptionRequest(
                     buffer=buf,
                     file_name=attachment.path or "",
@@ -129,14 +134,18 @@ async def apply_media_understanding(
                     api_key=api_key,
                 )
                 trans = await provider.transcribe_audio(audio_req)
+                transcript_text = trans.text or ""
+                if echo_transcript and transcript_text:
+                    result.body_additions.append(f"[Transcription]: {transcript_text}")
+                    result.echo_transcript = transcript_text
                 output = MediaUnderstandingOutput(
                     kind=MediaCapability.AUDIO,
                     attachment_index=attachment.index,
-                    text=trans.text or "",
+                    text=transcript_text,
                     provider=provider.id,
                     model=trans.model or "",
                 )
-                result.transcripts.append(trans.text)
+                result.transcripts.append(transcript_text)
 
             elif capability == MediaCapability.VIDEO:
                 video_req = VideoDescriptionRequest(

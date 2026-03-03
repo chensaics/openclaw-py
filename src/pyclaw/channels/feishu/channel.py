@@ -6,14 +6,25 @@ Requires ``requests`` or ``aiohttp`` for API calls.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
+import urllib.parse
 from typing import Any
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
+from pyclaw.channels.feishu.messages import parse_feishu_message
+from pyclaw.channels.feishu.routing import (
+    FeishuRoutingConfig,
+    resolve_feishu_session_key,
+    is_sender_allowed_in_group,
+    resolve_reply_params,
+)
 
 logger = logging.getLogger(__name__)
+
+DEDUP_TTL_SEC = 300  # 5 minutes
 
 
 class FeishuChannel(ChannelPlugin):
@@ -32,6 +43,7 @@ class FeishuChannel(ChannelPlugin):
         connection_mode: str = "webhook",  # "webhook" | "websocket"
         domain: str = "feishu",  # "feishu" | "lark"
         allow_from: list[str] | None = None,
+        routing: dict[str, Any] | None = None,
     ) -> None:
         self._app_id = app_id
         self._app_secret = app_secret
@@ -45,6 +57,15 @@ class FeishuChannel(ChannelPlugin):
         self._server: Any = None
         self._access_token: str = ""
         self._token_expires: float = 0
+        self._routing_config = (
+            FeishuRoutingConfig.from_dict(routing) if routing else FeishuRoutingConfig()
+        )
+        self._dedup_cache: dict[str, float] = {}
+        self._dedup_lock = asyncio.Lock()
+
+    @property
+    def id(self) -> str:
+        return "feishu"
 
     @property
     def _api_base(self) -> str:
@@ -84,11 +105,12 @@ class FeishuChannel(ChannelPlugin):
             await self._server.cleanup()
             self._server = None
 
-    async def send(self, reply: ChannelReply) -> None:
+    async def send_reply(self, reply: ChannelReply) -> None:
         await self._ensure_token()
-        await self._send_message(reply.recipient or reply.chat_id, reply.text)
+        await self._send_message(reply)
 
     def on_message(self, handler: Any) -> None:
+        super().on_message(handler)
         self._handler = handler
 
     async def _handle_webhook(self, request: Any) -> Any:
@@ -110,37 +132,84 @@ class FeishuChannel(ChannelPlugin):
             return web.Response(status=403)
 
         event = body.get("event", {})
-        msg_type = event.get("message", {}).get("message_type", "")
-
-        if msg_type != "text":
+        message = event.get("message", {})
+        if not message:
             return web.Response(status=200)
 
-        content = json.loads(str(event.get("message", {}).get("content") or "{}"))
-        text = content.get("text", "").strip()
+        message_id = message.get("message_id", "")
+        msg_type = message.get("message_type", "")
 
-        sender = event.get("sender", {})
-        sender_id = sender.get("sender_id", {}).get("open_id", "")
-        sender_name = sender.get("sender_id", {}).get("name", "")
-
-        if self._allow_from and sender_id not in self._allow_from:
+        # Support all message types: text, post, share_chat, merge_forward, image, audio, file, sticker
+        parsed = parse_feishu_message(body)
+        if not parsed.text.strip() and parsed.message_type not in (
+            "image",
+            "audio",
+            "media",
+            "file",
+            "sticker",
+        ):
             return web.Response(status=200)
 
-        chat_id = event.get("message", {}).get("chat_id", "")
-        chat_type = event.get("message", {}).get("chat_type", "")
-        is_group = chat_type == "group"
+        # Message dedup: skip if seen in last 5 minutes
+        async with self._dedup_lock:
+            now = time.time()
+            if message_id in self._dedup_cache and self._dedup_cache[message_id] > now:
+                return web.Response(status=200)
+            self._dedup_cache[message_id] = now + DEDUP_TTL_SEC
+            # Evict expired entries
+            self._dedup_cache = {k: v for k, v in self._dedup_cache.items() if v > now}
 
-        msg = ChannelMessage(
-            channel_id="feishu",
-            sender_id=sender_id,
-            sender_name=sender_name or sender_id,
-            text=text,
-            chat_id=chat_id or sender_id,
-            raw=body,
-            is_group=is_group,
-            group_id=chat_id if is_group else "",
-            display_name=sender_name or sender_id,
+        # Global allow_from filter
+        if self._allow_from and parsed.sender_id not in self._allow_from:
+            return web.Response(status=200)
+
+        # Group sender filtering via routing config
+        if parsed.chat_type == "group":
+            if not is_sender_allowed_in_group(
+                parsed.sender_id, parsed.chat_id, self._routing_config
+            ):
+                return web.Response(status=200)
+
+        session_key = resolve_feishu_session_key(
+            chat_id=parsed.chat_id,
+            sender_id=parsed.sender_id,
+            root_id=parsed.root_id,
+            chat_type=parsed.chat_type,
+            config=self._routing_config,
         )
 
+        # Build raw with root_id and session_key for normalize/topic routing
+        raw_with_root = dict(body)
+        if parsed.root_id:
+            raw_with_root["root_id"] = parsed.root_id
+        raw_with_root["session_key"] = session_key
+        # Handle non-ASCII file names for file/media messages
+        if parsed.media_type:
+            event_msg = body.get("event", {}).get("message", {})
+            raw_content = event_msg.get("content", "{}")
+            try:
+                content = json.loads(raw_content) if isinstance(raw_content, str) else raw_content
+            except json.JSONDecodeError:
+                content = {}
+            file_name = content.get("file_name", "")
+            if file_name:
+                raw_with_root["file_name_safe"] = self._safe_filename_for_url(file_name)
+
+        msg = ChannelMessage(
+            channel_id=self.id,
+            sender_id=parsed.sender_id,
+            sender_name=parsed.sender_name or parsed.sender_id,
+            text=parsed.text,
+            chat_id=parsed.chat_id or parsed.sender_id,
+            message_id=parsed.message_id or None,
+            raw=raw_with_root,
+            is_group=parsed.chat_type == "group",
+            group_id=parsed.chat_id if parsed.chat_type == "group" else "",
+            display_name=parsed.sender_name or parsed.sender_id,
+        )
+
+        if self.message_callback:
+            await self.message_callback(msg)
         if self._handler:
             await self._handler(msg)
 
@@ -166,25 +235,77 @@ class FeishuChannel(ChannelPlugin):
         if time.time() >= self._token_expires:
             await self._refresh_token()
 
-    async def _send_message(self, chat_id: str, text: str) -> None:
+    def _safe_filename_for_url(self, filename: str) -> str:
+        """Quote non-ASCII and special chars for use in URLs."""
+        return urllib.parse.quote(filename, safe="")
+
+    def _markdown_to_post_content(self, text: str) -> dict[str, Any]:
+        """Convert markdown text to Feishu post format (minimal)."""
+        return {
+            "zh_cn": {
+                "title": "",
+                "content": [[{"tag": "text", "text": text}]],
+            }
+        }
+
+    async def _send_message(self, reply: ChannelReply) -> None:
         try:
             import aiohttp
         except ImportError:
             return
 
-        url = f"{self._api_base}/open-apis/im/v1/messages"
+        chat_id = reply.recipient or reply.chat_id
+        text = reply.text
+        parse_mode = reply.parse_mode or ""
+
+        raw = reply.raw or {}
+        root_id = raw.get("root_id", "")
+        message_id = reply.reply_to_message_id or raw.get("message_id", "")
+
+        reply_params = resolve_reply_params(
+            chat_id=chat_id,
+            root_id=root_id,
+            message_id=message_id,
+            config=self._routing_config,
+        )
+
+        use_post = parse_mode == "markdown" and text
+        msg_type = "post" if use_post else "text"
+        if use_post:
+            content = json.dumps(self._markdown_to_post_content(text))
+        else:
+            content = json.dumps({"text": text})
+
         headers = {
             "Authorization": f"Bearer {self._access_token}",
             "Content-Type": "application/json",
         }
-        payload = {
-            "receive_id": chat_id,
-            "msg_type": "text",
-            "content": json.dumps({"text": text}),
-        }
-        params = {"receive_id_type": "chat_id"}
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=payload, headers=headers, params=params) as resp:
-                if resp.status >= 400:
-                    logger.error("Feishu send error: %d", resp.status)
+            if message_id and reply_params.get("message_id"):
+                # Use reply API: POST /im/v1/messages/:message_id/reply
+                url = f"{self._api_base}/open-apis/im/v1/messages/{message_id}/reply"
+                payload = {"msg_type": msg_type, "content": content}
+                if reply_params.get("reply_in_thread") and reply_params.get("root_id"):
+                    payload["root_id"] = reply_params["root_id"]
+                async with session.post(url, json=payload, headers=headers) as resp:
+                    if resp.status >= 400:
+                        err_text = await resp.text()
+                        logger.error("Feishu reply error: %d %s", resp.status, err_text)
+            else:
+                # Use create message API
+                url = f"{self._api_base}/open-apis/im/v1/messages"
+                payload = {
+                    "receive_id": chat_id,
+                    "msg_type": msg_type,
+                    "content": content,
+                }
+                if reply_params.get("reply_in_thread") and reply_params.get("root_id"):
+                    payload["root_id"] = reply_params["root_id"]
+                params = {"receive_id_type": "chat_id"}
+                async with session.post(
+                    url, json=payload, headers=headers, params=params
+                ) as resp:
+                    if resp.status >= 400:
+                        err_text = await resp.text()
+                        logger.error("Feishu send error: %d %s", resp.status, err_text)

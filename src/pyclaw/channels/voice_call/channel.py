@@ -8,8 +8,13 @@ TTS (text-to-speech) via the voice provider.
 from __future__ import annotations
 
 import asyncio
+import base64
+import errno
+import hashlib
+import hmac
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 from aiohttp import web
 
@@ -29,17 +34,55 @@ class VoiceCallChannel(ChannelPlugin):
         port: int = 8070,
         webhook_path: str = "/voice",
         on_message: Any = None,
+        auth_token: str = "",
     ) -> None:
         self._provider = provider
         self._port = port
         self._webhook_path = webhook_path
         self._on_message = on_message
+        self._auth_token: str = auth_token
         self._runner: web.AppRunner | None = None
         self._active_calls: dict[str, CallInfo] = {}
+        self._call_queue: asyncio.Queue[CallInfo] = asyncio.Queue()
 
     @property
     def id(self) -> str:
         return "voice-call"
+
+    def _verify_twilio_signature(
+        self,
+        url: str,
+        params: dict[str, str],
+        signature: str,
+    ) -> bool:
+        """Verify Twilio webhook signature using HMAC-SHA1."""
+        if not self._auth_token or not signature:
+            return not bool(self._auth_token)
+        try:
+            parsed = urlparse(url)
+            candidates = [url]
+            if parsed.port:
+                netloc_no_port = parsed.hostname or parsed.netloc.split(":")[0]
+                candidates.append(f"{parsed.scheme}://{netloc_no_port}{parsed.path or ''}{parsed.query and '?' + parsed.query or ''}")
+            else:
+                port = 443 if parsed.scheme == "https" else 80
+                candidates.append(f"{parsed.scheme}://{parsed.netloc}:{port}{parsed.path or ''}{parsed.query and '?' + parsed.query or ''}")
+            for uri in candidates:
+                s = uri
+                if params:
+                    for key in sorted(params):
+                        s += key + str(params.get(key, ""))
+                mac = hmac.new(
+                    self._auth_token.encode("utf-8"),
+                    s.encode("utf-8"),
+                    hashlib.sha1,
+                )
+                expected = base64.b64encode(mac.digest()).decode("utf-8").strip()
+                if hmac.compare_digest(expected, signature):
+                    return True
+            return False
+        except Exception:
+            return False
 
     async def start(self) -> None:
         app = web.Application()
@@ -49,7 +92,16 @@ class VoiceCallChannel(ChannelPlugin):
         self._runner = web.AppRunner(app)
         await self._runner.setup()
         site = web.TCPSite(self._runner, "0.0.0.0", self._port)
-        await site.start()
+        try:
+            await site.start()
+        except OSError as e:
+            if getattr(e, "errno", None) == errno.EADDRINUSE or "address already in use" in str(e).lower():
+                logger.error(
+                    "Port %d already in use. Another process may be listening. "
+                    "Try a different port or stop the conflicting service.",
+                    self._port,
+                )
+            raise
         logger.info("Voice Call webhook listening on port %d", self._port)
 
     async def stop(self) -> None:
@@ -58,6 +110,9 @@ class VoiceCallChannel(ChannelPlugin):
 
     async def _handle_webhook(self, request: web.Request) -> web.Response:
         data = dict(await request.post())
+        sig = request.headers.get("X-Twilio-Signature", "") or request.headers.get("x-twilio-signature", "")
+        if not self._verify_twilio_signature(str(request.url), data, sig):
+            return web.Response(status=403, text="Forbidden")
         call_info = self._provider.parse_webhook(data)
         self._active_calls[call_info.call_sid] = call_info
 
@@ -79,6 +134,9 @@ class VoiceCallChannel(ChannelPlugin):
 
     async def _handle_gather(self, request: web.Request) -> web.Response:
         data = dict(await request.post())
+        sig = request.headers.get("X-Twilio-Signature", "") or request.headers.get("x-twilio-signature", "")
+        if not self._verify_twilio_signature(str(request.url), data, sig):
+            return web.Response(status=403, text="Forbidden")
         call_info = self._provider.parse_webhook(data)
         speech = call_info.metadata.get("speech_result", "")
 

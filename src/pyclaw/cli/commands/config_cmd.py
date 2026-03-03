@@ -58,6 +58,29 @@ def config_set(key: str, value: str) -> None:
     typer.echo(f"{p.success}Set {key} = {value}{p.reset}")
 
 
+def config_validate() -> None:
+    """Validate the pyclaw configuration file."""
+    from pyclaw.config.io import load_config
+    from pyclaw.config.paths import resolve_config_path
+
+    config_path = resolve_config_path()
+    if not config_path.exists():
+        print(f"Config file not found: {config_path}")
+        raise SystemExit(1)
+
+    try:
+        cfg = load_config(config_path)
+        print(f"Config valid: {config_path}")
+        # Show summary
+        if cfg.models and cfg.models.providers:
+            print(f"  Providers: {', '.join(cfg.models.providers.keys())}")
+        if cfg.channels:
+            print(f"  Channels: configured")
+    except Exception as e:
+        print(f"Config invalid: {e}")
+        raise SystemExit(1)
+
+
 def config_list() -> None:
     """List all configuration values."""
     from pyclaw.config.paths import resolve_config_path

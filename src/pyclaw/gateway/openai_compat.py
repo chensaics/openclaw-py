@@ -48,6 +48,12 @@ def register_openai_routes(
         if not messages:
             raise HTTPException(status_code=400, detail="messages is required")
 
+        message_channel = (
+            request.headers.get("message-channel")
+            or request.headers.get("x-message-channel")
+            or ""
+        )
+
         # Build prompt from messages
         prompt = _build_prompt(messages)
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
@@ -61,6 +67,7 @@ def register_openai_routes(
                     model=model,
                     prompt=prompt,
                     run_agent_fn=run_agent_fn,
+                    message_channel=message_channel,
                 ),
                 media_type="text/event-stream",
                 headers={
@@ -76,6 +83,7 @@ def register_openai_routes(
                 model=model,
                 prompt=prompt,
                 run_agent_fn=run_agent_fn,
+                message_channel=message_channel,
             )
 
     @app.get("/v1/models")
@@ -129,12 +137,17 @@ async def _non_stream_response(
     model: str,
     prompt: str,
     run_agent_fn: Any,
+    message_channel: str = "",
 ) -> JSONResponse:
     """Collect full response and return as JSON."""
     output_parts: list[str] = []
 
     if run_agent_fn:
-        async for event in run_agent_fn(prompt=prompt, model_id=model):
+        try:
+            gen = run_agent_fn(prompt=prompt, model_id=model, message_channel=message_channel)
+        except TypeError:
+            gen = run_agent_fn(prompt=prompt, model_id=model)
+        async for event in gen:
             if hasattr(event, "delta") and event.delta:
                 output_parts.append(event.delta)
     else:
@@ -169,6 +182,7 @@ async def _stream_response(
     model: str,
     prompt: str,
     run_agent_fn: Any,
+    message_channel: str = "",
 ) -> Any:
     """Generate SSE stream chunks."""
     # Initial role chunk
@@ -188,7 +202,11 @@ async def _stream_response(
     yield f"data: {json.dumps(chunk)}\n\n"
 
     if run_agent_fn:
-        async for event in run_agent_fn(prompt=prompt, model_id=model):
+        try:
+            gen = run_agent_fn(prompt=prompt, model_id=model, message_channel=message_channel)
+        except TypeError:
+            gen = run_agent_fn(prompt=prompt, model_id=model)
+        async for event in gen:
             if hasattr(event, "delta") and event.delta:
                 chunk = {
                     "id": completion_id,

@@ -231,6 +231,13 @@ def config_list() -> None:
     _list()
 
 
+@config_app.command("validate")
+def config_validate_cmd() -> None:
+    """Validate the configuration file."""
+    from pyclaw.cli.commands.config_cmd import config_validate
+    config_validate()
+
+
 # ─── Agents subcommands ──────────────────────────────────────────────────
 
 agents_app = typer.Typer(name="agents", help="Manage agents.", no_args_is_help=True)
@@ -1162,10 +1169,13 @@ def security_audit_cmd(
 def health_cmd(
     output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
 ) -> None:
-    """Quick health command alias for status."""
-    from pyclaw.cli.commands.status import status_command
+    """Quick health command alias for status. Exits 1 if gateway unreachable (for Docker HEALTHCHECK)."""
+    from pyclaw.cli.commands.status import scan_status, status_command
 
+    summary = scan_status(output_json=output_json, deep=True)
     status_command(output_json=output_json, deep=True, all_info=False)
+    if not summary.gateway_running:
+        raise typer.Exit(1)
 
 
 # ─── MCP subcommands ─────────────────────────────────────────────────

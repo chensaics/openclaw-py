@@ -40,6 +40,9 @@ class GatewayConnection:
         self.client_name: str | None = None
         self.connected_at = time.time()
         self._event_seq = 0
+        self.message_channel: str = ""
+        headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in ws.scope.get("headers", [])}
+        self.message_channel = headers.get("message-channel") or headers.get("x-message-channel") or ""
 
     async def send_response(self, response: ResponseFrame) -> None:
         await self.ws.send_json(response.to_dict())
@@ -59,11 +62,15 @@ class GatewayConnection:
 class GatewayServer:
     """Central gateway server managing connections and method dispatch."""
 
-    def __init__(self, *, auth_token: str | None = None) -> None:
+    def __init__(self, *, auth_token: str | None = None, config_path: str | None = None) -> None:
         self.app = FastAPI(title="pyclaw Gateway", docs_url=None, redoc_url=None)
         self.auth_token = auth_token
+        self.config_path = config_path
         self.connections: list[GatewayConnection] = []
         self._handlers: dict[str, MethodHandler] = {}
+        self._started_at: float = 0.0
+        self._channel_health_check_interval: float = 15.0  # minutes
+        self._channel_health_monitor: Any = None
 
         self._setup_routes()
 
@@ -76,7 +83,18 @@ class GatewayServer:
     def _setup_routes(self) -> None:
         @self.app.get("/health")
         async def health() -> JSONResponse:
-            return JSONResponse({"status": "ok", "protocol": PROTOCOL_VERSION})
+            channels_healthy = 0
+            if self._channel_health_monitor:
+                from pyclaw.gateway.channel_health import HealthStatus
+                statuses = self._channel_health_monitor.get_all_statuses()
+                channels_healthy = sum(1 for s in statuses.values() if s == HealthStatus.HEALTHY)
+            uptime = time.time() - self._started_at if self._started_at else 0
+            return JSONResponse({
+                "status": "ok",
+                "protocol": PROTOCOL_VERSION,
+                "channels_healthy": channels_healthy,
+                "uptime": round(uptime, 1),
+            })
 
         @self.app.websocket("/")
         async def websocket_endpoint(ws: WebSocket) -> None:
@@ -89,6 +107,31 @@ class GatewayServer:
                 pass
             finally:
                 self.connections.remove(conn)
+
+        @self.app.on_event("startup")
+        async def _record_startup() -> None:
+            self._started_at = time.time()
+
+    def reload_channel_health_config(self) -> None:
+        """Hot-reload channelHealthCheckMinutes from config without full restart."""
+        if not self.config_path:
+            return
+        try:
+            from pathlib import Path
+            import json5
+            path = Path(self.config_path)
+            if not path.exists():
+                return
+            raw = path.read_text(encoding="utf-8")
+            data = json5.loads(raw)
+            gw = data.get("gateway") or {}
+            if isinstance(gw, dict):
+                minutes = gw.get("channelHealthCheckMinutes") or gw.get("channel_health_check_minutes")
+                if minutes is not None:
+                    self._channel_health_check_interval = float(minutes)
+                    logger.info("channelHealthCheckMinutes reloaded: %s", self._channel_health_check_interval)
+        except Exception:
+            logger.debug("channelHealthCheck reload skipped", exc_info=True)
 
     async def _handle_connection(self, conn: GatewayConnection) -> None:
         """Process incoming WebSocket frames for a connection."""
@@ -150,7 +193,7 @@ def create_gateway_app(
     """Create a fully configured gateway server with all default handlers."""
     from pyclaw.gateway.methods import register_core_handlers
 
-    server = GatewayServer(auth_token=auth_token)
+    server = GatewayServer(auth_token=auth_token, config_path=config_path)
     register_core_handlers(server, config_path=config_path)
     _load_plugins(server)
     _start_config_watcher(server, config_path)

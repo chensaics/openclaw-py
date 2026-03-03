@@ -29,6 +29,7 @@ class ChannelMessage:
     media: list[dict[str, Any]] = field(default_factory=list)
     display_name: str | None = None
     group_id: str | None = None
+    message_thread_id: int | None = None  # forum topic (Telegram)
 
     @property
     def channel(self) -> str:
@@ -49,6 +50,7 @@ class ChannelReply:
     raw: Any = None  # channel-specific raw payload
     media_url: str | None = None
     channel: str | None = None
+    message_thread_id: int | None = None  # forum topic (Telegram)
 
 
 class ChannelPlugin(ABC):

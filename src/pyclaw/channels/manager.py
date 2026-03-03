@@ -73,10 +73,16 @@ class ChannelManager:
         if reply_text:
             channel = self._channels.get(msg.channel_id)
             if channel:
+                raw: dict[str, Any] = {}
+                if msg.channel_id == "feishu" and msg.raw and isinstance(msg.raw, dict):
+                    if msg.raw.get("root_id"):
+                        raw["root_id"] = msg.raw["root_id"]
                 reply = ChannelReply(
                     text=reply_text,
                     chat_id=msg.chat_id,
-                    reply_to_message_id=msg.message_id,
+                    reply_to_message_id=msg.reply_to_message_id or msg.message_id,
+                    message_thread_id=msg.message_thread_id,
+                    raw=raw if raw else None,
                 )
                 try:
                     await channel.send_reply(reply)

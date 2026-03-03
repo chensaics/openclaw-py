@@ -40,11 +40,14 @@ class CronJob:
     every_seconds: float = 0.0
     at: str = ""  # ISO 8601 or "HH:MM" for once-type
     agent_id: str = "main"
+    handler_id: str = ""
     message: str = ""
     enabled: bool = True
     channel: str = ""
     chat_id: str = ""
     deliver: bool = False
+    failure_destination: str = ""
+    failure_channel: str = ""
     execution_mode: str = "auto"
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -57,30 +60,46 @@ class CronJob:
             "everySeconds": self.every_seconds,
             "at": self.at,
             "agentId": self.agent_id,
+            "handlerId": self.handler_id,
             "message": self.message,
             "enabled": self.enabled,
             "channel": self.channel,
             "chatId": self.chat_id,
             "deliver": self.deliver,
+            "failureDestination": self.failure_destination,
+            "failureChannel": self.failure_channel,
             "executionMode": self.execution_mode,
             "metadata": self.metadata,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CronJob:
+        from pyclaw.cron.history import _legacy_schedule_to_cron
+
+        schedule = data.get("schedule", "")
+        if schedule and len(schedule.split()) != 5 and schedule not in ("every", "once"):
+            try:
+                schedule = _legacy_schedule_to_cron(schedule)
+            except ValueError:
+                pass
+        handler_id = data.get("handlerId", data.get("handler_id", data.get("command", "")))
+        message = data.get("message", "")
         return cls(
             id=data.get("id", str(uuid.uuid4())[:8]),
             name=data.get("name", ""),
-            schedule=data.get("schedule", ""),
+            schedule=schedule,
             schedule_type=ScheduleType(data.get("scheduleType", "cron")),
             every_seconds=float(data.get("everySeconds", 0)),
             at=data.get("at", ""),
             agent_id=data.get("agentId", "main"),
-            message=data.get("message", ""),
+            handler_id=handler_id,
+            message=message,
             enabled=data.get("enabled", True),
             channel=data.get("channel", ""),
             chat_id=data.get("chatId", ""),
             deliver=data.get("deliver", False),
+            failure_destination=data.get("failureDestination", data.get("failure_destination", "")),
+            failure_channel=data.get("failureChannel", data.get("failure_channel", "")),
             execution_mode=data.get("executionMode", "auto"),
             metadata=data.get("metadata", {}),
         )
@@ -215,8 +234,8 @@ class CronScheduler:
         error_text = ""
         try:
             if self._handler:
-                await self._handler(job)
-                result_text = "ok"
+                handler_result = await self._handler(job)
+                result_text = str(handler_result) if handler_result is not None else "ok"
         except Exception as e:
             logger.exception("Cron job failed: %s", job.id)
             error_text = str(e)
@@ -230,11 +249,19 @@ class CronScheduler:
             self._history.update(record.id, ended_at=record.ended_at, status=record.status, output=result_text, error=error_text)
 
         if job.deliver and self._notify_handler:
-            try:
-                msg = f"[Cron] {job.name}: {'OK' if not error_text else f'FAILED: {error_text}'}"
-                await self._notify_handler(job.channel, job.chat_id, msg)
-            except Exception:
-                logger.debug("Failed to deliver cron notification for %s", job.id)
+            if "HEARTBEAT_OK" in result_text or "HEARTBEAT_OK" in error_text:
+                pass
+            else:
+                try:
+                    msg = f"[Cron] {job.name}: {'OK' if not error_text else f'FAILED: {error_text}'}"
+                    if error_text and (job.failure_destination or job.failure_channel):
+                        ch = job.failure_destination or job.channel
+                        chat = job.failure_channel or job.chat_id
+                        await self._notify_handler(ch, chat, msg)
+                    else:
+                        await self._notify_handler(job.channel, job.chat_id, msg)
+                except Exception:
+                    logger.debug("Failed to deliver cron notification for %s", job.id)
 
 
 # ---------------------------------------------------------------------------

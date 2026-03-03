@@ -10,6 +10,15 @@ from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 
 logger = logging.getLogger("pyclaw.channels.telegram")
 
+try:
+    from pyclaw.channels.telegram.enhanced import (
+        chunk_telegram_message,
+        markdown_to_telegram_html,
+    )
+except ImportError:
+    chunk_telegram_message = None  # type: ignore[assignment]
+    markdown_to_telegram_html = None  # type: ignore[assignment]
+
 
 class TelegramChannel(ChannelPlugin):
     """Telegram messaging channel using aiogram long polling."""
@@ -89,12 +98,38 @@ class TelegramChannel(ChannelPlugin):
         kwargs: dict[str, Any] = {}
         if reply.reply_to_message_id:
             kwargs["reply_to_message_id"] = int(reply.reply_to_message_id)
+        if reply.message_thread_id is not None:
+            kwargs["message_thread_id"] = int(reply.message_thread_id)
 
-        await self._bot.send_message(
-            chat_id=int(reply.chat_id),
-            text=reply.text,
-            **kwargs,
+        text = reply.text
+        chunks = (
+            chunk_telegram_message(text, max_length=4096)
+            if chunk_telegram_message and len(text) > 4096
+            else [text]
         )
+
+        from aiogram.enums import ParseMode
+
+        for chunk in chunks:
+            try:
+                await self._bot.send_message(
+                    chat_id=int(reply.chat_id),
+                    text=chunk,
+                    **kwargs,
+                )
+            except Exception as e:
+                if markdown_to_telegram_html and (
+                    "Markdown" in str(e) or "parse" in str(e).lower()
+                ):
+                    html_chunk = markdown_to_telegram_html(chunk)
+                    await self._bot.send_message(
+                        chat_id=int(reply.chat_id),
+                        text=html_chunk,
+                        parse_mode=ParseMode.HTML,
+                        **kwargs,
+                    )
+                else:
+                    raise
 
     def _register_handlers(self) -> None:
         from aiogram import types as tg_types
@@ -115,17 +150,42 @@ class TelegramChannel(ChannelPlugin):
             if self._allowed_ids and user_id not in self._allowed_ids and not is_owner:
                 return
 
+            # Send typing action before processing
+            try:
+                from aiogram.enums import ChatAction
+
+                await self._bot.send_chat_action(
+                    chat_id=message.chat.id,
+                    action=ChatAction.TYPING,
+                    message_thread_id=getattr(message, "message_thread_id", None),
+                )
+            except Exception:
+                pass
+
             text = message.text or ""
+
+            # Photo/Document/Video caption support
+            if not text and message.photo:
+                text = message.caption or "[photo]"
+            if not text and message.document:
+                text = message.caption or f"[file: {message.document.file_name or 'document'}]"
+            if not text and message.video:
+                text = message.caption or "[video]"
 
             # Voice/audio → automatic transcription
             if not text and (message.voice or message.audio):
                 text = await self._transcribe_voice(message)
+
+            # Sticker handling
+            if not text and message.sticker:
+                text = (message.sticker.emoji or "").strip() or "[sticker]"
 
             if not text:
                 return
 
             chat_id = str(message.chat.id)
             is_group = message.chat.type in ("group", "supergroup")
+            message_thread_id = getattr(message, "message_thread_id", None)
 
             msg = ChannelMessage(
                 channel_id=self.id,
@@ -137,6 +197,7 @@ class TelegramChannel(ChannelPlugin):
                 is_group=is_group,
                 is_owner=is_owner,
                 raw=message,
+                message_thread_id=message_thread_id,
             )
 
             if self.message_callback:
@@ -152,15 +213,33 @@ class TelegramChannel(ChannelPlugin):
             if not voice or not self._bot:
                 return ""
 
-            file = await self._bot.get_file(voice.file_id)
-            if not file.file_path:
+            file_size = getattr(voice, "file_size", None) or 0
+            if file_size < 1000:
+                logger.debug("Skipping transcription for tiny audio (%d bytes)", file_size)
                 return ""
+
+            file = None
+            for attempt in range(2):
+                try:
+                    file = await self._bot.get_file(voice.file_id)
+                    break
+                except Exception:
+                    if attempt < 1:
+                        await asyncio.sleep(1)
+                    else:
+                        raise
+            if not file or not file.file_path:
+                return ""
+
+            orig_name = getattr(voice, "file_name", None)
+            if not orig_name or "." not in orig_name:
+                orig_name = "voice.ogg" if message.voice else "audio.ogg"
 
             with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp:
                 tmp_path = Path(tmp.name)
                 await self._bot.download_file(file.file_path, destination=tmp)
 
-            transcript = await _whisper_transcribe(tmp_path)
+            transcript = await _whisper_transcribe(tmp_path, file_name=orig_name)
             tmp_path.unlink(missing_ok=True)
 
             if transcript:
@@ -171,7 +250,7 @@ class TelegramChannel(ChannelPlugin):
             return ""
 
 
-async def _whisper_transcribe(audio_path: Any) -> str:
+async def _whisper_transcribe(audio_path: Any, file_name: str | None = None) -> str:
     """Transcribe audio file using OpenAI Whisper API (or Groq fallback)."""
     import os
     from pathlib import Path
@@ -181,6 +260,9 @@ async def _whisper_transcribe(audio_path: Any) -> str:
     audio_path = Path(audio_path)
     if not audio_path.exists():
         return ""
+
+    name = file_name or audio_path.name
+    mime = "audio/ogg" if ".ogg" in name.lower() else "audio/mpeg"
 
     # Try Groq first (free Whisper endpoint), then OpenAI
     providers = []
@@ -202,7 +284,7 @@ async def _whisper_transcribe(audio_path: Any) -> str:
                     resp = await client.post(
                         url,
                         headers={"Authorization": f"Bearer {key}"},
-                        files={"file": (audio_path.name, f, "audio/ogg")},
+                        files={"file": (name, f, mime)},
                         data={"model": "whisper-large-v3"},
                     )
                 if resp.status_code == 200:

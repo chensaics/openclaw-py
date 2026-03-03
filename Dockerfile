@@ -25,6 +25,9 @@ COPY --from=builder /usr/local/bin/pyclaw /usr/local/bin/pyclaw
 
 EXPOSE 18789 18790
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD pyclaw health || exit 1
+
 VOLUME ["/root/.pyclaw"]
 
 ENTRYPOINT ["pyclaw"]

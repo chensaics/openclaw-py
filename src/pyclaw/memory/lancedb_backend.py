@@ -91,6 +91,13 @@ class LanceDBBackend(MemoryBackend):
 
         record_id = str(uuid.uuid4())
         vector = embedding or [0.0] * self._embedding_dim
+        if embedding and len(embedding) != self._embedding_dim:
+            logger.warning(
+                "Embedding dimension %d differs from backend %d; updating to match",
+                len(embedding),
+                self._embedding_dim,
+            )
+            self._embedding_dim = len(embedding)
         now = time.time()
 
         row = {

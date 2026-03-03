@@ -13,6 +13,7 @@ class HookEventType(str, Enum):
     AGENT = "agent"
     GATEWAY = "gateway"
     MESSAGE = "message"
+    CHANNEL = "channel"
 
 
 @dataclass
@@ -25,6 +26,9 @@ class HookEvent:
     context: dict[str, Any] = field(default_factory=dict)
     timestamp: float = 0.0
     messages: list[dict[str, Any]] = field(default_factory=list)
+    channel_id: str = ""
+    trigger: str = ""
+    agent_id: str = ""
 
 
 class HookHandler(Protocol):

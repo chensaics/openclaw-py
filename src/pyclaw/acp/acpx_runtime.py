@@ -169,7 +169,12 @@ class AcpxRuntime(AcpRuntimeProtocol):
             logger.warning("acpx CLI not available or version mismatch")
 
     async def ensure_session(
-        self, session_key: str, agent: str, cwd: str, mode: str = "persistent"
+        self,
+        session_key: str,
+        agent: str,
+        cwd: str,
+        mode: str = "persistent",
+        sandbox_config: dict[str, Any] | None = None,
     ) -> AcpSessionResolution:
         if not agent:
             raise ValueError("ACP agent id is required")

@@ -72,7 +72,12 @@ class AcpRuntimeProtocol:
     """Protocol for ACP runtime backends (acpx, built-in, etc.)."""
 
     async def ensure_session(
-        self, session_key: str, agent: str, cwd: str, mode: str = "persistent"
+        self,
+        session_key: str,
+        agent: str,
+        cwd: str,
+        mode: str = "persistent",
+        sandbox_config: dict[str, Any] | None = None,
     ) -> AcpSessionResolution:
         raise NotImplementedError
 
@@ -106,11 +111,12 @@ class AcpSessionManager:
     Singleton pattern — use ``get_acp_session_manager()`` to get the instance.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, default_sandbox_config: dict[str, Any] | None = None) -> None:
         self._runtimes: dict[str, AcpRuntimeProtocol] = {}
         self._sessions: dict[str, AcpSessionResolution] = {}
         self._session_status: dict[str, AcpSessionStatus] = {}
         self._default_backend: str = "builtin"
+        self._default_sandbox_config: dict[str, Any] | None = default_sandbox_config
 
     def register_runtime(self, backend_id: str, runtime: AcpRuntimeProtocol) -> None:
         self._runtimes[backend_id] = runtime
@@ -127,6 +133,7 @@ class AcpSessionManager:
         *,
         backend: str | None = None,
         mode: str = "persistent",
+        sandbox: dict[str, Any] | None = None,
     ) -> AcpSessionResolution:
         """Initialize or resume a session on the specified backend."""
         backend_id = backend or self._default_backend
@@ -134,7 +141,10 @@ class AcpSessionManager:
         if not runtime:
             raise ValueError(f"ACP runtime not found: {backend_id}")
 
-        resolution = await runtime.ensure_session(session_key, agent, cwd, mode)
+        sandbox_config = sandbox if sandbox is not None else self._default_sandbox_config
+        resolution = await runtime.ensure_session(
+            session_key, agent, cwd, mode, sandbox_config=sandbox_config
+        )
         self._sessions[session_key] = resolution
         self._session_status[session_key] = AcpSessionStatus(
             session_key=session_key,

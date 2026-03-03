@@ -169,7 +169,7 @@ class MessageDispatcher:
                 reply = ChannelReply(
                     text=reply_text,
                     chat_id=msg.chat_id,
-                    reply_to_message_id=msg.message_id,
+                    reply_to_message_id=msg.reply_to_message_id or msg.message_id,
                     channel=msg.channel,
                     recipient_id=msg.sender_id,
                 )

@@ -312,6 +312,10 @@ async def _do_chat_run(
     use_embedded = _use_embedded_runner()
 
     try:
+        runtime_ctx = None
+        if getattr(conn, "message_channel", ""):
+            from pyclaw.agents.tools.runtime_context import RuntimeContext
+            runtime_ctx = RuntimeContext(channel=conn.message_channel, metadata={"message_channel": conn.message_channel})
         if use_embedded:
             await _run_embedded(
                 message=message,
@@ -323,6 +327,7 @@ async def _do_chat_run(
                 conn=conn,
                 session_key=session_key,
                 method=method,
+                runtime_context=runtime_ctx,
             )
         else:
             await _run_legacy(
@@ -334,6 +339,7 @@ async def _do_chat_run(
                 abort_event=abort_event,
                 conn=conn,
                 method=method,
+                runtime_context=runtime_ctx,
             )
 
         await conn.send_ok(method, {"completed": True})
@@ -359,6 +365,7 @@ async def _run_embedded(
     conn: Any,
     session_key: str,
     method: str,
+    runtime_context: Any = None,
 ) -> None:
     from pyclaw.agents.embedded_runner.run import (
         Message,
@@ -393,6 +400,7 @@ async def _run_embedded(
         tools=tools,
         system_prompt=system_prompt,
         abort_event=abort_event,
+        runtime_context=runtime_context,
     ):
         if abort_event.is_set():
             from pyclaw.agents.embedded_runner.run import RunState
@@ -443,6 +451,7 @@ async def _run_legacy(
     abort_event: asyncio.Event,
     conn: Any,
     method: str,
+    runtime_context: Any = None,
 ) -> None:
     from pyclaw.agents.runner import run_agent
 
@@ -453,6 +462,7 @@ async def _run_legacy(
         tools=tools,
         system_prompt=system_prompt,
         abort_event=abort_event,
+        runtime_context=runtime_context,
     ):
         await conn.send_event(f"chat.{event.type}", {
             k: v for k, v in {

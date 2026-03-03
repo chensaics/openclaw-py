@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import logging
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -38,6 +39,7 @@ class AcpGatewayAgent:
         reset_session_default: bool = False,
         prefix_cwd: bool = True,
         verbose: bool = False,
+        dispatch_enabled: bool = True,
     ) -> None:
         self._gateway_url = gateway_url
         self._auth_token = auth_token
@@ -48,6 +50,7 @@ class AcpGatewayAgent:
         self._reset_session_default = reset_session_default
         self._prefix_cwd = prefix_cwd
         self._verbose = verbose
+        self._dispatch_enabled = dispatch_enabled
 
         self._store = create_in_memory_session_store()
         self._ws: Any = None
@@ -71,6 +74,13 @@ class AcpGatewayAgent:
         }
 
     async def new_session(self, params: dict[str, Any]) -> dict[str, Any]:
+        agent_id = params.get("agentId", "main")
+        if not re.match(r"^[a-zA-Z0-9_-]+$", agent_id):
+            raise ValueError(
+                f"Invalid agentId format: {agent_id!r}. "
+                "Must match ^[a-zA-Z0-9_-]+$ (alphanumeric, dash, underscore)."
+            )
+
         session_id = params.get("sessionId", str(uuid.uuid4()))
         hints = parse_session_meta(params.get("_meta"))
 
@@ -100,7 +110,7 @@ class AcpGatewayAgent:
             session_key=resolved_key,
             session_label=label,
             cwd=hints.cwd or "",
-            agent_id=params.get("agentId", "main"),
+            agent_id=agent_id,
             mode=params.get("mode", "agent"),
         )
         self._store.create_session(session_id, meta)
@@ -293,6 +303,7 @@ async def serve_acp_gateway(
     reset_session_default: bool = False,
     prefix_cwd: bool = True,
     verbose: bool = False,
+    dispatch_enabled: bool = True,
 ) -> None:
     """Main entry — read NDJSON from stdin, bridge to gateway."""
     agent = AcpGatewayAgent(
@@ -305,6 +316,7 @@ async def serve_acp_gateway(
         reset_session_default=reset_session_default,
         prefix_cwd=prefix_cwd,
         verbose=verbose,
+        dispatch_enabled=dispatch_enabled,
     )
 
     try:

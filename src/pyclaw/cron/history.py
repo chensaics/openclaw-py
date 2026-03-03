@@ -125,10 +125,37 @@ class HistoryStore:
             return
         try:
             raw = json.loads(self._persist_path.read_text(encoding="utf-8"))
-            for item in raw:
+            records_source: list[dict[str, Any]] = []
+            if isinstance(raw, dict):
+                jobs = raw.get("jobs", [])
+                migrated = 0
+                for job in jobs:
+                    if not isinstance(job, dict):
+                        continue
+                    changed = False
+                    if "command" in job and "handler_id" not in job and "handlerId" not in job:
+                        job["handlerId"] = job.pop("command")
+                        changed = True
+                    schedule = job.get("schedule", "")
+                    if isinstance(schedule, str) and schedule and len(schedule.split()) != 5:
+                        try:
+                            job["schedule"] = _legacy_schedule_to_cron(schedule)
+                            changed = True
+                        except ValueError:
+                            pass
+                    if changed:
+                        migrated += 1
+                if migrated:
+                    logger.info("Migrated %d legacy cron job(s)", migrated)
+                records_source = raw.get("executions", raw.get("history", []))
+            else:
+                records_source = raw if isinstance(raw, list) else []
+            for item in records_source:
+                if not isinstance(item, dict) or not item.get("id"):
+                    continue
                 self._records.append(
                     ExecutionRecord(
-                        id=item["id"],
+                        id=item.get("id", ""),
                         job_id=item.get("jobId", ""),
                         job_title=item.get("jobTitle", ""),
                         status=ExecutionStatus(item.get("status", "completed")),
@@ -140,3 +167,19 @@ class HistoryStore:
                 )
         except Exception:
             logger.debug("Failed to load cron history")
+
+
+def _legacy_schedule_to_cron(s: str) -> str:
+    """Convert legacy schedule string to cron expression."""
+    s = (s or "").strip().lower()
+    if not s:
+        return "0 0 * * *"
+    if s in ("daily", "day"):
+        return "0 0 * * *"
+    if s in ("hourly", "hour"):
+        return "0 * * * *"
+    if s.startswith("every ") and "second" in s:
+        return "*/1 * * * *"
+    if s.startswith("every ") and "minute" in s:
+        return "*/1 * * * *"
+    raise ValueError(f"Cannot convert legacy schedule: {s}")
