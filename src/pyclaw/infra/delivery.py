@@ -17,7 +17,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, cast
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ def compute_backoff(
 
     delay = min(base_delay * (2 ** attempt), max_delay)
     jitter = delay * jitter_factor * (2 * random.random() - 1)
-    return max(0.1, delay + jitter)
+    return cast(float, max(0.1, delay + jitter))
 
 
 class DeliveryQueue:

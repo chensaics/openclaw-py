@@ -11,6 +11,8 @@ from pathlib import Path
 
 import typer
 
+from typing import Any
+
 from pyclaw.cli.commands.auth_providers import PROVIDER_SPECS, AuthMethod
 from pyclaw.config.defaults import get_provider_defaults
 from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir, resolve_state_dir
@@ -110,9 +112,9 @@ def _run_wizard(config_path: Path) -> None:
     provider_id, provider_label, env_var = providers[idx]
     spec = PROVIDER_SPECS[provider_id]
 
-    config: dict = {}
+    config: dict[str, Any] = {}
 
-    provider_cfg: dict = {}
+    provider_cfg: dict[str, Any] = {}
 
     if spec.auth_method == AuthMethod.NONE:
         typer.echo(f"\n  {provider_label} selected (no API key required).")
@@ -173,7 +175,7 @@ def _run_non_interactive(config_path: Path, *, accept_risk: bool = False) -> Non
         typer.echo("Error: --non-interactive requires --accept-risk flag.")
         raise typer.Exit(1)
 
-    config: dict = {"gateway": {"port": 18789}}
+    config: dict[str, Any] = {"gateway": {"port": 18789}}
 
     for spec in PROVIDER_SPECS.values():
         if spec.env_var and os.environ.get(spec.env_var, "").strip():

@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 logger = logging.getLogger(__name__)
 
@@ -222,7 +222,7 @@ def prepare_text_for_tts(
         return text
 
     if config.summarize_long_text and summarize_fn:
-        return summarize_fn(text, config.summary_max_length)
+        return cast(str, summarize_fn(text, config.summary_max_length))
 
     return text[:config.max_text_length]
 

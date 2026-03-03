@@ -6,7 +6,7 @@ import asyncio
 import json
 import socket
 import time
-from typing import Any
+from typing import Any, cast
 
 import typer
 
@@ -314,7 +314,7 @@ async def _rpc_call(
                     if not data.get("ok", False):
                         err = data.get("error", {})
                         raise RuntimeError(err.get("message", f"RPC {method} failed"))
-                    return data.get("payload", {})
+                    return cast(dict[str, Any], data.get("payload", {}))
         except Exception as exc:
             last_error = exc
             continue

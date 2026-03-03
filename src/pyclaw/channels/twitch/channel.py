@@ -65,7 +65,8 @@ class TwitchChannel(ChannelPlugin):
             self._writer = None
 
     async def send(self, reply: ChannelReply) -> None:
-        channel = reply.recipient.lstrip("#")
+        recipient = reply.recipient or ""
+        channel = recipient.lstrip("#")
         text = reply.text
         for i in range(0, len(text), TEXT_CHUNK_LIMIT):
             chunk = text[i:i + TEXT_CHUNK_LIMIT]
@@ -109,9 +110,11 @@ class TwitchChannel(ChannelPlugin):
                 return
 
             msg = ChannelMessage(
-                channel="twitch",
+                channel_id="twitch",
                 sender_id=sender,
+                sender_name=sender,
                 text=text,
+                chat_id=target.lstrip("#"),
                 raw={"sender": sender, "target": target, "text": text},
                 is_group=True,
                 group_id=target.lstrip("#"),

@@ -107,21 +107,24 @@ class MatrixChannel(ChannelPlugin):
             return
 
         is_group = (
-            len(getattr(room, "member_count", 0) or []) > 2
+            len(getattr(room, "member_count", []) or []) > 2
             if hasattr(room, "member_count")
             else True
         )
 
+        display_name = (
+            room.user_name(event.sender) if hasattr(room, "user_name") else event.sender
+        )
         msg = ChannelMessage(
-            channel="matrix",
+            channel_id="matrix",
             sender_id=event.sender,
+            sender_name=display_name,
             text=event.body,
+            chat_id=room.room_id,
             raw={"room_id": room.room_id, "sender": event.sender, "body": event.body},
             is_group=is_group,
             group_id=room.room_id,
-            display_name=room.user_name(event.sender)
-            if hasattr(room, "user_name")
-            else event.sender,
+            display_name=display_name,
         )
 
         if self._handler:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, cast
 
 from pyclaw.gateway.methods.chat_advanced import (
     ChatAbortManager,
@@ -33,7 +33,7 @@ def _use_embedded_runner() -> bool:
         raw = load_config_raw()
         runner_cfg = raw.get("runner", {})
         if isinstance(runner_cfg, dict):
-            return runner_cfg.get("mode", "embedded") != "legacy"
+            return cast(bool, runner_cfg.get("mode", "embedded") != "legacy")
         return True
     except Exception:
         return True
@@ -419,7 +419,7 @@ async def _run_embedded(
     try:
         from pyclaw.infra.session_cost import record_usage
         record_usage(
-            session_key=session_key,
+            session_id=session_key,
             provider=model.provider,
             model=model.model_id,
             input_tokens=record.total_input_tokens,
@@ -501,5 +501,5 @@ def _remove_last_assistant_response(session: Any) -> None:
 def _find_last_user_message(session: Any) -> str:
     for msg in reversed(session.messages):
         if msg.role == "user":
-            return msg.content
+            return cast(str, msg.content)
     return ""

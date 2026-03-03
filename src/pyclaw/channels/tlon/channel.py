@@ -115,10 +115,14 @@ class TlonChannel(ChannelPlugin):
         if not text:
             return
 
+        chat = update.get("chat")
+        chat_id = str((chat or {}).get("path", author)) if isinstance(chat, dict) else author
         msg = ChannelMessage(
-            channel="tlon",
+            channel_id="tlon",
             sender_id=author,
+            sender_name=author,
             text=text,
+            chat_id=chat_id,
             raw=event,
         )
 

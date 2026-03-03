@@ -436,7 +436,7 @@ def create_irc_onboarding() -> OnboardingFlow:
 
 
 # Registry of all onboarding flow creators
-ONBOARDING_FLOWS: dict[str, callable] = {
+ONBOARDING_FLOWS: dict[str, Any] = {
     "telegram": create_telegram_onboarding,
     "discord": create_discord_onboarding,
     "slack": create_slack_onboarding,

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 def get_image_dimensions(data: bytes) -> tuple[int, int] | None:
@@ -15,7 +15,7 @@ def get_image_dimensions(data: bytes) -> tuple[int, int] | None:
     try:
         from PIL import Image
         with Image.open(io.BytesIO(data)) as img:
-            return img.size
+            return cast(tuple[int, int], img.size)
     except Exception:
         return None
 
@@ -33,7 +33,7 @@ def fix_exif_orientation(data: bytes) -> bytes:
         return data
 
     try:
-        img = Image.open(io.BytesIO(data))
+        img: Image.Image = Image.open(io.BytesIO(data))
     except Exception:
         return data
 
@@ -92,7 +92,7 @@ def compress_image(
     steps = quality_steps or [85, 70, 55, 40, 25]
 
     try:
-        img = Image.open(io.BytesIO(data))
+        img: Image.Image = Image.open(io.BytesIO(data))
     except Exception:
         return data
 

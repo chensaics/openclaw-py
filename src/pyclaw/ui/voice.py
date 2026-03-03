@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.ui.i18n import t
 
@@ -68,7 +68,7 @@ async def transcribe_audio(
     with open(audio_path, "rb") as f:
         transcript = await client.audio.transcriptions.create(model=model, file=f)
 
-    return transcript.text
+    return cast(str, transcript.text)
 
 
 # --- Flet UI component ---
@@ -125,6 +125,8 @@ def build_voice_panel(
         if not files:
             return
         picked = files[0]
+        if not picked.path:
+            return
         status_text.value = t("voice.transcribing", default="Transcribing...")
         status_text.update()
         try:

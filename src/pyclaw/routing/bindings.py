@@ -163,18 +163,18 @@ def remove_agent_bindings(
         return remaining, removed
 
     spec_keys = {binding_match_key(s) for s in specs}
-    remaining: list[AgentBinding] = []
-    removed: list[AgentBinding] = []
+    remaining_bindings: list[AgentBinding] = []
+    removed_bindings: list[AgentBinding] = []
     for b in existing:
         key = binding_match_key(b.match)
         if key in spec_keys:
             if agent_id and normalize_agent_id(b.agent_id) != normalize_agent_id(agent_id):
-                remaining.append(b)
+                remaining_bindings.append(b)
             else:
-                removed.append(b)
+                removed_bindings.append(b)
         else:
-            remaining.append(b)
-    return remaining, removed
+            remaining_bindings.append(b)
+    return remaining_bindings, removed_bindings
 
 
 def _find_upgrade_candidate(

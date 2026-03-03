@@ -52,25 +52,13 @@ class SendFileTool(BaseTool):
     async def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> ToolResult:
         file_path = arguments.get("file_path", "").strip()
         if not file_path:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content="Error: file_path is required.",
-                is_error=True,
-            )
+            return ToolResult.text("Error: file_path is required.", is_error=True)
 
         if not os.path.exists(file_path):
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content=f"Error: File not found: {file_path}",
-                is_error=True,
-            )
+            return ToolResult.text(f"Error: File not found: {file_path}", is_error=True)
 
         if not os.path.isfile(file_path):
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content=f"Error: Not a file: {file_path}",
-                is_error=True,
-            )
+            return ToolResult.text(f"Error: Not a file: {file_path}", is_error=True)
 
         mime_type, _ = mimetypes.guess_type(file_path)
         if mime_type is None:
@@ -90,19 +78,15 @@ class SendFileTool(BaseTool):
                     content = f.read()
                 if len(content) > 50000:
                     content = content[:50000] + "\n... (truncated)"
-                return ToolResult(
-                    tool_call_id=tool_call_id,
-                    content=f"[File: {os.path.basename(abs_path)} ({size_display})]\n\n{content}",
+                return ToolResult.text(
+                    f"[File: {os.path.basename(abs_path)} ({size_display})]\n\n{content}"
                 )
             except UnicodeDecodeError:
                 pass
 
-        return ToolResult(
-            tool_call_id=tool_call_id,
-            content=(
-                f"File ready to send: {os.path.basename(abs_path)}\n"
-                f"  Type: {file_type} ({mime_type})\n"
-                f"  Size: {size_display}\n"
-                f"  Path: {abs_path}"
-            ),
+        return ToolResult.text(
+            f"File ready to send: {os.path.basename(abs_path)}\n"
+            f"  Type: {file_type} ({mime_type})\n"
+            f"  Size: {size_display}\n"
+            f"  Path: {abs_path}"
         )

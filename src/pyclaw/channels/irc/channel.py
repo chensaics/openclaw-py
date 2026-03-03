@@ -180,7 +180,7 @@ class IrcChannel(ChannelPlugin):
             self._client = None
 
     async def send(self, reply: ChannelReply) -> None:
-        if self._client:
+        if self._client and reply.recipient:
             await self._client.send_privmsg(reply.recipient, reply.text)
 
     def on_message(self, handler: Any) -> None:
@@ -192,9 +192,11 @@ class IrcChannel(ChannelPlugin):
 
         is_group = target.startswith("#")
         msg = ChannelMessage(
-            channel="irc",
+            channel_id="irc",
             sender_id=sender,
+            sender_name=sender,
             text=text,
+            chat_id=target,
             raw={"sender": sender, "target": target, "text": text},
             is_group=is_group,
             group_id=target if is_group else "",

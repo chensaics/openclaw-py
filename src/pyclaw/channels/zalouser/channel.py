@@ -88,9 +88,11 @@ class ZaloUserChannel(ChannelPlugin):
             return
 
         msg = ChannelMessage(
-            channel="zalouser",
+            channel_id="zalouser",
             sender_id=sender_id,
+            sender_name=sender_id,
             text=text,
+            chat_id=sender_id,
             raw=data,
         )
 

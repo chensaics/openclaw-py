@@ -78,10 +78,10 @@ def _collect_sessions(*, store: str, agent: str, all_agents: bool) -> list[Sessi
         return _collect_from_agent_dir(default_agent, agent_id="main")
 
     # Fallback to all available if main doesn't exist.
-    entries: list[SessionEntry] = []
+    fallback_entries: list[SessionEntry] = []
     for agent_dir in sorted(d for d in agents_dir.iterdir() if d.is_dir()):
-        entries.extend(_collect_from_agent_dir(agent_dir, agent_id=agent_dir.name))
-    return entries
+        fallback_entries.extend(_collect_from_agent_dir(agent_dir, agent_id=agent_dir.name))
+    return fallback_entries
 
 
 def _collect_from_store_path(store_path: Path) -> list[SessionEntry]:

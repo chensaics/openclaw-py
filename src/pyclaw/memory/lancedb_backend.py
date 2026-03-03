@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.memory.backend import (
     MemoryBackend,
@@ -191,7 +191,7 @@ class LanceDBBackend(MemoryBackend):
     async def count(self) -> int:
         if not self._table:
             return 0
-        return self._table.count_rows()
+        return cast(int, self._table.count_rows())
 
     async def list_recent(self, *, limit: int = 20) -> list[MemoryRecord]:
         if not self._table:

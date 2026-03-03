@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
 from pyclaw.agents.auth_profiles.types import (
     AuthProfileStore,
@@ -78,7 +79,7 @@ def calculate_auth_profile_cooldown_ms(stats: ProfileUsageStats) -> int:
     """Exponential backoff cooldown based on consecutive errors."""
     consecutive = stats.error_count
     ms = _BASE_COOLDOWN_MS * (2 ** min(consecutive, 10))
-    return min(ms, _MAX_COOLDOWN_MS)
+    return cast(int, min(ms, _MAX_COOLDOWN_MS))
 
 
 def clear_auth_profile_cooldown(

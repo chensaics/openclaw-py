@@ -86,7 +86,7 @@ class FeishuChannel(ChannelPlugin):
 
     async def send(self, reply: ChannelReply) -> None:
         await self._ensure_token()
-        await self._send_message(reply.recipient, reply.text)
+        await self._send_message(reply.recipient or reply.chat_id, reply.text)
 
     def on_message(self, handler: Any) -> None:
         self._handler = handler
@@ -115,7 +115,7 @@ class FeishuChannel(ChannelPlugin):
         if msg_type != "text":
             return web.Response(status=200)
 
-        content = json.loads(event.get("message", {}).get("content", "{}"))
+        content = json.loads(str(event.get("message", {}).get("content") or "{}"))
         text = content.get("text", "").strip()
 
         sender = event.get("sender", {})
@@ -130,9 +130,11 @@ class FeishuChannel(ChannelPlugin):
         is_group = chat_type == "group"
 
         msg = ChannelMessage(
-            channel="feishu",
+            channel_id="feishu",
             sender_id=sender_id,
+            sender_name=sender_name or sender_id,
             text=text,
+            chat_id=chat_id or sender_id,
             raw=body,
             is_group=is_group,
             group_id=chat_id if is_group else "",

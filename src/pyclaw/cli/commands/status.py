@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import typer
 
@@ -107,7 +107,7 @@ def _probe_gateway(port: int) -> bool:
 
     try:
         resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
-        return resp.status == 200
+        return cast(bool, resp.status == 200)
     except Exception:
         return False
 

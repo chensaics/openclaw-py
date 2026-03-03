@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import typer
+
+if TYPE_CHECKING:
+    from pyclaw.agents.providers.oauth_providers import OAuthTokens
 
 from pyclaw.terminal.palette import PALETTE
 from pyclaw.terminal.table import TableColumn, render_table
@@ -102,10 +107,10 @@ def _login_device_code(provider: str, profile_id: str | None) -> None:
     typer.echo(f"{p.success}Saved auth profile '{pid}' for {provider}.{p.reset}")
 
 
-async def _run_device_code_flow(provider: str) -> object | None:
+async def _run_device_code_flow(provider: str) -> OAuthTokens | None:
     import httpx
 
-    from pyclaw.agents.providers.oauth_providers import CopilotDeviceFlow
+    from pyclaw.agents.providers.oauth_providers import CopilotDeviceFlow, OAuthTokens
 
     flow = CopilotDeviceFlow()
     req_body = flow.build_device_code_request()

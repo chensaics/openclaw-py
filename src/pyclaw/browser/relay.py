@@ -18,7 +18,7 @@ import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +211,7 @@ class BrowserRelayManager:
             self._config.reconnect_delay_s * (2**attempt),
             self._config.max_reconnect_delay_s,
         )
-        return delay
+        return cast(float, delay)
 
     def should_reconnect(self, session_id: str) -> bool:
         """Check if a session should attempt reconnection."""

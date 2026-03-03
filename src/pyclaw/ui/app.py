@@ -12,7 +12,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import flet as ft
 
@@ -138,7 +138,7 @@ def _get_tool_display(tool_name: str) -> dict[str, str]:
     try:
         if display_path.is_file():
             data = json.loads(display_path.read_text(encoding="utf-8"))
-            return data.get(tool_name, {})
+            return cast(dict[str, str], data.get(tool_name, {}))
     except Exception:
         pass
     return {}
@@ -251,7 +251,7 @@ class ChatMessage(ft.Container):
             ),
         )
 
-        msg_row_controls = [avatar, bubble] if not is_user else [bubble, avatar]
+        msg_row_controls: list[ft.Control] = [avatar, bubble] if not is_user else [bubble, avatar]
         super().__init__(
             content=ft.Row(
                 msg_row_controls,
@@ -265,7 +265,7 @@ class ChatMessage(ft.Container):
 
     def update_content(self, new_content: str) -> None:
         """Update the message content (used for streaming)."""
-        self.content = new_content
+        self._message_content = new_content
         if self._content_control is not None:
             col = self.content_row_column
             if col and self._content_control in col.controls:
@@ -280,7 +280,7 @@ class ChatMessage(ft.Container):
     def content_row_column(self) -> ft.Column | None:
         """Access the inner Column holding message children."""
         try:
-            row = self.content
+            row = super().content
             if isinstance(row, ft.Row):
                 for ctrl in row.controls:
                     if isinstance(ctrl, ft.Container):
@@ -588,8 +588,9 @@ class ChatView(ft.Column):
     def append_delta(self, delta: str) -> None:
         """Append a text delta to the current streaming message."""
         if self._current_assistant_msg:
-            self._current_assistant_msg.content += delta
-            self._current_assistant_msg.update_content(self._current_assistant_msg.content)
+            new_content = (self._current_assistant_msg._message_content or "") + delta
+            self._current_assistant_msg._message_content = new_content
+            self._current_assistant_msg.update_content(new_content)
             self._safe_update(self._messages_list)
 
     def finish_streaming(self, usage: dict[str, Any] | None = None) -> None:
@@ -634,9 +635,9 @@ class ChatView(ft.Column):
                 else ft.Icons.CIRCLE_OUTLINED
             )
             step_indicators.append(
-                ft.Tooltip(
-                    message=step.get("description", f"Step {i+1}"),
+                ft.Container(
                     content=ft.Icon(icon, size=16, color=color),
+                    tooltip=step.get("description", f"Step {i+1}"),
                 )
             )
             if i < total - 1:
@@ -727,7 +728,8 @@ class ChatView(ft.Column):
         query = (self._search_bar.value or "").strip().lower()
         for ctrl in self._messages_list.controls:
             if isinstance(ctrl, ChatMessage):
-                ctrl.visible = not query or query in ctrl.content.lower()
+                msg_content = ctrl._message_content or ""
+                ctrl.visible = not query or query in msg_content.lower()
         self._safe_update(self._messages_list)
 
     def _safe_update(self, control: ft.Control) -> None:
@@ -1299,7 +1301,8 @@ class PyClawApp:
             if isinstance(row, ft.Row) and len(row.controls) >= 2:
                 dot = row.controls[0]
                 label = row.controls[1]
-                dot.bgcolor = ft.Colors.GREEN if self._gw_connected else ft.Colors.RED
+                if isinstance(dot, ft.Container):
+                    dot.bgcolor = ft.Colors.GREEN if self._gw_connected else ft.Colors.RED
                 if isinstance(label, ft.Text):
                     label.value = "Gateway" if self._gw_connected else "Offline"
             try:
@@ -1367,9 +1370,14 @@ class PyClawApp:
                 result = await self._gw.call("sessions.preview", {"path": session_id, "limit": 100})
                 messages = result.get("messages", [])
                 for msg in messages:
+                    raw_content = msg.get("content", "")
+                    content_str = (
+                        raw_content if isinstance(raw_content, str)
+                        else str(raw_content) if raw_content else ""
+                    )
                     self._chat_view.add_message(
                         msg.get("role", "user"),
-                        msg.get("content", ""),
+                        content_str,
                         msg.get("tool_calls"),
                     )
             except Exception:
@@ -1394,7 +1402,8 @@ class PyClawApp:
                 if session_id in jsonl.stem:
                     mgr = SessionManager.open(jsonl)
                     for msg in mgr.messages:
-                        self._chat_view.add_message(msg.role, msg.content or "")
+                        content = msg.content if isinstance(msg.content, str) else ""
+                        self._chat_view.add_message(msg.role, content)
                     return
 
     async def _handle_new_session(self) -> None:
@@ -1839,8 +1848,8 @@ class PyClawApp:
         if self._gw_connected and self._gw:
             try:
                 result = await self._gw.call("channels.list")
-                channels = result.get("channels", [])
-                self._channels_panel.update_channels(channels)
+                gw_channels = result.get("channels", [])
+                self._channels_panel.update_channels(gw_channels)
                 return
             except Exception:
                 pass
@@ -1902,7 +1911,9 @@ class PyClawApp:
             api_key = config.get("api_key")
             model_id = config.get("model", "gpt-4o")
 
-            provider_cfg = ModelProviderConfig(baseUrl="", apiKey=api_key) if api_key else None
+            provider_cfg = ModelProviderConfig(
+                base_url="", api_key=api_key
+            ) if api_key else None
             providers = {provider: provider_cfg} if provider_cfg else None
 
             channels_selected = config.get("channels", [])
@@ -1913,7 +1924,9 @@ class PyClawApp:
             cfg = PyClawConfig(
                 models=ModelsConfig(providers=providers) if providers else None,
                 agents=AgentsConfig(
-                    defaults=AgentDefaultsConfig(model=model_id, provider=provider)
+                    defaults=AgentDefaultsConfig(
+                        model=model_id, provider=provider, workspace_dir=None
+                    )
                 ),
                 channels=ChannelsConfig(**channels_data) if channels_data else None,
             )

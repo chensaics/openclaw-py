@@ -32,7 +32,7 @@ async def run_node_host(
 
     async with websockets.connect(gateway_url) as ws:
         # Authenticate
-        connect_msg = {
+        connect_msg: dict[str, Any] = {
             "id": 1,
             "method": "connect",
             "params": {

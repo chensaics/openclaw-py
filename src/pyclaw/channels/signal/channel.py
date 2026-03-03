@@ -91,7 +91,7 @@ class SignalChannel(ChannelPlugin):
 
     async def _health_check(self) -> bool:
         """Check if signal-cli daemon is running."""
-        import aiohttp  # type: ignore[import-untyped]
+        import aiohttp
 
         try:
             async with (
@@ -100,7 +100,7 @@ class SignalChannel(ChannelPlugin):
                     f"{self._base_url}/api/v1/check", timeout=aiohttp.ClientTimeout(total=5)
                 ) as resp,
             ):
-                return resp.status == 200
+                return bool(resp.status == 200)
         except Exception:
             return False
 

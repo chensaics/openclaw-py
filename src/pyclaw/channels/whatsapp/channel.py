@@ -10,7 +10,7 @@ import asyncio
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 
@@ -104,14 +104,14 @@ class WhatsAppChannel(ChannelPlugin):
 
     async def _start_neonize(self) -> None:
         """Start using neonize library."""
-        import neonize  # type: ignore[import-untyped]
+        import neonize
 
         auth_path = self._auth_dir or Path.home() / ".pyclaw" / "whatsapp"
         auth_path.mkdir(parents=True, exist_ok=True)
 
         client = neonize.NewClient(str(auth_path / "session.db"))
 
-        @client.event
+        @client.event  # type: ignore[untyped-decorator]
         def on_message(client_ref: Any, message: Any) -> None:
             if not self.message_callback:
                 return
@@ -250,16 +250,17 @@ def _extract_text(message: Any) -> str:
     if hasattr(message, "Message") and message.Message:
         msg = message.Message
         if hasattr(msg, "conversation") and msg.conversation:
-            return msg.conversation
+            return str(msg.conversation)
         if hasattr(msg, "extendedTextMessage") and msg.extendedTextMessage:
-            return msg.extendedTextMessage.text or ""
+            return str(msg.extendedTextMessage.text or "")
     return ""
 
 
 def _extract_sender(message: Any) -> str:
     if hasattr(message, "Info") and hasattr(message.Info, "MessageSource"):
         src = message.Info.MessageSource
-        return getattr(src, "Sender", "") or getattr(src, "Chat", "")
+        val = getattr(src, "Sender", "") or getattr(src, "Chat", "")
+        return str(val) if val else ""
     return ""
 
 
@@ -277,7 +278,7 @@ def _extract_chat_id(message: Any) -> str:
 
 def _extract_message_id(message: Any) -> str:
     if hasattr(message, "Info") and hasattr(message.Info, "ID"):
-        return message.Info.ID
+        return cast(str, message.Info.ID)
     return ""
 
 

@@ -95,10 +95,15 @@ class NextcloudChannel(ChannelPlugin):
             if not text:
                 continue
 
+            sender_name = msg_data.get("actorDisplayName", sender_id)
+            chat_id = self._room_token
+
             msg = ChannelMessage(
-                channel="nextcloud",
+                channel_id="nextcloud",
                 sender_id=sender_id,
+                sender_name=sender_name,
                 text=text,
+                chat_id=chat_id,
                 raw=msg_data,
             )
 

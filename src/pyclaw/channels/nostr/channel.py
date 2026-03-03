@@ -149,9 +149,11 @@ class NostrChannel(ChannelPlugin):
             return
 
         channel_msg = ChannelMessage(
-            channel="nostr",
+            channel_id="nostr",
             sender_id=sender_pubkey,
+            sender_name=sender_pubkey[:16] + ("..." if len(sender_pubkey) > 16 else ""),
             text=text,
+            chat_id=sender_pubkey,
             raw=event,
         )
 

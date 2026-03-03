@@ -39,7 +39,9 @@ for cmd in python3.13 python3.12 python3 python; do
         if [[ -n "$ver" ]]; then
             major="${ver%%.*}"
             minor="${ver#*.}"
-            if [[ "$major" -ge "$MIN_PYTHON_MAJOR" && "$minor" -ge "$MIN_PYTHON_MINOR" ]]; then
+            ver_num=$((major * 100 + minor))
+            min_num=$((MIN_PYTHON_MAJOR * 100 + MIN_PYTHON_MINOR))
+            if [[ "$ver_num" -ge "$min_num" ]]; then
                 PYTHON="$cmd"
                 break
             fi
@@ -80,9 +82,9 @@ fi
 # --- Build install spec ---
 if [[ "$FROM_SOURCE" == true ]]; then
     _info "Installing from source..."
-    TMPDIR=$(mktemp -d)
-    git clone --depth 1 "https://github.com/${REPO}.git" "$TMPDIR/pyclaw"
-    SPEC="$TMPDIR/pyclaw"
+    CLONE_DIR=$(mktemp -d)
+    git clone --depth 1 "https://github.com/${REPO}.git" "$CLONE_DIR/pyclaw"
+    SPEC="$CLONE_DIR/pyclaw"
 else
     SPEC="pyclaw"
     if [[ -n "$VERSION" ]]; then
@@ -104,26 +106,17 @@ if [[ -n "$EXTRAS" ]]; then
 fi
 
 # --- Install ---
+INSTALL_TARGET="$SPEC"
+if [[ -n "$EXTRA_SPEC" ]]; then
+    INSTALL_TARGET="${SPEC}[${EXTRA_SPEC}]"
+fi
+
 if [[ "$INSTALLER" == "pipx" ]]; then
-    if [[ -n "$EXTRA_SPEC" && "$FROM_SOURCE" == true ]]; then
-        pipx install "${SPEC}[${EXTRA_SPEC}]" --python "$PYTHON"
-    elif [[ -n "$EXTRA_SPEC" ]]; then
-        pipx install "${SPEC}[${EXTRA_SPEC}]" --python "$PYTHON"
-    else
-        pipx install "$SPEC" --python "$PYTHON"
-    fi
+    pipx install "$INSTALL_TARGET" --python "$PYTHON"
 elif [[ "$INSTALLER" == "uv" ]]; then
-    if [[ -n "$EXTRA_SPEC" ]]; then
-        uv tool install "${SPEC}[${EXTRA_SPEC}]" --python "$PYTHON"
-    else
-        uv tool install "$SPEC" --python "$PYTHON"
-    fi
+    uv tool install "$INSTALL_TARGET" --python "$PYTHON"
 else
-    if [[ -n "$EXTRA_SPEC" ]]; then
-        "$PYTHON" -m pip install "${SPEC}[${EXTRA_SPEC}]"
-    else
-        "$PYTHON" -m pip install "$SPEC"
-    fi
+    "$PYTHON" -m pip install "$INSTALL_TARGET"
 fi
 
 # --- Verify ---
@@ -142,6 +135,6 @@ else
 fi
 
 # Cleanup
-if [[ "$FROM_SOURCE" == true && -d "${TMPDIR:-}" ]]; then
-    rm -rf "$TMPDIR"
+if [[ "$FROM_SOURCE" == true && -d "${CLONE_DIR:-}" ]]; then
+    rm -rf "$CLONE_DIR"
 fi

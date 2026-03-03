@@ -119,9 +119,11 @@ class MattermostChannel(ChannelPlugin):
             return
 
         msg = ChannelMessage(
-            channel="mattermost",
+            channel_id="mattermost",
             sender_id=user_id,
+            sender_name=user_id,
             text=text,
+            chat_id=channel_id,
             raw={"post": post, "channel_id": channel_id},
         )
 

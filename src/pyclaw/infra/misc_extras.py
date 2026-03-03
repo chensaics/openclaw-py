@@ -23,7 +23,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -301,7 +301,7 @@ class RespawnTracker:
             self._config.initial_delay_s * (2 ** (self._count - 1)),
             self._config.max_delay_s,
         )
-        return delay
+        return cast(float, delay)
 
     def reset(self) -> None:
         self._count = 0

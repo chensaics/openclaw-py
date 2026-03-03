@@ -12,7 +12,7 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -194,4 +194,4 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
     norm_b = sum(x * x for x in b) ** 0.5
     if norm_a == 0 or norm_b == 0:
         return 0.0
-    return dot / (norm_a * norm_b)
+    return cast(float, dot / (norm_a * norm_b))

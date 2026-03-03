@@ -64,7 +64,7 @@ body:
     attributes:
       label: Install method
       description: How pyclaw was installed or launched.
-      placeholder: npm global / pnpm dev / docker / mac app
+      placeholder: pip / pipx / brew / docker / from source
   - type: textarea
     id: logs
     attributes:

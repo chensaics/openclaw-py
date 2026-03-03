@@ -16,7 +16,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ class MoonshotVideoProvider:
     def parse_response(self, response: dict[str, Any]) -> str:
         choices = response.get("choices", [])
         if choices:
-            return choices[0].get("message", {}).get("content", "")
+            return cast(str, choices[0].get("message", {}).get("content", ""))
         return ""
 
 
@@ -169,7 +169,7 @@ class MiniMaxVideoProvider:
     def parse_response(self, response: dict[str, Any]) -> str:
         choices = response.get("choices", [])
         if choices:
-            return choices[0].get("message", {}).get("content", "")
+            return cast(str, choices[0].get("message", {}).get("content", ""))
         return ""
 
 

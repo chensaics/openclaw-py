@@ -14,7 +14,7 @@ import re
 import shutil
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,8 @@ def _parse_noisy_json(raw: str) -> dict[str, Any]:
     if start < 0 or end < start:
         return {}
     try:
-        return json.loads(raw[start : end + 1])
+        result: dict[str, Any] = json.loads(raw[start : end + 1])
+        return result
     except json.JSONDecodeError:
         return {}
 
@@ -119,10 +120,10 @@ async def get_tailnet_hostname() -> str:
     self_info = status.get("Self", {})
     dns_name = self_info.get("DNSName", "")
     if dns_name:
-        return dns_name.rstrip(".")
+        return cast(str, dns_name.rstrip("."))
     ips = self_info.get("TailscaleIPs", [])
     if ips:
-        return ips[0]
+        return cast(str, ips[0])
     raise RuntimeError("Cannot determine Tailscale hostname: no DNS name or IPs found")
 
 

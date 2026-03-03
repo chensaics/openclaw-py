@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, cast
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class MLXBackend:
 
     def _format_messages(self, messages: list[dict[str, str]]) -> str:
         if hasattr(self._tokenizer, "apply_chat_template"):
-            return self._tokenizer.apply_chat_template(
+            return cast(str, self._tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True,
-            )
+            ))
         parts = []
         for msg in messages:
             role = msg.get("role", "user")

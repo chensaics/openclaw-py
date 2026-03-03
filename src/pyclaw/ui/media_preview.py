@@ -114,7 +114,7 @@ def _build_video_preview(source: str, max_width: int, max_height: int) -> ft.Con
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=4,
                     ),
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment.CENTER,
                     width=max_width,
                     height=max_height // 2,
                 ),
@@ -135,7 +135,7 @@ def _open_lightbox(e: Any, source: str) -> None:
     if not page:
         return
 
-    dialog = ft.AlertDialog(
+    dialog: ft.AlertDialog = ft.AlertDialog(
         content=ft.Image(src=source, fit=ft.ImageFit.CONTAIN),
         actions=[ft.TextButton(t("media.close"), on_click=lambda _: page.close(dialog))],
     )

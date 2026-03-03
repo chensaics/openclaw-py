@@ -54,9 +54,12 @@ def _load_and_migrate_legacy(legacy_path: Path) -> AuthProfileStore:
                 store.profiles[pid] = ApiKeyCredential(provider=provider, key=value.strip())
             elif isinstance(value, dict):
                 # Already structured
-                store.profiles[provider] = AuthProfileStore.from_dict(
+                parsed = AuthProfileStore.from_dict(
                     {"profiles": {provider: value}}
-                ).profiles.get(provider, store.profiles.get(provider))  # type: ignore[arg-type]
+                )
+                cred = parsed.profiles.get(provider) or store.profiles.get(provider)
+                if cred is not None:
+                    store.profiles[provider] = cred
     return store
 
 

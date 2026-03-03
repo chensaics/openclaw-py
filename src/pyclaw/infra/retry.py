@@ -9,7 +9,7 @@ import asyncio
 import math
 import random
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar, cast
 
 T = TypeVar("T")
 
@@ -42,7 +42,7 @@ def _compute_delay(attempt: int, config: RetryConfig) -> float:
     capped = min(base, config.max_delay_ms)
     jitter_range = capped * config.jitter
     jittered = capped + random.uniform(-jitter_range, jitter_range)
-    return max(0.0, jittered) / 1000.0
+    return cast(float, max(0.0, jittered) / 1000.0)
 
 
 async def retry_async(

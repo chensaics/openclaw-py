@@ -53,7 +53,7 @@ class AnthropicMediaProvider:
                         "type": "image",
                         "source": {"type": "base64", "media_type": media_type, "data": b64},
                     },
-                    {"type": "text", "text": request.prompt or "Describe this image in detail."},
+                    {"type": "text", "text": (request.prompt or "Describe this image in detail.")},
                 ],
             }],
         )

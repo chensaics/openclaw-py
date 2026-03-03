@@ -7,7 +7,7 @@ Requires ``botbuilder-core`` and ``aiohttp``.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 
@@ -93,9 +93,11 @@ class MSTeamsChannel(ChannelPlugin):
         is_group = conversation.get("conversationType") in ("groupChat", "channel")
 
         msg = ChannelMessage(
-            channel="msteams",
+            channel_id="msteams",
             sender_id=sender_id,
+            sender_name=sender_name or sender_id,
             text=text,
+            chat_id=conversation.get("id", "") or sender_id,
             raw=body,
             is_group=is_group,
             group_id=conversation.get("id", ""),
@@ -147,5 +149,5 @@ class MSTeamsChannel(ChannelPlugin):
         async with aiohttp.ClientSession() as session, session.post(url, data=data) as resp:
             if resp.status == 200:
                 result = await resp.json()
-                return result.get("access_token")
+                return cast(str | None, result.get("access_token"))
         return None

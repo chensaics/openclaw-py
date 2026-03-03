@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 
@@ -115,7 +115,7 @@ class QQChannel(ChannelPlugin):
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
-                return resp.json().get("url")
+                return cast(str | None, resp.json().get("url"))
             logger.error("QQ gateway request failed: %d", resp.status_code)
             return None
 
@@ -125,7 +125,7 @@ class QQChannel(ChannelPlugin):
         except ImportError:
             raise RuntimeError("websockets required for QQ channel")
 
-        async with websockets.connect(gateway_url) as ws:  # type: ignore[attr-defined]
+        async with websockets.connect(gateway_url) as ws:
             logger.info("QQ WebSocket connected")
 
             hello = json.loads(await ws.recv())

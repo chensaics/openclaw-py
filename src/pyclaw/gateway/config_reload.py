@@ -227,6 +227,7 @@ class ConfigFileWatcher:
     def _load_config(self) -> dict[str, Any]:
         try:
             text = Path(self._config.config_path).read_text(encoding="utf-8")
-            return json.loads(text)
+            result: dict[str, Any] = json.loads(text)
+            return result
         except Exception:
             return {}

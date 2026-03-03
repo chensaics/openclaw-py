@@ -1270,10 +1270,10 @@ def uninstall(
     """Uninstall pyclaw. With --purge, removes all data and config."""
     import shutil
 
-    from pyclaw.config.paths import resolve_config_dir, resolve_state_dir
+    from pyclaw.config.paths import resolve_config_path, resolve_state_dir
 
     if purge:
-        for d in (resolve_config_dir(), resolve_state_dir()):
+        for d in (resolve_config_path().parent, resolve_state_dir()):
             if d.exists():
                 shutil.rmtree(d, ignore_errors=True)
                 typer.echo(f"Removed: {d}")

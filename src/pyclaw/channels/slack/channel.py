@@ -92,7 +92,7 @@ class SlackChannel(ChannelPlugin):
         await self._app.client.chat_postMessage(**kwargs)
 
     def _register_handlers(self) -> None:
-        @self._app.event("message")
+        @self._app.event("message")  # type: ignore[untyped-decorator]
         async def on_message(event: dict[str, Any], say: Any) -> None:
             # Ignore bot messages
             if event.get("bot_id") or event.get("subtype"):
@@ -123,7 +123,7 @@ class SlackChannel(ChannelPlugin):
             if self.message_callback:
                 await self.message_callback(msg)
 
-        @self._app.event("app_mention")
+        @self._app.event("app_mention")  # type: ignore[untyped-decorator]
         async def on_mention(event: dict[str, Any], say: Any) -> None:
             # Same processing as message
             await on_message(event, say)

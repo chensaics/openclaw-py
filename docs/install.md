@@ -22,10 +22,10 @@ curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/
 
 ```bash
 # llama.cpp 后端
-curl -fsSL .../install.sh | bash -s -- --extras llamacpp
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash -s -- --extras llamacpp
 
 # MLX 后端（Apple Silicon）
-curl -fsSL .../install.sh | bash -s -- --extras mlx
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/main/scripts/install.sh | bash -s -- --extras mlx
 ```
 
 ### Windows (PowerShell)

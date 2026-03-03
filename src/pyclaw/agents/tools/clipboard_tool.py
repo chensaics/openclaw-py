@@ -30,11 +30,8 @@ class ClipboardReadTool(BaseTool):
 
         content = clipboard_read()
         if content:
-            return ToolResult(tool_call_id=tool_call_id, output=content)
-        return ToolResult(
-            tool_call_id=tool_call_id,
-            output="Clipboard is empty or could not be read.",
-        )
+            return ToolResult.text(content)
+        return ToolResult.text("Clipboard is empty or could not be read.")
 
 
 class ClipboardWriteTool(BaseTool):
@@ -68,20 +65,9 @@ class ClipboardWriteTool(BaseTool):
 
         text = arguments.get("text", "")
         if not text:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output="No text provided.",
-                is_error=True,
-            )
+            return ToolResult.text("No text provided.", is_error=True)
 
         success = clipboard_write(text)
         if success:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output=f"Copied {len(text)} characters to clipboard.",
-            )
-        return ToolResult(
-            tool_call_id=tool_call_id,
-            output="Failed to write to clipboard.",
-            is_error=True,
-        )
+            return ToolResult.text(f"Copied {len(text)} characters to clipboard.")
+        return ToolResult.text("Failed to write to clipboard.", is_error=True)

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
+from typing import Any
 
 import typer
 
@@ -16,8 +18,6 @@ def message_send(
     auth_token: str | None = None,
 ) -> None:
     """Send a message through the gateway or directly to a channel."""
-    import asyncio
-
     asyncio.run(_send_via_gateway(text, channel, recipient, gateway_url, auth_token))
 
 
@@ -39,7 +39,7 @@ async def _send_via_gateway(
     try:
         async with websockets.connect(url) as ws:
             # Authenticate
-            connect_msg = {
+            connect_msg: dict[str, Any] = {
                 "id": 1,
                 "method": "connect",
                 "params": {
@@ -51,14 +51,14 @@ async def _send_via_gateway(
                 connect_msg["params"]["token"] = auth_token
 
             await ws.send(json.dumps(connect_msg))
-            response = json.loads(await ws.recv())
+            response: dict[str, Any] = json.loads(await ws.recv())
 
             if response.get("error"):
                 typer.echo(f"Connection error: {response['error']}", err=True)
                 raise typer.Exit(1)
 
             # Send chat message
-            chat_msg = {
+            chat_msg: dict[str, Any] = {
                 "id": 2,
                 "method": "chat.send",
                 "params": {

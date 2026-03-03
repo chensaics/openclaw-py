@@ -55,7 +55,7 @@ class BlueBubblesChannel(ChannelPlugin):
             self._server = None
 
     async def send(self, reply: ChannelReply) -> None:
-        await self._send_message(reply.recipient, reply.text, reply.media_url)
+        await self._send_message(reply.recipient or "", reply.text, reply.media_url)
 
     def on_message(self, handler: Any) -> None:
         self._handler = handler
@@ -84,14 +84,17 @@ class BlueBubblesChannel(ChannelPlugin):
         if self._allow_from and sender not in self._allow_from:
             return web.Response(status=200)
 
+        sender_name = data.get("handle", {}).get("displayName") or sender
         msg = ChannelMessage(
-            channel="bluebubbles",
+            channel_id="bluebubbles",
             sender_id=sender,
+            sender_name=sender_name,
             text=text,
+            chat_id=chat_guid or sender,
             raw=body,
             is_group=is_group,
             group_id=chat_guid if is_group else "",
-            display_name=data.get("handle", {}).get("displayName", sender),
+            display_name=sender_name,
         )
 
         if self._handler:

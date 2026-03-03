@@ -144,7 +144,7 @@ class ScreenshotService:
         except ImportError:
             return result
 
-        img = Image.open(io.BytesIO(result.data))
+        img: Image.Image = Image.open(io.BytesIO(result.data))
         w, h = img.size
         result.width = w
         result.height = h
@@ -164,7 +164,7 @@ class ScreenshotService:
         )
         new_w = int(w * ratio)
         new_h = int(h * ratio)
-        img = img.resize((new_w, new_h), Image.LANCZOS)
+        img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
         buf = io.BytesIO()
         fmt = "PNG" if result.format == ScreenshotFormat.PNG else "JPEG"

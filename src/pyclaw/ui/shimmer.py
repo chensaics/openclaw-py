@@ -13,7 +13,7 @@ from typing import Optional
 try:
     import flet as ft
 except ImportError:
-    ft = None  # type: ignore[assignment]
+    ft = None
 
 from pyclaw.ui.theme import get_theme
 
@@ -112,7 +112,7 @@ def shimmer_list_tile(count: int = 5) -> "ft.Column":
     return ft.Column(tiles, spacing=0)
 
 
-class ShimmerContainer(ft.Container if ft else object):  # type: ignore[misc]
+class ShimmerContainer(ft.Container if ft else object):
     """Container with a pulsing opacity animation (shimmer effect).
 
     Wraps any skeleton layout and toggles opacity between 0.3 and 1.0
@@ -186,18 +186,20 @@ async def stagger_fade_in(
     The controls must already be added to the page/container.
     """
     for ctrl in controls:
-        ctrl.opacity = 0
-        ctrl.offset = ft.Offset(0, 0.05)
-        ctrl.animate_opacity = ft.Animation(duration_ms, ft.AnimationCurve.EASE_OUT)
-        ctrl.animate_offset = ft.Animation(duration_ms, ft.AnimationCurve.EASE_OUT)
+        if isinstance(ctrl, ft.Container):
+            ctrl.opacity = 0
+            ctrl.offset = ft.Offset(0, 0.05)
+            ctrl.animate_opacity = ft.Animation(duration_ms, ft.AnimationCurve.EASE_OUT)
+            ctrl.animate_offset = ft.Animation(duration_ms, ft.AnimationCurve.EASE_OUT)
 
     target = page
     if target:
         target.update()
 
     for ctrl in controls:
-        ctrl.opacity = 1
-        ctrl.offset = ft.Offset(0, 0)
+        if isinstance(ctrl, ft.Container):
+            ctrl.opacity = 1
+            ctrl.offset = ft.Offset(0, 0)
         if target:
             target.update()
         await asyncio.sleep(delay_ms / 1000.0)

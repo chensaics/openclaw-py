@@ -53,7 +53,7 @@ def detect_config_version(config: dict[str, Any]) -> str:
         parts = schema.rstrip("/").split("/")
         for part in reversed(parts):
             if part.startswith("v") and part[1:].isdigit():
-                return part
+                return str(part)
         return "v1"
 
     # Explicit version

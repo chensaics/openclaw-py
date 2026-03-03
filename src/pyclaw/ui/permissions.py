@@ -65,7 +65,7 @@ async def check_permission(kind: PermissionKind) -> PermissionResult:
         return PermissionResult(kind=kind, status=PermissionStatus.GRANTED, can_request_again=False)
 
     try:
-        import flet as ft  # type: ignore[import-untyped]
+        import flet as ft
 
         ph = ft.PermissionHandler()
         status = await ph.check_permission(kind.value)
@@ -86,7 +86,7 @@ async def request_permission(kind: PermissionKind) -> PermissionResult:
         return PermissionResult(kind=kind, status=PermissionStatus.GRANTED, can_request_again=False)
 
     try:
-        import flet as ft  # type: ignore[import-untyped]
+        import flet as ft
 
         ph = ft.PermissionHandler()
         status = await ph.request_permission(kind.value)
@@ -119,7 +119,7 @@ async def ensure_permission(kind: PermissionKind, page: Any = None) -> bool:
 
     if page is not None:
         try:
-            import flet as ft  # type: ignore[import-untyped]
+            import flet as ft
 
             sb = ft.SnackBar(
                 ft.Text(f"Permission denied: {kind.value}"),

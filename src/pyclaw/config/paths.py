@@ -4,6 +4,7 @@ Compatible with the TypeScript version's path conventions.
 """
 
 import os
+from collections.abc import Mapping
 from pathlib import Path
 
 CONFIG_FILENAME = "pyclaw.json"
@@ -17,7 +18,7 @@ def _homedir() -> Path:
     return Path.home()
 
 
-def resolve_state_dir(env: dict[str, str] | None = None) -> Path:
+def resolve_state_dir(env: Mapping[str, str] | None = None) -> Path:
     """Resolve the pyclaw state directory.
 
     Checks PYCLAW_STATE_DIR env var, then falls back to ~/.pyclaw.
@@ -41,7 +42,7 @@ def resolve_state_dir(env: dict[str, str] | None = None) -> Path:
     return new_dir
 
 
-def resolve_config_path(env: dict[str, str] | None = None) -> Path:
+def resolve_config_path(env: Mapping[str, str] | None = None) -> Path:
     """Resolve the config file path.
 
     Checks PYCLAW_CONFIG_PATH env var, then looks in state dir.
@@ -92,7 +93,7 @@ def resolve_workspace_dir(state_dir: Path | None = None) -> Path:
     return sd / "workspace"
 
 
-def resolve_gateway_port(env: dict[str, str] | None = None) -> int:
+def resolve_gateway_port(env: Mapping[str, str] | None = None) -> int:
     e = env or os.environ
     if port_str := e.get("PYCLAW_GATEWAY_PORT"):
         return int(port_str)

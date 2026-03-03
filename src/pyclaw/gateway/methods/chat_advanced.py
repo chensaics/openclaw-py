@@ -77,12 +77,12 @@ def validate_chat_params(params: dict[str, Any]) -> tuple[ChatParams | None, str
     for att in params.get("attachments", []):
         if isinstance(att, dict):
             attachments.append(ChatAttachment(
-                filename=att.get("filename", ""),
-                mime_type=att.get("mimeType", att.get("mime_type", "")),
-                size_bytes=att.get("size", att.get("size_bytes", 0)),
-                url=att.get("url", ""),
-                base64_data=att.get("base64", att.get("base64_data", "")),
-                attachment_type=att.get("type", "file"),
+                filename=str(att.get("filename") or att.get("filename", "") or ""),
+                mime_type=str(att.get("mimeType") or att.get("mime_type", "") or ""),
+                size_bytes=int(att.get("size") or att.get("size_bytes", 0) or 0),
+                url=str(att.get("url", "") or ""),
+                base64_data=str(att.get("base64") or att.get("base64_data", "") or ""),
+                attachment_type=str(att.get("type", "file") or "file"),
             ))
 
     temperature = params.get("temperature")

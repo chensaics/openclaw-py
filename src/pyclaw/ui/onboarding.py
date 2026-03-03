@@ -96,8 +96,8 @@ class OnboardingWizard(ft.Column):
             # Change "Next" to "Finish" on last step
             finish_btn = nav_row.controls[-1]
             if isinstance(finish_btn, ft.Button):
-                finish_btn.text = (
-                    t("onboarding.finish") if self._step == total - 1 else t("onboarding.next")
+                finish_btn.content = (
+                    ft.Text(t("onboarding.finish") if self._step == total - 1 else t("onboarding.next"))
                 )
 
         if self._step == 0:

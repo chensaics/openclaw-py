@@ -101,14 +101,17 @@ class LINEChannel(ChannelPlugin):
         reply_token = event.get("replyToken", "")
         group_id = source.get("groupId", "")
         room_id = source.get("roomId", "")
+        chat_id = group_id or room_id or reply_token or user_id
 
         if not text:
             return
 
         msg = ChannelMessage(
-            channel="line",
+            channel_id="line",
             sender_id=user_id,
+            sender_name=user_id,
             text=text,
+            chat_id=chat_id,
             raw={
                 "event": event,
                 "reply_token": reply_token,

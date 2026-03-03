@@ -133,7 +133,7 @@ class DingTalkChannel(ChannelPlugin):
         except ImportError:
             raise RuntimeError("websockets required for DingTalk Stream Mode")
 
-        async with websockets.connect(endpoint) as ws:  # type: ignore[attr-defined]
+        async with websockets.connect(endpoint) as ws:
             logger.info("DingTalk stream connected")
             async for raw in ws:
                 try:

@@ -82,7 +82,7 @@ class IMessageChannel(ChannelPlugin):
         if not self._client:
             raise RuntimeError("iMessage client not started")
 
-        params = _parse_target(reply.recipient)
+        params = _parse_target(reply.recipient or "")
         params["text"] = reply.text
 
         if reply.media_url:
@@ -107,10 +107,13 @@ class IMessageChannel(ChannelPlugin):
         if self._allow_from and sender not in self._allow_from:
             return
 
+        chat_id = msg_data.get("chatId", sender)
         msg = ChannelMessage(
-            channel="imessage",
+            channel_id="imessage",
             sender_id=sender,
+            sender_name=msg_data.get("senderName", sender) or sender,
             text=msg_data.get("text", ""),
+            chat_id=chat_id or sender,
             raw=msg_data,
             is_group=bool(msg_data.get("isGroup")),
             group_id=msg_data.get("chatId", ""),

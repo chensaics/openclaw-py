@@ -53,7 +53,7 @@ class GoogleChatChannel(ChannelPlugin):
             self._server = None
 
     async def send(self, reply: ChannelReply) -> None:
-        await self._send_message(reply.recipient, reply.text)
+        await self._send_message(reply.recipient or "", reply.text)
 
     def on_message(self, handler: Any) -> None:
         self._handler = handler
@@ -88,9 +88,11 @@ class GoogleChatChannel(ChannelPlugin):
         thread_name = message.get("thread", {}).get("name", "")
 
         msg = ChannelMessage(
-            channel="googlechat",
+            channel_id="googlechat",
             sender_id=sender_id,
+            sender_name=sender_name or sender_id,
             text=text,
+            chat_id=space_name if is_group else sender_id,
             raw=body,
             is_group=is_group,
             group_id=space_name if is_group else "",

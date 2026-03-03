@@ -38,14 +38,13 @@ class ReadPdfTool(BaseTool):
         end = arguments.get("end_page")
 
         if not os.path.isfile(file_path):
-            return ToolResult(tool_call_id=tool_call_id, content=f"File not found: {file_path}", is_error=True)
+            return ToolResult.text(f"File not found: {file_path}", is_error=True)
 
         try:
             from pypdf import PdfReader
         except ImportError:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content="pypdf required. Install with: pip install 'pyclaw[office]'",
+            return ToolResult.text(
+                "pypdf required. Install with: pip install 'pyclaw[office]'",
                 is_error=True,
             )
 
@@ -64,9 +63,9 @@ class ReadPdfTool(BaseTool):
             content = "\n\n".join(parts)
             if len(content) > 100000:
                 content = content[:100000] + "\n\n... (truncated)"
-            return ToolResult(tool_call_id=tool_call_id, content=content)
+            return ToolResult.text(content)
         except Exception as exc:
-            return ToolResult(tool_call_id=tool_call_id, content=f"Error reading PDF: {exc}", is_error=True)
+            return ToolResult.text(f"Error reading PDF: {exc}", is_error=True)
 
 
 class ReadDocxTool(BaseTool):
@@ -93,14 +92,13 @@ class ReadDocxTool(BaseTool):
     async def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> ToolResult:
         file_path = arguments.get("file_path", "")
         if not os.path.isfile(file_path):
-            return ToolResult(tool_call_id=tool_call_id, content=f"File not found: {file_path}", is_error=True)
+            return ToolResult.text(f"File not found: {file_path}", is_error=True)
 
         try:
             from docx import Document
         except ImportError:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content="python-docx required. Install with: pip install 'pyclaw[office]'",
+            return ToolResult.text(
+                "python-docx required. Install with: pip install 'pyclaw[office]'",
                 is_error=True,
             )
 
@@ -126,9 +124,9 @@ class ReadDocxTool(BaseTool):
             content = "\n".join(parts)
             if len(content) > 100000:
                 content = content[:100000] + "\n\n... (truncated)"
-            return ToolResult(tool_call_id=tool_call_id, content=content)
+            return ToolResult.text(content)
         except Exception as exc:
-            return ToolResult(tool_call_id=tool_call_id, content=f"Error reading DOCX: {exc}", is_error=True)
+            return ToolResult.text(f"Error reading DOCX: {exc}", is_error=True)
 
 
 class ReadXlsxTool(BaseTool):
@@ -160,14 +158,13 @@ class ReadXlsxTool(BaseTool):
         max_rows = arguments.get("max_rows", 500)
 
         if not os.path.isfile(file_path):
-            return ToolResult(tool_call_id=tool_call_id, content=f"File not found: {file_path}", is_error=True)
+            return ToolResult.text(f"File not found: {file_path}", is_error=True)
 
         try:
             from openpyxl import load_workbook
         except ImportError:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content="openpyxl required. Install with: pip install 'pyclaw[office]'",
+            return ToolResult.text(
+                "openpyxl required. Install with: pip install 'pyclaw[office]'",
                 is_error=True,
             )
 
@@ -195,9 +192,9 @@ class ReadXlsxTool(BaseTool):
             content = "\n".join(parts)
             if len(content) > 100000:
                 content = content[:100000] + "\n\n... (truncated)"
-            return ToolResult(tool_call_id=tool_call_id, content=content)
+            return ToolResult.text(content)
         except Exception as exc:
-            return ToolResult(tool_call_id=tool_call_id, content=f"Error reading XLSX: {exc}", is_error=True)
+            return ToolResult.text(f"Error reading XLSX: {exc}", is_error=True)
 
 
 class ReadPptxTool(BaseTool):
@@ -224,14 +221,13 @@ class ReadPptxTool(BaseTool):
     async def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> ToolResult:
         file_path = arguments.get("file_path", "")
         if not os.path.isfile(file_path):
-            return ToolResult(tool_call_id=tool_call_id, content=f"File not found: {file_path}", is_error=True)
+            return ToolResult.text(f"File not found: {file_path}", is_error=True)
 
         try:
             from pptx import Presentation
         except ImportError:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                content="python-pptx required. Install with: pip install 'pyclaw[office]'",
+            return ToolResult.text(
+                "python-pptx required. Install with: pip install 'pyclaw[office]'",
                 is_error=True,
             )
 
@@ -261,6 +257,6 @@ class ReadPptxTool(BaseTool):
             content = "\n\n".join(parts)
             if len(content) > 100000:
                 content = content[:100000] + "\n\n... (truncated)"
-            return ToolResult(tool_call_id=tool_call_id, content=content)
+            return ToolResult.text(content)
         except Exception as exc:
-            return ToolResult(tool_call_id=tool_call_id, content=f"Error reading PPTX: {exc}", is_error=True)
+            return ToolResult.text(f"Error reading PPTX: {exc}", is_error=True)

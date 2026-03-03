@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, cast
 
 from .manager import get_active_model, get_local_model
 from .schema import BackendType
@@ -55,7 +55,7 @@ def local_chat(
     temperature: float = 0.7,
 ) -> dict[str, Any]:
     backend = _load_backend(model_id)
-    return backend.generate(messages, max_tokens=max_tokens, temperature=temperature)
+    return cast(dict[str, Any], backend.generate(messages, max_tokens=max_tokens, temperature=temperature))
 
 
 async def local_chat_stream(

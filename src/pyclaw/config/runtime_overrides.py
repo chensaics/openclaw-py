@@ -16,7 +16,7 @@ import copy
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ def _set_nested(data: dict[str, Any], key: str, value: Any) -> None:
 
 def redact_config(config: dict[str, Any]) -> dict[str, Any]:
     """Create a copy of config with sensitive values redacted."""
-    return _redact_recursive(copy.deepcopy(config))
+    return cast(dict[str, Any], _redact_recursive(copy.deepcopy(config)))
 
 
 def _redact_recursive(data: Any) -> Any:

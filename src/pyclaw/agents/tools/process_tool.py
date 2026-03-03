@@ -75,13 +75,13 @@ class ProcessTool(BaseTool):
 
         if action == "list":
             items = []
-            for bp in self._processes.values():
+            for proc_item in self._processes.values():
                 items.append(
                     {
-                        "pid": bp.pid,
-                        "label": bp.label,
-                        "done": bp.done,
-                        "returncode": bp.proc.returncode,
+                        "pid": proc_item.pid,
+                        "label": proc_item.label,
+                        "done": proc_item.done,
+                        "returncode": proc_item.proc.returncode,
                     }
                 )
             return ToolResult.text(json.dumps(items, indent=2))
@@ -106,27 +106,27 @@ class ProcessTool(BaseTool):
             pid = arguments.get("pid")
             if pid is None:
                 return ToolResult.text("Error: pid is required for poll.", is_error=True)
-            bp = self._processes.get(pid)
-            if not bp:
+            bg_proc = self._processes.get(pid)
+            if not bg_proc:
                 return ToolResult.text(f"No tracked process with pid={pid}.", is_error=True)
 
             timeout_ms = arguments.get("timeout", 5000)
             try:
-                await asyncio.wait_for(bp.proc.wait(), timeout=timeout_ms / 1000.0)
-                bp.done = True
+                await asyncio.wait_for(bg_proc.proc.wait(), timeout=timeout_ms / 1000.0)
+                bg_proc.done = True
             except TimeoutError:
                 pass
 
             stdout = b""
             stderr = b""
-            if bp.proc.stdout:
+            if bg_proc.proc.stdout:
                 try:
-                    stdout = await asyncio.wait_for(bp.proc.stdout.read(_MAX_OUTPUT), timeout=0.1)
+                    stdout = await asyncio.wait_for(bg_proc.proc.stdout.read(_MAX_OUTPUT), timeout=0.1)
                 except TimeoutError:
                     pass
-            if bp.proc.stderr:
+            if bg_proc.proc.stderr:
                 try:
-                    stderr = await asyncio.wait_for(bp.proc.stderr.read(_MAX_OUTPUT), timeout=0.1)
+                    stderr = await asyncio.wait_for(bg_proc.proc.stderr.read(_MAX_OUTPUT), timeout=0.1)
                 except TimeoutError:
                     pass
 
@@ -134,8 +134,8 @@ class ProcessTool(BaseTool):
                 json.dumps(
                     {
                         "pid": pid,
-                        "done": bp.done,
-                        "returncode": bp.proc.returncode,
+                        "done": bg_proc.done,
+                        "returncode": bg_proc.proc.returncode,
                         "stdout": stdout.decode("utf-8", errors="replace")[-_MAX_OUTPUT:]
                         if stdout
                         else "",
@@ -150,15 +150,15 @@ class ProcessTool(BaseTool):
             pid = arguments.get("pid")
             if pid is None:
                 return ToolResult.text("Error: pid is required for kill.", is_error=True)
-            bp = self._processes.get(pid)
-            if not bp:
+            bg_proc = self._processes.get(pid)
+            if not bg_proc:
                 return ToolResult.text(f"No tracked process with pid={pid}.", is_error=True)
             try:
-                bp.proc.kill()
-                await bp.proc.wait()
-                bp.done = True
+                bg_proc.proc.kill()
+                await bg_proc.proc.wait()
+                bg_proc.done = True
             except ProcessLookupError:
-                bp.done = True
+                bg_proc.done = True
             return ToolResult.text(f"Process {pid} killed.")
 
         return ToolResult.text(f"Unknown action: {action}", is_error=True)

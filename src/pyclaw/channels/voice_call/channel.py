@@ -96,9 +96,11 @@ class VoiceCallChannel(ChannelPlugin):
             )
 
         msg = ChannelMessage(
-            channel="voice-call",
+            channel_id="voice-call",
             sender_id=call_info.from_number,
+            sender_name=call_info.from_number,
             text=speech,
+            chat_id=call_info.from_number,
             raw={"call_sid": call_info.call_sid, "from": call_info.from_number},
         )
 

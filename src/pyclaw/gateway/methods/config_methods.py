@@ -51,7 +51,7 @@ def create_config_handlers(
         path = _resolve_path()
         try:
             cfg = PyClawConfig.model_validate(params["config"])
-            save_config(path, cfg)
+            save_config(cfg, path)
             await conn.send_ok("config.set", {"saved": True})
         except Exception as e:
             await conn.send_error("config.set", "config_error", str(e))
@@ -69,7 +69,7 @@ def create_config_handlers(
 
         path = _resolve_path()
         try:
-            cfg = patch_config(path, params["patch"])
+            cfg = patch_config(params["patch"], path)
             await conn.send_ok("config.patch", {
                 "config": cfg.model_dump(by_alias=True, exclude_none=True),
             })

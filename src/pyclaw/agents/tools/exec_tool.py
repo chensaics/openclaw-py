@@ -23,7 +23,8 @@ def _load_security_policy() -> dict[str, Any]:
     """Load the host environment security policy."""
     policy_path = Path(__file__).parent / "host-env-security-policy.json"
     if policy_path.exists():
-        return json.loads(policy_path.read_text(encoding="utf-8"))
+        result: dict[str, Any] = json.loads(policy_path.read_text(encoding="utf-8"))
+        return result
     return {"blockedKeys": [], "blockedPrefixes": [], "blockedOverrideKeys": []}
 
 

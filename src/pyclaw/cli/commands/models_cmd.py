@@ -244,7 +244,7 @@ def models_status_command(
                     api_key=provider_keys.get(provider, ""),
                 )
             )
-    data = {
+    data: dict[str, Any] = {
         "providers": providers,
         "total_models": len(registry.list_models()),
         "default_aliases": [a.alias for a in registry.list_aliases()],

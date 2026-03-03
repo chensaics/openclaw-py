@@ -80,7 +80,7 @@ def resolve_hostname(hostname: str) -> list[str]:
     """Resolve a hostname to IP addresses."""
     try:
         results = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
-        return list(set(r[4][0] for r in results))
+        return list({str(r[4][0]) for r in results})
     except socket.gaierror:
         return []
 

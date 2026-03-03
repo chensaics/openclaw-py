@@ -81,6 +81,7 @@ class ModelProviderConfig(_CamelModel):
 class ModelsConfig(_CamelModel):
     mode: Literal["merge", "replace"] | None = None
     providers: dict[str, ModelProviderConfig] | None = None
+    default: str | None = Field(None, alias="default")
 
 
 # --- Session ---

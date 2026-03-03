@@ -80,7 +80,8 @@ def _load_file(path: str) -> dict[str, Any]:
 
     try:
         with open(resolved) as f:
-            return json.load(f)
+            result: dict[str, Any] = json.load(f)
+            return result
     except json.JSONDecodeError as e:
         raise IncludeError(f"Invalid JSON in {path}: {e}")
 
@@ -128,7 +129,7 @@ def resolve_includes(
         warnings.append(f"Invalid $include value (expected string or list): {type(includes)}")
         return IncludeResult(data=data, warnings=warnings)
 
-    merged = {}
+    merged: dict[str, Any] = {}
     for include_path in includes:
         resolved_path = resolve_include_path(include_path, base_dir)
         abs_path = str(Path(resolved_path).resolve())

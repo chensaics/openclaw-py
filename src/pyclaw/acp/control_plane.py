@@ -78,7 +78,7 @@ class AcpRuntimeProtocol:
 
     async def run_turn(self, input: AcpRunTurnInput) -> AsyncIterator[AcpRuntimeEvent]:
         raise NotImplementedError
-        yield  # type: ignore[misc]
+        yield
 
     async def get_status(self, handle: AcpSessionResolution) -> AcpSessionStatus:
         raise NotImplementedError

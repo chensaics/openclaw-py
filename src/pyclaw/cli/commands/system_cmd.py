@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import time
+from typing import Any
 
 import typer
 
@@ -26,7 +27,7 @@ _LAST_HEARTBEAT_AT = 0.0
 _FALLBACK_MSG = "[warn] Gateway unreachable — using local-only fallback."
 
 
-def _try_rpc(method: str, params: dict | None = None) -> dict | None:
+def _try_rpc(method: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """Attempt a Gateway RPC call; returns None if unreachable."""
     try:
         import asyncio

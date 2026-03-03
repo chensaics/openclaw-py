@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Onboarding
-    url: https://discord.gg/clawd
-    about: "New to pyclaw? Join Discord for setup guidance in #help."
+    url: https://github.com/chensaics/openclaw-py/discussions
+    about: "New to pyclaw? Check the Discussions for setup guidance and Q&A."
   - name: Support
-    url: https://discord.gg/clawd
-    about: "Get help from the pyclaw community on Discord in #help."
+    url: https://github.com/chensaics/openclaw-py/discussions/categories/q-a
+    about: "Get help from the pyclaw community in Q&A discussions."

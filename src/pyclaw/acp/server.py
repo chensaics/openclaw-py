@@ -146,7 +146,8 @@ class AcpGatewayAgent:
 
         # Gateway currently keys chat sessions by `sessionId`; ACP maps labels/keys to it.
         chat_session_id = session.meta.session_key or session_id
-        meta = params.get("_meta") if isinstance(params.get("_meta"), dict) else {}
+        _meta = params.get("_meta")
+        meta: dict[str, Any] = _meta if isinstance(_meta, dict) else {}
         prefix_override = meta.get("prefixCwd")
         prefix_enabled = (
             bool(prefix_override) if isinstance(prefix_override, bool) else self._prefix_cwd

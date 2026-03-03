@@ -9,7 +9,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ async def resolve_session_key(
         key = resolved.get("key") if isinstance(resolved, dict) else None
         if not key:
             raise ValueError(f"Unable to resolve session label: {meta.session_label}")
-        return key
+        return cast(str, key)
 
     if meta.session_key:
         if not require:
@@ -86,14 +86,14 @@ async def resolve_session_key(
         key = resolved.get("key") if isinstance(resolved, dict) else None
         if not key:
             raise ValueError(f"Session key not found: {meta.session_key}")
-        return key
+        return cast(str, key)
 
     if requested_label:
         resolved = await gateway_request("sessions.resolve", {"label": requested_label})
         key = resolved.get("key") if isinstance(resolved, dict) else None
         if not key:
             raise ValueError(f"Unable to resolve session label: {requested_label}")
-        return key
+        return cast(str, key)
 
     if requested_key:
         if not require:
@@ -102,7 +102,7 @@ async def resolve_session_key(
         key = resolved.get("key") if isinstance(resolved, dict) else None
         if not key:
             raise ValueError(f"Session key not found: {requested_key}")
-        return key
+        return cast(str, key)
 
     return fallback_key
 
@@ -165,7 +165,8 @@ class SessionLabelMap:
         if not self._path.exists():
             return {"sessions": {}, "labels": {}}
         try:
-            return json.loads(self._path.read_text(encoding="utf-8"))
+            result: dict[str, Any] = json.loads(self._path.read_text(encoding="utf-8"))
+            return result
         except Exception:
             return {"sessions": {}, "labels": {}}
 

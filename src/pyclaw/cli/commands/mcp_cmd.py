@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
 import typer
 
@@ -75,13 +76,15 @@ def mcp_list_tools_command(*, server: str | None = None) -> None:
 
 
 async def _get_mcp_statuses(
-    mcp_servers: dict[str, dict[str, object]],
-) -> list[dict[str, object]]:
+    mcp_servers: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    from typing import Any
+
     from pyclaw.mcp.registry import McpRegistry
 
     registry = McpRegistry()
     try:
-        await registry.connect_all(mcp_servers)  # type: ignore[arg-type]
+        await registry.connect_all(mcp_servers)
         return registry.get_status()
     except Exception as exc:
         return [{"name": "error", "connected": False, "tools": [], "transport": "?", "error": str(exc)}]

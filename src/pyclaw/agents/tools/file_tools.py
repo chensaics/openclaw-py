@@ -98,8 +98,8 @@ class ReadTool(BaseTool):
 
         if start is not None or end is not None:
             s = (start or 1) - 1
-            e = end or len(lines)
-            lines = lines[s:e]
+            end_idx = end or len(lines)
+            lines = lines[s:end_idx]
             offset = s
         else:
             offset = 0

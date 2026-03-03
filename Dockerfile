@@ -6,10 +6,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml README.md ./
 COPY src/ src/
 
-RUN pip install --no-cache-dir -e ".[all]"
+RUN pip install --no-cache-dir ".[all]"
 
 # ── Runtime ──────────────────────────────────────────────────────────
 FROM python:3.12-slim
@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin/pyclaw /usr/local/bin/pyclaw
-COPY --from=builder /app /app
 
 EXPOSE 18789 18790
 

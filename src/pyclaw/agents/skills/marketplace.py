@@ -6,6 +6,7 @@ import logging
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ async def fetch_skill_content(name: str) -> str | None:
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
-            return resp.text
+            return cast(str, resp.text)
     except Exception:
         logger.exception("Failed to fetch skill '%s' from ClawHub", name)
         return None
@@ -99,7 +100,7 @@ async def fetch_skill_from_url(url: str) -> str | None:
         async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
             resp = await client.get(target)
             resp.raise_for_status()
-            return resp.text
+            return cast(str, resp.text)
     except Exception:
         logger.exception("Failed to fetch skill from URL: %s", url)
         return None

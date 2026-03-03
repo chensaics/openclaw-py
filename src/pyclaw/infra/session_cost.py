@@ -340,7 +340,7 @@ def summarize_session_usage(
     cutoff = now - max(days, 1) * 86400
     usage_path = _usage_log_path(path)
 
-    summary = {
+    summary: dict[str, Any] = {
         "session_id": session_id,
         "calls": 0,
         "session_tokens": 0,

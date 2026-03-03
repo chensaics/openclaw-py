@@ -47,10 +47,14 @@ def load_hook_entries(directory: Path) -> list[HookEntry]:
             continue
 
         fm = _parse_frontmatter(text)
+        _events = fm.get("events")
+        _requires = fm.get("requires")
+        events: list[str] = _events if isinstance(_events, list) else ([_events] if isinstance(_events, str) else [])
+        requires: list[str] = _requires if isinstance(_requires, list) else ([_requires] if isinstance(_requires, str) else [])
         meta = HookEntryMeta(
             name=str(fm.get("name", hook_md.parent.name)),
-            events=fm.get("events", []) if isinstance(fm.get("events"), list) else [],
-            requires=fm.get("requires", []) if isinstance(fm.get("requires"), list) else [],
+            events=events,
+            requires=requires,
             description=str(fm.get("description", "")),
             module=str(fm.get("module", "")),
         )

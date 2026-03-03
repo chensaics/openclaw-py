@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.channels.plugin_sdk.status_issues import (
     ChannelIssue,
@@ -287,7 +287,7 @@ def check_channel_issues(channel_type: str, config: dict[str, Any]) -> list[Chan
     checker = CHANNEL_ISSUE_CHECKERS.get(channel_type)
     if not checker:
         return []
-    return checker(config)
+    return cast(list[ChannelIssue], checker(config))
 
 
 def check_all_channels(

@@ -96,11 +96,11 @@ class DiscordChannel(ChannelPlugin):
     def _register_handlers(self) -> None:
         import discord
 
-        @self._client.event
+        @self._client.event  # type: ignore[untyped-decorator]
         async def on_ready() -> None:
             logger.info("Discord bot ready: %s", self._client.user)
 
-        @self._client.event
+        @self._client.event  # type: ignore[untyped-decorator]
         async def on_message(message: discord.Message) -> None:
             if message.author == self._client.user:
                 return

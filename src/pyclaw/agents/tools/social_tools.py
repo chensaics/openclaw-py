@@ -53,9 +53,8 @@ class SocialJoinTool(BaseTool):
         description = arguments.get("description", "")
 
         if not self._registry:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output="Social platform registry not configured.",
+            return ToolResult.text(
+                "Social platform registry not configured.",
                 is_error=True,
             )
 
@@ -64,9 +63,8 @@ class SocialJoinTool(BaseTool):
         platform = self._registry.get(platform_id)
         if not platform:
             available = [p["id"] for p in self._registry.list_platforms()]
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output=f"Unknown platform '{platform_id}'. Available: {available}",
+            return ToolResult.text(
+                f"Unknown platform '{platform_id}'. Available: {available}",
                 is_error=True,
             )
 
@@ -79,13 +77,11 @@ class SocialJoinTool(BaseTool):
 
         success = await platform.join(profile)
         if success:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output=f"Joined {platform.display_name} as '{display_name}'.",
+            return ToolResult.text(
+                f"Joined {platform.display_name} as '{display_name}'.",
             )
-        return ToolResult(
-            tool_call_id=tool_call_id,
-            output=f"Failed to join {platform.display_name}.",
+        return ToolResult.text(
+            f"Failed to join {platform.display_name}.",
             is_error=True,
         )
 
@@ -113,24 +109,19 @@ class SocialStatusTool(BaseTool):
 
     async def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> ToolResult:
         if not self._registry:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output="Social platform registry not configured.",
+            return ToolResult.text(
+                "Social platform registry not configured.",
                 is_error=True,
             )
 
         platforms = self._registry.list_platforms()
         if not platforms:
-            return ToolResult(
-                tool_call_id=tool_call_id,
-                output="No social platforms registered.",
+            return ToolResult.text(
+                "No social platforms registered.",
             )
 
         lines = []
         for p in platforms:
             lines.append(f"- {p['name']} ({p['id']}): {p['status']}")
 
-        return ToolResult(
-            tool_call_id=tool_call_id,
-            output="\n".join(lines),
-        )
+        return ToolResult.text("\n".join(lines))

@@ -30,7 +30,7 @@ def build_menubar(
     except ImportError:
         return None
 
-    async def _wrap(handler: Any) -> Callable[[Any], Any]:
+    async def _wrap(handler: Any) -> None:
         if handler:
             if callable(handler):
                 try:

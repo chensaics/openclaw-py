@@ -158,3 +158,13 @@ description = "Multi-channel AI gateway"
 [tool.mypy]
 python_version = "3.12"
 strict = true
+disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = [
+    "pyclaw.cli.app",
+    "pyclaw.cli.commands.*",
+    "pyclaw.gateway.server",
+    "pyclaw.gateway.openai_compat",
+]
+disable_error_code = ["untyped-decorator"]

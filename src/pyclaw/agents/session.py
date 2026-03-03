@@ -343,7 +343,8 @@ def load_sessions_index(sessions_json_path: Path) -> dict[str, Any]:
     if not sessions_json_path.exists():
         return {}
     with open(sessions_json_path, encoding="utf-8") as f:
-        return json.load(f)
+        result: dict[str, Any] = json.load(f)
+        return result
 
 
 def save_sessions_index(sessions_json_path: Path, data: dict[str, Any]) -> None:

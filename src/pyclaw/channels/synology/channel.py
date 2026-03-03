@@ -68,9 +68,11 @@ class SynologyChannel(ChannelPlugin):
             return web.Response(status=200, text="ok")
 
         msg = ChannelMessage(
-            channel="synology",
+            channel_id="synology",
             sender_id=user_id,
+            sender_name=str(data.get("username", user_id)),
             text=text,
+            chat_id=user_id,
             raw=data,
         )
 

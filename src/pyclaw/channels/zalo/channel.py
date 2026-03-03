@@ -72,9 +72,11 @@ class ZaloChannel(ChannelPlugin):
             return web.Response(status=200, text="ok")
 
         msg = ChannelMessage(
-            channel="zalo",
+            channel_id="zalo",
             sender_id=str(sender_id),
+            sender_name=str(sender.get("name", sender_id)),
             text=text,
+            chat_id=str(sender_id),
             raw=data,
         )
 

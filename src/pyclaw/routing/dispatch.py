@@ -167,10 +167,11 @@ class MessageDispatcher:
 
             if reply_text and send_reply:
                 reply = ChannelReply(
+                    text=reply_text,
+                    chat_id=msg.chat_id,
+                    reply_to_message_id=msg.message_id,
                     channel=msg.channel,
                     recipient_id=msg.sender_id,
-                    text=reply_text,
-                    reply_to_message_id=msg.message_id,
                 )
                 await send_reply(reply)
 

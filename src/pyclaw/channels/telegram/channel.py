@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 
@@ -45,7 +45,8 @@ class TelegramChannel(ChannelPlugin):
         from aiogram import Bot, Dispatcher
         from aiogram.enums import ParseMode
 
-        self._bot = Bot(token=self._token, default={"parse_mode": ParseMode.MARKDOWN})
+        from aiogram.client.default import DefaultBotProperties
+        self._bot = Bot(token=self._token, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN))
         self._dp = Dispatcher()
 
         self._register_handlers()
@@ -99,11 +100,11 @@ class TelegramChannel(ChannelPlugin):
         from aiogram import types as tg_types
         from aiogram.filters import Command
 
-        @self._dp.message(Command("start"))
+        @self._dp.message(Command("start"))  # type: ignore[untyped-decorator]
         async def on_start(message: tg_types.Message) -> None:
             await message.reply("pyclaw is ready. Send me a message!")
 
-        @self._dp.message()
+        @self._dp.message()  # type: ignore[untyped-decorator]
         async def on_message(message: tg_types.Message) -> None:
             if not message.from_user:
                 return
@@ -205,7 +206,7 @@ async def _whisper_transcribe(audio_path: Any) -> str:
                         data={"model": "whisper-large-v3"},
                     )
                 if resp.status_code == 200:
-                    return resp.json().get("text", "")
+                    return cast(str, resp.json().get("text", ""))
         except httpx.HTTPError:
             continue
 

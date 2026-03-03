@@ -103,58 +103,58 @@ async def apply_media_understanding(
             output: MediaUnderstandingOutput | None = None
 
             if capability == MediaCapability.IMAGE:
-                req = ImageDescriptionRequest(
+                img_req = ImageDescriptionRequest(
                     buffer=buf,
                     file_name=attachment.path or "",
                     mime=mime,
                     prompt=image_prompt,
                     api_key=api_key,
                 )
-                desc = await provider.describe_image(req)
+                img_desc = await provider.describe_image(img_req)
                 output = MediaUnderstandingOutput(
                     kind=MediaCapability.IMAGE,
                     attachment_index=attachment.index,
-                    text=desc.text,
+                    text=img_desc.text or "",
                     provider=provider.id,
-                    model=desc.model,
+                    model=img_desc.model or "",
                 )
-                result.body_additions.append(f"[Image: {desc.text}]")
+                result.body_additions.append(f"[Image: {img_desc.text}]")
 
             elif capability == MediaCapability.AUDIO:
-                req = AudioTranscriptionRequest(
+                audio_req = AudioTranscriptionRequest(
                     buffer=buf,
                     file_name=attachment.path or "",
                     mime=mime,
                     prompt=audio_prompt,
                     api_key=api_key,
                 )
-                trans = await provider.transcribe_audio(req)
+                trans = await provider.transcribe_audio(audio_req)
                 output = MediaUnderstandingOutput(
                     kind=MediaCapability.AUDIO,
                     attachment_index=attachment.index,
-                    text=trans.text,
+                    text=trans.text or "",
                     provider=provider.id,
-                    model=trans.model,
+                    model=trans.model or "",
                 )
                 result.transcripts.append(trans.text)
 
             elif capability == MediaCapability.VIDEO:
-                req = VideoDescriptionRequest(
+                video_req = VideoDescriptionRequest(
                     buffer=buf,
                     file_name=attachment.path or "",
                     mime=mime,
                     prompt=video_prompt,
                     api_key=api_key,
                 )
-                desc = await provider.describe_video(req)
+                video_desc = await provider.describe_video(video_req)
                 output = MediaUnderstandingOutput(
                     kind=MediaCapability.VIDEO,
                     attachment_index=attachment.index,
-                    text=desc.text,
+                    text=video_desc.text or "",
                     provider=provider.id,
-                    model=desc.model,
+                    model=video_desc.model or "",
                 )
-                result.body_additions.append(f"[Video: {desc.text}]")
+                result.body_additions.append(f"[Video: {video_desc.text}]")
 
             if output:
                 result.outputs.append(output)

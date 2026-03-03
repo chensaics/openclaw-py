@@ -27,6 +27,13 @@ class ChannelMessage:
     is_owner: bool = False
     raw: Any = None  # channel-specific raw payload
     media: list[dict[str, Any]] = field(default_factory=list)
+    display_name: str | None = None
+    group_id: str | None = None
+
+    @property
+    def channel(self) -> str:
+        """Alias for channel_id (backward compat)."""
+        return self.channel_id
 
 
 @dataclass
@@ -37,6 +44,11 @@ class ChannelReply:
     chat_id: str
     reply_to_message_id: str | None = None
     parse_mode: str | None = None  # "markdown", "html", etc.
+    recipient: str | None = None
+    recipient_id: str | None = None
+    raw: Any = None  # channel-specific raw payload
+    media_url: str | None = None
+    channel: str | None = None
 
 
 class ChannelPlugin(ABC):

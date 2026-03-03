@@ -218,7 +218,7 @@ class AzureOpenAIProvider:
                         "stream": False,
                     },
                 )
-                return resp.status_code == 200
+                return bool(resp.status_code == 200)
         except httpx.HTTPError:
             return False
 

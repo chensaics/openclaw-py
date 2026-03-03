@@ -49,7 +49,7 @@ class OpenAIMediaProvider:
             messages=[{
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": request.prompt or "Describe this image in detail."},
+                    {"type": "text", "text": (request.prompt or "Describe this image in detail.")},
                     {"type": "image_url", "image_url": {"url": data_url}},
                 ],
             }],
@@ -74,12 +74,15 @@ class OpenAIMediaProvider:
         file_obj = io.BytesIO(request.buffer)
         file_obj.name = request.file_name or "audio.wav"
 
-        response = await client.audio.transcriptions.create(
-            model=request.model or "whisper-1",
-            file=file_obj,
-            language=request.language or None,
-            prompt=request.prompt or None,
-        )
+        transcribe_kwargs: dict[str, Any] = {
+            "model": request.model or "whisper-1",
+            "file": file_obj,
+        }
+        if request.language:
+            transcribe_kwargs["language"] = request.language
+        if request.prompt:
+            transcribe_kwargs["prompt"] = request.prompt
+        response = await client.audio.transcriptions.create(**transcribe_kwargs)
 
         return AudioTranscriptionResult(text=response.text, model=request.model or "whisper-1")
 
