@@ -1,0 +1,20 @@
+name: security-audit
+version: "1.0"
+schedule: "0 2 * * 0"
+
+settings:
+  alert_channel: telegram
+  alert_recipient: ""
+  alert_level: critical
+
+scan:
+  check_secrets: true
+  check_dependencies: true
+  check_config_permissions: true
+  secret_patterns:
+    - "sk-[a-zA-Z0-9]{20,}"
+    - "PRIVATE KEY"
+    - "Bearer [a-zA-Z0-9._-]{20,}"
+  ignore_paths:
+    - "tests/fixtures/"
+    - "docs/"

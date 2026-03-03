@@ -34,3 +34,6 @@ updates:
       interval: "weekly"
     labels:
       - "docker"
+    ignore:
+      - dependency-name: "python"
+        versions: [">=3.14"]

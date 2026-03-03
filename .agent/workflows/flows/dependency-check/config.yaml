@@ -1,0 +1,12 @@
+name: dependency-check
+version: "1.0"
+schedule: "0 9 * * 1"
+
+settings:
+  alert_channel: telegram
+  alert_recipient: ""
+  alert_on_critical_only: true
+
+check:
+  include_dev_deps: true
+  ignore_packages: []

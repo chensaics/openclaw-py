@@ -1,0 +1,14 @@
+name: model-probe
+version: "1.0"
+schedule: "0 */6 * * *"
+
+settings:
+  test_prompt: "Reply with exactly: OK"
+  max_tokens: 5
+  timeout_seconds: 30
+  alert_channel: telegram
+  alert_recipient: ""
+
+probe:
+  skip_providers: []
+  include_local_models: true

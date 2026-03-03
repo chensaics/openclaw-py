@@ -1,0 +1,13 @@
+name: channel-health-check
+version: "1.0"
+schedule: "*/15 * * * *"
+
+settings:
+  timeout_seconds: 10
+  alert_after_failures: 2
+  alert_channel: telegram
+  alert_recipient: ""
+
+probe:
+  skip_channels: []
+  include_webhook_check: true

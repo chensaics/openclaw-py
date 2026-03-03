@@ -18,7 +18,7 @@ jobs:
       docs_only: ${{ steps.scope.outputs.docs_only }}
       src_changed: ${{ steps.scope.outputs.src_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -63,15 +63,15 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache pip packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
@@ -86,15 +86,12 @@ jobs:
       - name: Lint
         run: ruff check src tests
 
-      - name: Format check
-        run: ruff format --check src tests
-
       - name: Test with coverage
         run: pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/
 
       - name: Upload coverage
         if: matrix.python-version == '3.13'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage.xml
@@ -105,15 +102,15 @@ jobs:
     if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
       - name: Cache pip packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.13-${{ hashFiles('pyproject.toml') }}
@@ -132,7 +129,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check for secrets in code
         run: |

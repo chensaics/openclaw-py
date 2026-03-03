@@ -42,15 +42,20 @@ USER.md
 
 # Agent credentials and memory
 /memory/
-.agent/*.json
-!.agent/workflows/
 /local/
 .agents/
 .agents
-.agent/
 skills-lock.json
 .claude/settings.local.json
 .ant-colony/
+
+# Agent workspace (exclude all except workflows)
+.agent/*
+!.agent/workflows/
+.agent/workflows/flows/*/state/*
+!.agent/workflows/flows/*/state/.gitkeep
+.agent/workflows/flows/*/logs/*
+!.agent/workflows/flows/*/logs/.gitkeep
 
 # Misc
 .serena/
