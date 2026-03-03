@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import json5
 
@@ -22,11 +22,11 @@ def load_config(path: Path | None = None) -> PyClawConfig:
     """
     config_path = path or resolve_config_path()
     if not config_path.exists():
-        return PyClawConfig(canvas_host=None, node_host=None)
+        return PyClawConfig()
 
     raw = config_path.read_text(encoding="utf-8")
     parsed: dict[str, Any] = json5.loads(raw)
-    return cast(PyClawConfig, PyClawConfig.model_validate(parsed))
+    return PyClawConfig.model_validate(parsed)
 
 
 def save_config(config: PyClawConfig, path: Path | None = None) -> None:
@@ -60,7 +60,7 @@ def patch_config(updates: dict[str, Any], path: Path | None = None) -> PyClawCon
     config_path = path or resolve_config_path()
     raw = load_config_raw(config_path)
     _deep_merge(raw, updates)
-    config: PyClawConfig = cast(PyClawConfig, PyClawConfig.model_validate(raw))
+    config = PyClawConfig.model_validate(raw)
     save_config(config, config_path)
     return config
 

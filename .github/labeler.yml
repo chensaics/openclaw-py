@@ -1,0 +1,85 @@
+# Path-based PR labeling rules (used by .github/workflows/labeler.yml)
+
+gateway:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/gateway/**"
+
+agents:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/agents/**"
+
+channels:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/channels/**"
+
+cli:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/cli/**"
+
+ui:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/ui/**"
+
+config:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/config/**"
+
+security:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/security/**"
+
+memory:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/memory/**"
+
+tools:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/agents/tools/**"
+
+media:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/media/**"
+
+browser:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/browser/**"
+
+infra:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/infra/**"
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Dockerfile*"
+          - "docker-compose*"
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "**/*.md"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: "tests/**"
+
+scripts:
+  - changed-files:
+      - any-glob-to-any-file: "scripts/**"
+
+plugins:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/plugins/**"
+
+hooks:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/hooks/**"
+
+acp:
+  - changed-files:
+      - any-glob-to-any-file: "src/pyclaw/acp/**"

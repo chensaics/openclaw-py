@@ -15,7 +15,7 @@ def get_image_dimensions(data: bytes) -> tuple[int, int] | None:
     try:
         from PIL import Image
         with Image.open(io.BytesIO(data)) as img:
-            return cast(tuple[int, int], img.size)
+            return img.size
     except Exception:
         return None
 

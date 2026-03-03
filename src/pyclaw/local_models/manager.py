@@ -6,7 +6,7 @@ import json
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional
 
 from pyclaw.config.paths import resolve_state_dir
 
@@ -32,7 +32,7 @@ def _load_manifest() -> LocalModelsManifest:
     if MANIFEST_PATH.is_file():
         try:
             raw = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-            return cast(LocalModelsManifest, LocalModelsManifest.model_validate(raw))
+            return LocalModelsManifest.model_validate(raw)
         except (json.JSONDecodeError, ValueError):
             logger.warning("Corrupted manifest.json, starting fresh")
     return LocalModelsManifest()

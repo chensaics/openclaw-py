@@ -56,3 +56,5 @@ skills-lock.json
 .serena/
 .tgz
 bin/
+
+commit.sh

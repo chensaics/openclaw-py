@@ -37,9 +37,9 @@ class GoogleMediaProvider:
             return ImageDescriptionResult(text="google-generativeai package not installed")
 
         if request.api_key:
-            genai.configure(api_key=request.api_key)
+            genai.configure(api_key=request.api_key)  # type: ignore[attr-defined]
 
-        model = genai.GenerativeModel(request.model or "gemini-2.0-flash")
+        model = genai.GenerativeModel(request.model or "gemini-2.0-flash")  # type: ignore[attr-defined]
         b64 = base64.b64encode(request.buffer).decode("ascii")
 
         response = await model.generate_content_async([
@@ -59,9 +59,9 @@ class GoogleMediaProvider:
             return AudioTranscriptionResult(text="google-generativeai package not installed")
 
         if request.api_key:
-            genai.configure(api_key=request.api_key)
+            genai.configure(api_key=request.api_key)  # type: ignore[attr-defined]
 
-        model = genai.GenerativeModel(request.model or "gemini-2.0-flash")
+        model = genai.GenerativeModel(request.model or "gemini-2.0-flash")  # type: ignore[attr-defined]
         b64 = base64.b64encode(request.buffer).decode("ascii")
 
         response = await model.generate_content_async([
@@ -81,9 +81,9 @@ class GoogleMediaProvider:
             return VideoDescriptionResult(text="google-generativeai package not installed")
 
         if request.api_key:
-            genai.configure(api_key=request.api_key)
+            genai.configure(api_key=request.api_key)  # type: ignore[attr-defined]
 
-        model = genai.GenerativeModel(request.model or "gemini-2.0-flash")
+        model = genai.GenerativeModel(request.model or "gemini-2.0-flash")  # type: ignore[attr-defined]
         b64 = base64.b64encode(request.buffer).decode("ascii")
 
         response = await model.generate_content_async([

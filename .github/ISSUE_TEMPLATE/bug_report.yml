@@ -8,6 +8,19 @@ body:
     attributes:
       value: |
         Thanks for filing this report. Keep it concise, reproducible, and evidence-based.
+  - type: dropdown
+    id: bug_type
+    attributes:
+      label: Bug type
+      description: What kind of bug is this?
+      options:
+        - Regression (worked before, now broken)
+        - Crash / exception
+        - Incorrect behavior
+        - Performance issue
+        - Other
+    validations:
+      required: true
   - type: textarea
     id: summary
     attributes:

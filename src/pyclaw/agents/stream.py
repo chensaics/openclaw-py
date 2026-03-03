@@ -221,9 +221,9 @@ async def _stream_google(
     """Stream from the Google Gemini API."""
     import google.generativeai as genai
 
-    genai.configure(api_key=model.api_key or "not-set")
+    genai.configure(api_key=model.api_key or "not-set")  # type: ignore[attr-defined]
 
-    gemini_model = genai.GenerativeModel(model.model_id)
+    gemini_model = genai.GenerativeModel(model.model_id)  # type: ignore[attr-defined]
 
     # Convert messages to Gemini format
     system_text = ""
@@ -245,7 +245,7 @@ async def _stream_google(
             history.append({"role": "model", "parts": [content]})
 
     # Gemini uses the chat interface with history
-    chat = gemini_model.start_chat(history=history[:-1] if history else [])
+    chat = gemini_model.start_chat(history=history[:-1] if history else [])  # type: ignore[arg-type]
 
     prompt = last_user_msg
     if system_text and not history:

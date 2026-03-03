@@ -161,7 +161,7 @@ class ChatMessage(ft.Container):
         msg_id: str = "",
     ) -> None:
         self.role = role
-        self.content = content
+        self._message_text = content
         self.msg_id = msg_id
         self._content_control: ft.Control | None = None
         self._tool_cards: dict[str, ToolCallCard] = {}
@@ -700,7 +700,7 @@ class ChatView(ft.Column):
 
             page = self._progress_bar.page
             if page:
-                page.run_task(_hide_after_delay())
+                page.run_task(_hide_after_delay)  # type: ignore[attr-defined]
             else:
                 self._progress_row.visible = False
                 self._progress_bar.visible = False
@@ -1051,7 +1051,7 @@ class PyClawApp:
         self._menubar = build_menubar(
             on_new_session=self._handle_new_session,
             on_toggle_theme=self._toggle_theme,
-            on_quit=lambda: page.window.close() if page.window else None,
+            on_quit=lambda: page.window.close() if page.window else None,  # type: ignore[no-untyped-call]
         )
 
         gw_indicator = ft.Container(
@@ -1912,7 +1912,7 @@ class PyClawApp:
             model_id = config.get("model", "gpt-4o")
 
             provider_cfg = ModelProviderConfig(
-                base_url="", api_key=api_key
+                baseUrl="", apiKey=api_key
             ) if api_key else None
             providers = {provider: provider_cfg} if provider_cfg else None
 
@@ -1922,10 +1922,10 @@ class PyClawApp:
                 channels_data[ch_name] = {"enabled": True}
 
             cfg = PyClawConfig(
-                models=ModelsConfig(providers=providers) if providers else None,
+                models=ModelsConfig(default=None, providers=providers) if providers else None,
                 agents=AgentsConfig(
                     defaults=AgentDefaultsConfig(
-                        model=model_id, provider=provider, workspace_dir=None
+                        model=model_id, provider=provider, workspaceDir=None
                     )
                 ),
                 channels=ChannelsConfig(**channels_data) if channels_data else None,

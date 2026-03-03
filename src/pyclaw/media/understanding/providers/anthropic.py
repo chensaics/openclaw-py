@@ -49,7 +49,7 @@ class AnthropicMediaProvider:
             messages=[{
                 "role": "user",
                 "content": [
-                    {
+                    {  # type: ignore[list-item]
                         "type": "image",
                         "source": {"type": "base64", "media_type": media_type, "data": b64},
                     },

@@ -13,7 +13,7 @@ from typing import Optional
 try:
     import flet as ft
 except ImportError:
-    ft = None
+    ft = None  # type: ignore[assignment]
 
 from pyclaw.ui.theme import get_theme
 

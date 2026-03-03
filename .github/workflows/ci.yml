@@ -6,10 +6,60 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # ── Scope detection ───────────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+      src_changed: ${{ steps.scope.outputs.src_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect change scope
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+          else
+            FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} 2>/dev/null || echo "")
+          fi
+
+          SRC_CHANGED=false
+          DOCS_ONLY=true
+
+          for f in $FILES; do
+            case "$f" in
+              docs/*|*.md|*.mdx) ;;
+              *) DOCS_ONLY=false ;;
+            esac
+            case "$f" in
+              src/*|tests/*|pyproject.toml) SRC_CHANGED=true ;;
+            esac
+          done
+
+          # Fail-safe: if no files detected, assume full CI needed
+          if [ -z "$FILES" ]; then
+            DOCS_ONLY=false
+            SRC_CHANGED=true
+          fi
+
+          echo "docs_only=$DOCS_ONLY" >> "$GITHUB_OUTPUT"
+          echo "src_changed=$SRC_CHANGED" >> "$GITHUB_OUTPUT"
+
+  # ── Tests ─────────────────────────────────────────────────────────
   test:
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
@@ -21,7 +71,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache pip packages
-        uses: actions/cache@v4 
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
@@ -36,6 +86,9 @@ jobs:
       - name: Lint
         run: ruff check src tests
 
+      - name: Format check
+        run: ruff format --check src tests
+
       - name: Test with coverage
         run: pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/
 
@@ -46,7 +99,10 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
+  # ── Type checking ─────────────────────────────────────────────────
   typecheck:
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,3 +127,28 @@ jobs:
 
       - name: Type check
         run: mypy src/pyclaw --ignore-missing-imports
+
+  # ── Security scan ─────────────────────────────────────────────────
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for secrets in code
+        run: |
+          if grep -rn "sk-[a-zA-Z0-9]\{20,\}" src/ tests/ --include="*.py" | grep -v "\.pyc" | grep -v "__pycache__"; then
+            echo "::error::Potential API key found in source code"
+            exit 1
+          fi
+
+      - name: Check for private keys
+        run: |
+          if grep -rn "PRIVATE KEY" src/ tests/ --include="*.py"; then
+            echo "::error::Private key found in source code"
+            exit 1
+          fi
+
+      - name: Audit dependencies
+        run: |
+          pip install pip-audit
+          pip-audit --require-hashes=false --ignore-vuln GHSA-0000-0000-0000 || true

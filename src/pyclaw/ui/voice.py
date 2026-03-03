@@ -68,7 +68,7 @@ async def transcribe_audio(
     with open(audio_path, "rb") as f:
         transcript = await client.audio.transcriptions.create(model=model, file=f)
 
-    return cast(str, transcript.text)
+    return transcript.text
 
 
 # --- Flet UI component ---
