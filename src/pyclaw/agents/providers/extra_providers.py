@@ -108,10 +108,10 @@ EXTRA_PROVIDERS: dict[str, ExtraProviderConfig] = {
         display_name="LiteLLM Proxy",
         base_url="http://localhost:4000/v1",
         api_key_env="LITELLM_API_KEY",
-        default_model="gpt-4o",
+        default_model="default",
         models=[],
         supports_tools=True,
-        notes="LiteLLM proxy for unified LLM access",
+        notes="LiteLLM proxy for unified LLM access — model names depend on your LiteLLM config",
     ),
 
     "kimi-coding": ExtraProviderConfig(

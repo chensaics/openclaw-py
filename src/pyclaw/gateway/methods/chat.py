@@ -10,6 +10,7 @@ import asyncio
 import logging
 from typing import Any, TYPE_CHECKING, cast
 
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 from pyclaw.gateway.methods.chat_advanced import (
     ChatAbortManager,
     validate_chat_params,
@@ -155,8 +156,8 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
             message=message,
             agent_id=agent_id,
             session_id=session_id,
-            provider=params.get("provider", "openai"),
-            model_id=params.get("model", "gpt-4o"),
+            provider=params.get("provider", DEFAULT_PROVIDER),
+            model_id=params.get("model", DEFAULT_MODEL),
             api_key=params.get("apiKey", ""),
             system_prompt=system_prompt,
             temperature=None,
@@ -195,8 +196,8 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
             message=last_user_msg,
             agent_id=agent_id,
             session_id=session_id,
-            provider=(params or {}).get("provider", "openai"),
-            model_id=(params or {}).get("model", "gpt-4o"),
+            provider=(params or {}).get("provider", DEFAULT_PROVIDER),
+            model_id=(params or {}).get("model", DEFAULT_MODEL),
             api_key=(params or {}).get("apiKey", ""),
             system_prompt=system_prompt,
             temperature=None,
@@ -255,7 +256,7 @@ def _resolve_gateway_model(
         default_base, default_model = get_provider_defaults(effective_provider)
         if default_base:
             effective_base = default_base
-        if (not effective_model or effective_model == "gpt-4o") and default_model:
+        if not effective_model and default_model:
             effective_model = default_model
 
     return effective_provider, effective_model, effective_key, effective_base

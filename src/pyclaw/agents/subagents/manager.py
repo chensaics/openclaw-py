@@ -177,9 +177,11 @@ class SubagentManager:
         config = entry.config
         entry.cancel_event = asyncio.Event()
 
+        from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
+
         model_config = ModelConfig(
-            provider=config.provider or "openai",
-            model_id=config.model or "gpt-4o",
+            provider=config.provider or DEFAULT_PROVIDER,
+            model_id=config.model or DEFAULT_MODEL,
         )
 
         session = SessionManager.in_memory()

@@ -16,6 +16,7 @@ from typing import Any, cast
 
 import flet as ft
 
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 from pyclaw.ui.i18n import I18n, set_i18n, t
 
 logger = logging.getLogger(__name__)
@@ -750,28 +751,26 @@ class SettingsView(ft.Column):
         self._on_save = on_save
         self._gw = gateway_client
 
+        from pyclaw.agents.model_catalog import ModelCatalog
+        self._catalog = ModelCatalog()
+
+        provider_options = [
+            ft.dropdown.Option(p["id"], p["name"])
+            for p in self._catalog.list_providers()
+        ]
         self._provider = ft.Dropdown(
             label=t("settings.provider"),
-            value="openai",
-            options=[
-                ft.dropdown.Option("openai", "OpenAI"),
-                ft.dropdown.Option("anthropic", "Anthropic"),
-                ft.dropdown.Option("google", "Google Gemini"),
-                ft.dropdown.Option("ollama", "Ollama (local)"),
-                ft.dropdown.Option("openrouter", "OpenRouter"),
-                ft.dropdown.Option("groq", "Groq"),
-                ft.dropdown.Option("deepseek", "DeepSeek"),
-                ft.dropdown.Option("mistral", "Mistral"),
-                ft.dropdown.Option("xai", "xAI"),
-            ],
+            value=DEFAULT_PROVIDER,
+            options=provider_options,
             width=250,
         )
-        self._provider.on_select = self._handle_provider_change
+        self._provider.on_change = self._handle_provider_change
 
+        _initial_model = self._catalog.default_model_for_provider(DEFAULT_PROVIDER)
         self._model = ft.Dropdown(
             label=t("settings.model_id"),
-            value="gpt-4o",
-            options=[ft.dropdown.Option("gpt-4o", "gpt-4o")],
+            value=_initial_model,
+            options=self._build_model_options(DEFAULT_PROVIDER),
             width=300,
         )
         self._api_key = ft.TextField(
@@ -850,28 +849,66 @@ class SettingsView(ft.Column):
             "gateway_url": self._gateway_url.value or None,
         }
 
+    def _build_model_options(self, provider: str) -> list[Any]:
+        """Build dropdown options for models belonging to a provider."""
+        models = self._catalog.list_models(provider)
+        return [
+            ft.dropdown.Option(m.model_id, m.display_name or m.model_id)
+            for m in models
+        ]
+
     async def load_models_from_gateway(self) -> None:
-        """Fetch model list from gateway and populate the dropdown."""
-        if not self._gw or not self._gw.connected:
-            return
-        try:
-            result = await self._gw.call("models.list", {"provider": self._provider.value})
-            models = result.get("models", [])
-            if models:
-                self._model.options = [
-                    ft.dropdown.Option(m.get("id", m) if isinstance(m, dict) else m)
-                    for m in models
-                ]
-                self._safe_update(self._model)
-        except Exception:
-            pass
+        """Fetch model list from gateway and populate the dropdown.
+
+        Falls back to the local catalog if gateway is unavailable.
+        """
+        provider = self._provider.value or DEFAULT_PROVIDER
+
+        if self._gw and getattr(self._gw, "connected", False):
+            try:
+                result = await self._gw.call("models.list", {"provider": provider})
+                models = result.get("models", [])
+                if models:
+                    self._model.options = [
+                        ft.dropdown.Option(
+                            m.get("model_id") or m.get("key", ""),
+                            m.get("display_name") or m.get("model_id", ""),
+                        )
+                        if isinstance(m, dict)
+                        else ft.dropdown.Option(str(m))
+                        for m in models
+                    ]
+                    default = self._catalog.default_model_for_provider(provider)
+                    model_ids = [
+                        (m.get("model_id") or m.get("key", ""))
+                        if isinstance(m, dict) else str(m)
+                        for m in models
+                    ]
+                    self._model.value = default if default in model_ids else (model_ids[0] if model_ids else "")
+                    self._safe_update(self._model)
+                    return
+            except Exception:
+                pass
+
+        self._model.options = self._build_model_options(provider)
+        default = self._catalog.default_model_for_provider(provider)
+        self._model.value = default
+        self._safe_update(self._model)
 
     async def _handle_provider_change(self, e: Any) -> None:
         await self.load_models_from_gateway()
 
     async def _handle_save(self, e: Any) -> None:
+        cfg = self.get_config()
+        provider = cfg.get("provider") or DEFAULT_PROVIDER
+        model = cfg.get("model") or ""
+        if model and not self._catalog.validate_model_for_provider(provider, model):
+            fallback = self._catalog.default_model_for_provider(provider)
+            cfg["model"] = fallback
+            self._model.value = fallback
+            self._safe_update(self._model)
         if self._on_save:
-            await self._on_save(self.get_config())
+            await self._on_save(cfg)
 
     async def _handle_theme_change(self, e: Any) -> None:
         try:
@@ -916,8 +953,8 @@ class PyClawApp:
 
     def __init__(self) -> None:
         self._config: dict[str, Any] = {
-            "provider": "openai",
-            "model": "gpt-4o",
+            "provider": DEFAULT_PROVIDER,
+            "model": DEFAULT_MODEL,
             "api_key": None,
             "base_url": None,
             "gateway_url": "ws://127.0.0.1:18789/",
@@ -985,47 +1022,20 @@ class PyClawApp:
         self._cron_panel = self._build_cron_panel()
         self._system_panel = self._build_system_panel()
 
+        nav_items = [
+            (ft.Icons.CHAT_BUBBLE_OUTLINE, ft.Icons.CHAT_BUBBLE, t("nav.chat")),
+            (ft.Icons.SMART_TOY_OUTLINED, ft.Icons.SMART_TOY, t("nav.agents", default="Agents")),
+            (ft.Icons.LINK, ft.Icons.LINK, t("nav.channels")),
+            (ft.Icons.CHECKLIST, ft.Icons.CHECKLIST, t("nav.plans", default="Plans")),
+            (ft.Icons.SCHEDULE, ft.Icons.SCHEDULE, t("nav.cron", default="Cron")),
+            (ft.Icons.MIC_NONE, ft.Icons.MIC, t("voice.title")),
+            (ft.Icons.MONITOR_HEART_OUTLINED, ft.Icons.MONITOR_HEART, t("nav.system", default="System")),
+            (ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS, t("nav.settings")),
+        ]
+
         nav_destinations = [
-            ft.NavigationRailDestination(
-                icon=ft.Icons.CHAT_BUBBLE_OUTLINE,
-                selected_icon=ft.Icons.CHAT_BUBBLE,
-                label=t("nav.chat"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.SMART_TOY_OUTLINED,
-                selected_icon=ft.Icons.SMART_TOY,
-                label=t("nav.agents", default="Agents"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.LINK,
-                selected_icon=ft.Icons.LINK,
-                label=t("nav.channels"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.CHECKLIST,
-                selected_icon=ft.Icons.CHECKLIST,
-                label=t("nav.plans", default="Plans"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.SCHEDULE,
-                selected_icon=ft.Icons.SCHEDULE,
-                label=t("nav.cron", default="Cron"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.MIC_NONE,
-                selected_icon=ft.Icons.MIC,
-                label=t("voice.title"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.MONITOR_HEART_OUTLINED,
-                selected_icon=ft.Icons.MONITOR_HEART,
-                label=t("nav.system", default="System"),
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.SETTINGS_OUTLINED,
-                selected_icon=ft.Icons.SETTINGS,
-                label=t("nav.settings"),
-            ),
+            ft.NavigationRailDestination(icon=ic, selected_icon=sel, label=lbl)
+            for ic, sel, lbl in nav_items
         ]
 
         self._nav_rail = ft.NavigationRail(
@@ -1036,6 +1046,17 @@ class PyClawApp:
             min_width=72,
         )
 
+        # Bottom navigation bar for mobile (<600px)
+        self._bottom_nav = ft.NavigationBar(
+            selected_index=0,
+            destinations=[
+                ft.NavigationBarDestination(icon=ic, selected_icon=sel, label=lbl)
+                for ic, sel, lbl in nav_items[:5]  # show first 5 on mobile
+            ],
+            on_change=self._handle_nav_change,
+            visible=False,
+        )
+
         from pyclaw.ui.toolbar import build_toolbar
 
         self._toolbar = build_toolbar(
@@ -1043,7 +1064,7 @@ class PyClawApp:
             on_voice=self._handle_voice_toggle,
             on_clear=self._handle_clear_session,
             on_model_change=self._handle_model_change,
-            current_model=self._config.get("model", "gpt-4o"),
+            current_model=self._config.get("model", DEFAULT_MODEL),
         )
 
         from pyclaw.ui.menubar import build_menubar
@@ -1072,6 +1093,7 @@ class PyClawApp:
         )
         self._gw_indicator = gw_indicator
 
+        # Top bar: menubar (desktop only) + toolbar + gateway indicator
         top_bar_controls: list[ft.Control] = []
         if self._menubar:
             top_bar_controls.append(self._menubar)
@@ -1079,30 +1101,40 @@ class PyClawApp:
             top_bar_controls.append(self._toolbar)
         top_bar_controls.append(gw_indicator)
 
-        top_bar = ft.Row(
+        self._top_bar = ft.Row(
             top_bar_controls,
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         ) if top_bar_controls else None
 
         main_content = ft.Column(
-            controls=[c for c in [top_bar, self._content_area] if c],
+            controls=[c for c in [self._top_bar, self._content_area] if c],
             expand=True, spacing=0,
         )
 
-        page.add(
-            ft.Row(
-                controls=[
-                    self._nav_rail,
-                    ft.VerticalDivider(width=1),
-                    self._session_sidebar,
-                    ft.VerticalDivider(width=1),
-                    main_content,
-                ],
-                expand=True,
-            )
+        self._sidebar_divider1 = ft.VerticalDivider(width=1)
+        self._sidebar_divider2 = ft.VerticalDivider(width=1)
+
+        self._desktop_row = ft.Row(
+            controls=[
+                self._nav_rail,
+                self._sidebar_divider1,
+                self._session_sidebar,
+                self._sidebar_divider2,
+                main_content,
+            ],
+            expand=True,
         )
 
+        self._root_column = ft.Column(
+            controls=[self._desktop_row, self._bottom_nav],
+            expand=True, spacing=0,
+        )
+
+        page.add(self._root_column)
+
         page.on_resize = self._handle_resize
+        # Apply initial responsive layout
+        self._apply_responsive_layout(page.width or 1100)
 
         from pyclaw.agents.progress import add_progress_listener
 
@@ -1161,16 +1193,60 @@ class PyClawApp:
             await self._refresh_system()
 
     async def _handle_resize(self, e: Any) -> None:
-        """Adapt layout for responsive design."""
+        """Adapt layout for responsive design across Web/Desktop/Mobile."""
         if not self._page:
             return
-        width = self._page.width or 1100
-        self._session_sidebar.visible = width > 600
-        self._nav_rail.label_type = (
-            ft.NavigationRailLabelType.ALL if width > 900
-            else ft.NavigationRailLabelType.SELECTED
-        )
+        self._apply_responsive_layout(self._page.width or 1100)
         self._page.update()
+
+    def _apply_responsive_layout(self, width: float) -> None:
+        """Apply breakpoint-based layout.
+
+        Desktop (>1200): NavigationRail + SessionSidebar + Content + top bar
+        Tablet (600-1200): Collapsed rail + hidden sidebar + Content
+        Mobile (<600): Bottom NavigationBar + full-screen Content
+        """
+        from pyclaw.ui.theme import get_theme
+        theme = get_theme()
+        bp_mobile = theme.breakpoint_mobile
+        bp_tablet = theme.breakpoint_tablet
+
+        if width < bp_mobile:
+            # Mobile: bottom nav, no rail, no sidebar, no menubar
+            self._nav_rail.visible = False
+            self._sidebar_divider1.visible = False
+            self._session_sidebar.visible = False
+            self._sidebar_divider2.visible = False
+            self._bottom_nav.visible = True
+            if self._top_bar:
+                self._top_bar.visible = True
+                # Hide menubar on mobile, keep toolbar
+                if self._menubar:
+                    self._menubar.visible = False
+        elif width < bp_tablet:
+            # Tablet: rail with selected-only labels, sidebar hidden
+            self._nav_rail.visible = True
+            self._nav_rail.label_type = ft.NavigationRailLabelType.SELECTED
+            self._sidebar_divider1.visible = True
+            self._session_sidebar.visible = False
+            self._sidebar_divider2.visible = False
+            self._bottom_nav.visible = False
+            if self._top_bar:
+                self._top_bar.visible = True
+            if self._menubar:
+                self._menubar.visible = True
+        else:
+            # Desktop: full rail + sidebar
+            self._nav_rail.visible = True
+            self._nav_rail.label_type = ft.NavigationRailLabelType.ALL
+            self._sidebar_divider1.visible = True
+            self._session_sidebar.visible = True
+            self._sidebar_divider2.visible = True
+            self._bottom_nav.visible = False
+            if self._top_bar:
+                self._top_bar.visible = True
+            if self._menubar:
+                self._menubar.visible = True
 
     # ─── Chat handlers ───────────────────────────────────────────────
 
@@ -1862,27 +1938,46 @@ class PyClawApp:
             config = load_config(resolve_config_path())
             ch_cfg = config.channels
             if ch_cfg:
-                channel_map = {
-                    "telegram": ch_cfg.telegram,
-                    "discord": ch_cfg.discord,
-                    "slack": ch_cfg.slack,
-                    "whatsapp": ch_cfg.whatsapp,
-                    "signal": ch_cfg.signal,
-                    "imessage": ch_cfg.imessage,
-                }
-                for name, cfg_val in channel_map.items():
-                    if cfg_val is not None:
-                        enabled = (
-                            cfg_val.get("enabled", True) if isinstance(cfg_val, dict) else True
-                        )
-                        channels.append({
-                            "name": name,
-                            "enabled": enabled,
-                            "status": "configured" if enabled else "disabled",
-                        })
+                cfg_dict = ch_cfg.model_dump(by_alias=True, exclude_none=True)
+                for name, cfg_val in cfg_dict.items():
+                    if name == "defaults" or not isinstance(cfg_val, dict):
+                        continue
+                    enabled = cfg_val.get("enabled", True)
+                    entry_meta = self._get_catalog_meta(name)
+                    info: dict[str, Any] = {
+                        "id": name,
+                        "name": entry_meta.get("display_name", name.title()),
+                        "enabled": enabled,
+                        "status": "configured" if enabled else "disabled",
+                    }
+                    info.update(entry_meta)
+                    channels.append(info)
         except Exception:
             pass
         self._channels_panel.update_channels(channels)
+
+    @staticmethod
+    def _get_catalog_meta(channel_type: str) -> dict[str, Any]:
+        try:
+            from pyclaw.channels.plugins.catalog import BUILTIN_CATALOG
+            entry = BUILTIN_CATALOG.get(channel_type)
+            if entry:
+                spec = entry.action_spec
+                return {
+                    "display_name": entry.display_name,
+                    "color": entry.color,
+                    "capabilities": {
+                        "typing": spec.supports_typing,
+                        "reactions": spec.supports_reactions,
+                        "threads": spec.supports_threads,
+                        "editing": spec.supports_editing,
+                        "buttons": spec.supports_buttons,
+                        "pins": spec.supports_pins,
+                    },
+                }
+        except Exception:
+            pass
+        return {}
 
     # ─── Onboarding ──────────────────────────────────────────────────
 
@@ -1909,7 +2004,7 @@ class PyClawApp:
 
             provider = config.get("provider", "openai")
             api_key = config.get("api_key")
-            model_id = config.get("model", "gpt-4o")
+            model_id = config.get("model", DEFAULT_MODEL)
 
             provider_cfg = ModelProviderConfig(
                 baseUrl="", apiKey=api_key
@@ -1952,7 +2047,7 @@ class PyClawApp:
         self._ensure_session_manager()
         model = ModelConfig(
             provider=self._config.get("provider", "openai"),
-            model_id=self._config.get("model", "gpt-4o"),
+            model_id=self._config.get("model", DEFAULT_MODEL),
             api_key=self._config.get("api_key"),
             base_url=self._config.get("base_url"),
         )

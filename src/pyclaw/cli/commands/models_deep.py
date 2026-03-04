@@ -69,20 +69,13 @@ def probe_model(
     timeout_s: float = 10.0,
 ) -> ProbeResult:
     """Probe a model for availability (sync, non-network)."""
-    # Known models and their capabilities
-    model_caps: dict[str, dict[str, Any]] = {
-        "gpt-4o": {"context": 128000, "tools": True, "vision": True},
-        "gpt-4o-mini": {"context": 128000, "tools": True, "vision": True},
-        "claude-3-5-sonnet": {"context": 200000, "tools": True, "vision": True},
-        "claude-3-5-haiku": {"context": 200000, "tools": True, "vision": False},
-        "gemini-2.0-flash": {"context": 1000000, "tools": True, "vision": True},
-        "gemini-2.5-pro": {"context": 1000000, "tools": True, "vision": True},
-        "o3-mini": {"context": 128000, "tools": True, "vision": False},
-        "deepseek-chat": {"context": 64000, "tools": True, "vision": False},
-        "deepseek-reasoner": {"context": 64000, "tools": False, "vision": False},
-    }
+    from pyclaw.agents.model_catalog import ModelCatalog as _MC
 
-    caps = model_caps.get(model, {})
+    cat = _MC()
+    info = cat.get(provider, model)
+    caps: dict[str, Any] = {}
+    if info:
+        caps = {"context": info.context_window, "tools": info.supports_tools, "vision": info.supports_vision}
     if not api_key and provider not in ("ollama", "lmstudio"):
         return ProbeResult(
             model=model, provider=provider, available=False,
@@ -106,17 +99,12 @@ def scan_providers(
     start = time.time()
     results: list[ProbeResult] = []
 
-    provider_default_models: dict[str, str] = {
-        "openai": "gpt-4o",
-        "anthropic": "claude-3-5-sonnet",
-        "google": "gemini-2.0-flash",
-        "ollama": "llama3.2",
-        "groq": "llama-3.3-70b-versatile",
-        "deepseek": "deepseek-chat",
-    }
+    from pyclaw.agents.model_catalog import ModelCatalog as _MC
+
+    _cat = _MC()
 
     for provider, api_key in providers.items():
-        model = provider_default_models.get(provider, "unknown")
+        model = _cat.default_model_for_provider(provider) or "unknown"
         result = probe_model(model, provider, api_key=api_key)
         results.append(result)
 

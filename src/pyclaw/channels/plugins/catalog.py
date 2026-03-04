@@ -199,6 +199,303 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         ),
         supports_groups=True,
     ),
+    "feishu": CatalogEntry(
+        channel_type="feishu",
+        display_name="Feishu / Lark",
+        description="Feishu (Lark) Bot channel",
+        category=ChannelCategory.TEAM,
+        icon="business",
+        color="#3370FF",
+        media_limits=MediaLimits(max_message_length=30000, max_file_size_mb=25),
+        action_spec=ActionSpec(
+            supports_typing=True, supports_threads=True,
+            supports_editing=True, supports_deletion=True,
+        ),
+        account_helper=AccountHelper(
+            steps=["Create app at Feishu Open Platform", "Enable Bot capability", "Copy App ID and Secret"],
+            required_fields=["app_id", "app_secret"],
+            docs_url="https://docs.openclaw.ai/channels/feishu",
+        ),
+    ),
+    "matrix": CatalogEntry(
+        channel_type="matrix",
+        display_name="Matrix",
+        description="Matrix protocol channel",
+        category=ChannelCategory.MESSAGING,
+        icon="grid_view",
+        color="#0DBD8B",
+        media_limits=MediaLimits(max_message_length=65536, max_file_size_mb=100),
+        action_spec=ActionSpec(
+            supports_reactions=True, supports_threads=True, supports_typing=True,
+            supports_editing=True, supports_deletion=True,
+        ),
+        account_helper=AccountHelper(
+            steps=["Create Matrix account", "Generate access token"],
+            required_fields=["homeserver", "access_token"],
+        ),
+    ),
+    "irc": CatalogEntry(
+        channel_type="irc",
+        display_name="IRC",
+        description="Internet Relay Chat",
+        category=ChannelCategory.SOCIAL,
+        icon="terminal",
+        color="#5B9BD5",
+        media_limits=MediaLimits(max_message_length=512),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Configure IRC server and channel"],
+            required_fields=["server", "channel", "nick"],
+        ),
+    ),
+    "msteams": CatalogEntry(
+        channel_type="msteams",
+        display_name="Microsoft Teams",
+        description="MS Teams Bot channel",
+        category=ChannelCategory.TEAM,
+        icon="groups",
+        color="#6264A7",
+        media_limits=MediaLimits(max_message_length=28000, max_file_size_mb=250),
+        action_spec=ActionSpec(
+            supports_reactions=True, supports_typing=True, supports_threads=True,
+            supports_editing=True, supports_deletion=True,
+        ),
+        account_helper=AccountHelper(
+            steps=["Register app in Azure AD", "Create Teams Bot", "Copy credentials"],
+            required_fields=["app_id", "app_password", "tenant_id"],
+        ),
+    ),
+    "googlechat": CatalogEntry(
+        channel_type="googlechat",
+        display_name="Google Chat",
+        description="Google Workspace Chat channel",
+        category=ChannelCategory.TEAM,
+        icon="chat_bubble",
+        color="#00AC47",
+        media_limits=MediaLimits(max_message_length=4096),
+        action_spec=ActionSpec(
+            supports_threads=True, supports_typing=True,
+        ),
+        account_helper=AccountHelper(
+            steps=["Create Google Cloud project", "Enable Chat API", "Configure OAuth"],
+            required_fields=["credentials_json"],
+        ),
+    ),
+    "dingtalk": CatalogEntry(
+        channel_type="dingtalk",
+        display_name="DingTalk",
+        description="DingTalk Bot channel",
+        category=ChannelCategory.TEAM,
+        icon="notifications",
+        color="#0089FF",
+        media_limits=MediaLimits(max_message_length=20000),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Create DingTalk robot", "Copy webhook URL and secret"],
+            required_fields=["app_key", "app_secret"],
+        ),
+    ),
+    "qq": CatalogEntry(
+        channel_type="qq",
+        display_name="QQ",
+        description="QQ Bot channel",
+        category=ChannelCategory.SOCIAL,
+        icon="question_answer",
+        color="#12B7F5",
+        media_limits=MediaLimits(max_message_length=4500),
+        action_spec=ActionSpec(supports_reactions=True),
+        account_helper=AccountHelper(
+            steps=["Register QQ Bot at open.qq.com", "Copy Bot AppID and Token"],
+            required_fields=["app_id", "token"],
+        ),
+    ),
+    "twitch": CatalogEntry(
+        channel_type="twitch",
+        display_name="Twitch",
+        description="Twitch IRC chat channel",
+        category=ChannelCategory.SOCIAL,
+        icon="live_tv",
+        color="#9146FF",
+        media_limits=MediaLimits(max_message_length=500),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Register Twitch app", "Generate OAuth token"],
+            required_fields=["oauth_token", "channel"],
+        ),
+    ),
+    "bluebubbles": CatalogEntry(
+        channel_type="bluebubbles",
+        display_name="BlueBubbles",
+        description="iMessage via BlueBubbles server",
+        category=ChannelCategory.MESSAGING,
+        icon="bubble_chart",
+        color="#1E90FF",
+        media_limits=MediaLimits(max_message_length=20000),
+        action_spec=ActionSpec(supports_reactions=True, supports_typing=True),
+        account_helper=AccountHelper(
+            steps=["Install BlueBubbles server on macOS", "Copy server URL and password"],
+            required_fields=["server_url", "password"],
+        ),
+    ),
+    "voice_call": CatalogEntry(
+        channel_type="voice_call",
+        display_name="Voice Call",
+        description="Telephony voice channel (Twilio, etc.)",
+        category=ChannelCategory.VOICE,
+        icon="phone",
+        color="#F22F46",
+        media_limits=MediaLimits(max_message_length=1600),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Configure Twilio account", "Set webhook URL"],
+            required_fields=["account_sid", "auth_token", "phone_number"],
+        ),
+        supports_dm=True,
+        supports_groups=False,
+    ),
+    "line": CatalogEntry(
+        channel_type="line",
+        display_name="LINE",
+        description="LINE Messaging API channel",
+        category=ChannelCategory.MESSAGING,
+        icon="forum",
+        color="#00B900",
+        media_limits=MediaLimits(max_message_length=5000, max_file_size_mb=200),
+        action_spec=ActionSpec(
+            supports_reactions=True, supports_typing=True,
+        ),
+        account_helper=AccountHelper(
+            steps=["Create LINE channel", "Copy channel access token and secret"],
+            required_fields=["channel_access_token", "channel_secret"],
+        ),
+    ),
+    "mattermost": CatalogEntry(
+        channel_type="mattermost",
+        display_name="Mattermost",
+        description="Mattermost Bot channel",
+        category=ChannelCategory.TEAM,
+        icon="developer_board",
+        color="#0058CC",
+        media_limits=MediaLimits(max_message_length=16383, max_file_size_mb=50),
+        action_spec=ActionSpec(
+            supports_reactions=True, supports_threads=True, supports_typing=True,
+            supports_editing=True, supports_deletion=True,
+        ),
+        account_helper=AccountHelper(
+            steps=["Create Mattermost bot account", "Copy access token"],
+            required_fields=["url", "token"],
+        ),
+    ),
+    "nostr": CatalogEntry(
+        channel_type="nostr",
+        display_name="Nostr",
+        description="Nostr protocol channel",
+        category=ChannelCategory.SOCIAL,
+        icon="public",
+        color="#8B5CF6",
+        media_limits=MediaLimits(max_message_length=65536),
+        action_spec=ActionSpec(supports_reactions=True),
+        account_helper=AccountHelper(
+            steps=["Generate Nostr keypair", "Configure relay URLs"],
+            required_fields=["private_key"],
+        ),
+    ),
+    "nextcloud": CatalogEntry(
+        channel_type="nextcloud",
+        display_name="Nextcloud Talk",
+        description="Nextcloud Talk channel via REST API polling",
+        category=ChannelCategory.TEAM,
+        icon="cloud",
+        color="#0082C9",
+        media_limits=MediaLimits(max_message_length=32000),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Set up Nextcloud instance", "Create Talk room", "Configure URL and credentials"],
+            required_fields=["server_url", "username", "password", "room_token"],
+        ),
+    ),
+    "synology": CatalogEntry(
+        channel_type="synology",
+        display_name="Synology Chat",
+        description="Synology Chat channel via webhooks",
+        category=ChannelCategory.TEAM,
+        icon="dns",
+        color="#4B4B4B",
+        media_limits=MediaLimits(max_message_length=4096),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Enable Synology Chat", "Create incoming and outgoing webhooks"],
+            required_fields=["incoming_url", "outgoing_token"],
+        ),
+        requires_webhook=True,
+    ),
+    "tlon": CatalogEntry(
+        channel_type="tlon",
+        display_name="Tlon / Urbit",
+        description="Urbit ship chat via SSE + REST",
+        category=ChannelCategory.SOCIAL,
+        icon="language",
+        color="#1A1A1A",
+        media_limits=MediaLimits(max_message_length=4096),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Set up Urbit ship", "Obtain ship URL and code"],
+            required_fields=["ship_url", "ship_code"],
+        ),
+    ),
+    "zalo": CatalogEntry(
+        channel_type="zalo",
+        display_name="Zalo OA",
+        description="Zalo Official Account channel via webhook",
+        category=ChannelCategory.MESSAGING,
+        icon="storefront",
+        color="#0068FF",
+        media_limits=MediaLimits(max_message_length=2000),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Register Zalo OA at oa.zalo.me", "Generate OA access token", "Configure webhook"],
+            required_fields=["oa_access_token"],
+        ),
+        requires_webhook=True,
+    ),
+    "zalouser": CatalogEntry(
+        channel_type="zalouser",
+        display_name="Zalo User",
+        description="Personal Zalo account via zca-cli subprocess",
+        category=ChannelCategory.MESSAGING,
+        icon="person",
+        color="#0068FF",
+        media_limits=MediaLimits(max_message_length=2000),
+        action_spec=ActionSpec(supports_typing=False),
+        account_helper=AccountHelper(
+            steps=["Install zca-cli", "Login with personal Zalo account"],
+            required_fields=["zca_cli_path"],
+        ),
+    ),
+    "webchat": CatalogEntry(
+        channel_type="webchat",
+        display_name="Web Chat",
+        description="Built-in web chat widget",
+        category=ChannelCategory.OTHER,
+        icon="web",
+        color="#607D8B",
+        media_limits=MediaLimits(max_message_length=10000),
+        action_spec=ActionSpec(supports_typing=True),
+    ),
+    "onebot": CatalogEntry(
+        channel_type="onebot",
+        display_name="OneBot",
+        description="OneBot v11/v12 protocol (QQ ecosystem)",
+        category=ChannelCategory.SOCIAL,
+        icon="smart_toy",
+        color="#12B7F5",
+        media_limits=MediaLimits(max_message_length=4500),
+        action_spec=ActionSpec(supports_reactions=True),
+        account_helper=AccountHelper(
+            steps=["Set up OneBot implementation (e.g. go-cqhttp)", "Configure WebSocket or HTTP endpoint"],
+            required_fields=["endpoint"],
+        ),
+    ),
 }
 
 
@@ -250,3 +547,70 @@ class ChannelCatalog:
             }
             for e in self._entries.values()
         ]
+
+    # ------------------------------------------------------------------
+    # Single-source-of-truth validation
+    # ------------------------------------------------------------------
+
+    def channel_types(self) -> set[str]:
+        """Return the set of all registered channel type identifiers."""
+        return set(self._entries.keys())
+
+    def validate_against_schema(self) -> dict[str, list[str]]:
+        """Check catalog ↔ ChannelsConfig alignment.
+
+        Returns a dict with two keys:
+        - ``in_catalog_not_schema``: types in catalog but missing from
+          ChannelsConfig explicit fields.
+        - ``in_schema_not_catalog``: fields on ChannelsConfig with no
+          matching catalog entry.
+        """
+        from pyclaw.config.schema import ChannelsConfig
+
+        schema_fields = _schema_channel_fields(ChannelsConfig)
+        catalog_types = self.channel_types()
+
+        return {
+            "in_catalog_not_schema": sorted(catalog_types - schema_fields),
+            "in_schema_not_catalog": sorted(schema_fields - catalog_types),
+        }
+
+    def validate_against_implementations(
+        self, implementations_dir: str | None = None,
+    ) -> dict[str, list[str]]:
+        """Check catalog ↔ on-disk channel implementations alignment.
+
+        Scans ``src/pyclaw/channels/*/channel.py`` to discover implemented
+        channels and compares against catalog entries.
+        """
+        import pathlib
+
+        if implementations_dir is None:
+            implementations_dir = str(
+                pathlib.Path(__file__).resolve().parent.parent
+            )
+        impl_path = pathlib.Path(implementations_dir)
+        implemented: set[str] = set()
+        for child in impl_path.iterdir():
+            if child.is_dir() and (child / "channel.py").exists():
+                implemented.add(child.name)
+
+        # "plugins" dir itself is not a channel
+        implemented.discard("plugins")
+
+        catalog_types = self.channel_types()
+        return {
+            "in_catalog_not_implemented": sorted(catalog_types - implemented),
+            "implemented_not_in_catalog": sorted(implemented - catalog_types),
+        }
+
+
+def _schema_channel_fields(config_cls: type) -> set[str]:
+    """Extract channel field names from a ChannelsConfig Pydantic model."""
+    skip = {"defaults"}
+    fields: set[str] = set()
+    for name, info in config_cls.model_fields.items():
+        if name in skip:
+            continue
+        fields.add(name)
+    return fields

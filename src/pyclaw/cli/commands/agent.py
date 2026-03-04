@@ -8,6 +8,8 @@ Phase 39 notes:
 
 from __future__ import annotations
 
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
+
 import asyncio
 import json
 import sys
@@ -103,12 +105,12 @@ def _resolve_from_config() -> tuple[str, str, str | None, str | None]:
 
     path = resolve_config_path()
     if not path.exists():
-        return ("openai", "gpt-4o", None, None)
+        return (DEFAULT_PROVIDER, DEFAULT_MODEL, None, None)
     raw = load_config_raw(path)
     models = raw.get("models") or {}
     providers = models.get("providers") or {}
     if not providers:
-        return ("openai", "gpt-4o", None, None)
+        return (DEFAULT_PROVIDER, DEFAULT_MODEL, None, None)
 
     agents_cfg = raw.get("agents") or {}
     defaults = agents_cfg.get("defaults") or {}
@@ -118,7 +120,7 @@ def _resolve_from_config() -> tuple[str, str, str | None, str | None]:
     provider_id = default_provider or next(iter(providers))
     prov = providers.get(provider_id)
     if not prov or not isinstance(prov, dict):
-        return ("openai", "gpt-4o", None, None)
+        return (DEFAULT_PROVIDER, DEFAULT_MODEL, None, None)
 
     key = prov.get("apiKey")
     if key is not None and not isinstance(key, str):
@@ -138,15 +140,15 @@ def _resolve_from_config() -> tuple[str, str, str | None, str | None]:
         if models_list and isinstance(models_list[0], dict):
             model_id = models_list[0].get("id")
         if not model_id:
-            model_id = default_model_id or "gpt-4o"
+            model_id = default_model_id or DEFAULT_MODEL
     return (provider_id, model_id, key, base)
 
 
 def agent_command(
     *,
     message: str,
-    provider: str = "openai",
-    model: str = "gpt-4o",
+    provider: str = DEFAULT_PROVIDER,
+    model: str = DEFAULT_MODEL,
     api_key: str | None = None,
     base_url: str | None = None,
     agent_id: str = "main",

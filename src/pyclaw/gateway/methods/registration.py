@@ -38,6 +38,8 @@ def register_core_handlers(
     server.register_handlers(create_chat_handlers())
     server.register_handlers(create_models_handlers())
     server.register_handlers(create_agents_handlers())
+    from pyclaw.gateway.methods.channels import set_config_path as _set_channels_config
+    _set_channels_config(config_path)
     server.register_handlers(create_channels_handlers())
     server.register_handlers(create_tools_handlers())
     server.register_handlers(create_cron_handlers())

@@ -6,6 +6,7 @@ from typing import Any
 
 import flet as ft
 
+from pyclaw.config.defaults import DEFAULT_PROVIDER
 from pyclaw.ui.i18n import t
 
 
@@ -16,6 +17,9 @@ class OnboardingWizard(ft.Column):
         self._on_complete = on_complete
         self._step = 0
         self._config: dict[str, Any] = {}
+
+        from pyclaw.agents.model_catalog import ModelCatalog
+        self._catalog = ModelCatalog()
 
         self._content = ft.Container(expand=True)
         self._progress = ft.ProgressBar(value=0, visible=True)
@@ -51,17 +55,17 @@ class OnboardingWizard(ft.Column):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        # Step-specific controls
+        provider_options = [
+            ft.dropdown.Option(p["id"], p["name"])
+            for p in self._catalog.list_providers()
+        ]
+
         self._provider_dropdown = ft.Dropdown(
             label=t("onboarding.provider_label"),
-            value="openai",
-            options=[
-                ft.dropdown.Option("openai", "OpenAI"),
-                ft.dropdown.Option("anthropic", "Anthropic"),
-                ft.dropdown.Option("google", "Google Gemini"),
-                ft.dropdown.Option("ollama", "Ollama (local)"),
-            ],
+            value=DEFAULT_PROVIDER,
+            options=provider_options,
             width=300,
+            on_change=self._handle_provider_change,
         )
         self._api_key_field = ft.TextField(
             label=t("settings.api_key"),
@@ -69,9 +73,12 @@ class OnboardingWizard(ft.Column):
             can_reveal_password=True,
             width=400,
         )
-        self._model_field = ft.TextField(
+
+        _init_model = self._catalog.default_model_for_provider(DEFAULT_PROVIDER)
+        self._model_dropdown = ft.Dropdown(
             label=t("onboarding.default_model"),
-            value="gpt-4o",
+            value=_init_model,
+            options=self._build_model_options(DEFAULT_PROVIDER),
             width=300,
         )
         self._channel_checks = {
@@ -137,7 +144,7 @@ class OnboardingWizard(ft.Column):
                 [
                     ft.Text(t("onboarding.select_model"), size=18, weight=ft.FontWeight.W_500),
                     ft.Container(height=8),
-                    self._model_field,
+                    self._model_dropdown,
                 ],
                 spacing=4,
             )
@@ -175,7 +182,7 @@ class OnboardingWizard(ft.Column):
         elif self._step == 1:
             self._config["api_key"] = self._api_key_field.value
         elif self._step == 2:
-            self._config["model"] = self._model_field.value
+            self._config["model"] = self._model_dropdown.value
         elif self._step == 3:
             self._config["channels"] = [
                 name for name, cb in self._channel_checks.items() if cb.value
@@ -192,3 +199,21 @@ class OnboardingWizard(ft.Column):
         if self._step > 0:
             self._step -= 1
             self._update_step_ui()
+
+    def _build_model_options(self, provider: str) -> list[Any]:
+        models = self._catalog.list_models(provider)
+        return [
+            ft.dropdown.Option(m.model_id, m.display_name or m.model_id)
+            for m in models
+        ]
+
+    async def _handle_provider_change(self, e: Any) -> None:
+        provider = self._provider_dropdown.value or "anthropic"
+        self._model_dropdown.options = self._build_model_options(provider)
+        default = self._catalog.default_model_for_provider(provider)
+        self._model_dropdown.value = default
+        try:
+            if self._model_dropdown.page:
+                self._model_dropdown.update()
+        except RuntimeError:
+            pass

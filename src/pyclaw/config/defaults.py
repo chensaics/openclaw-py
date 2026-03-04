@@ -19,12 +19,24 @@ DEFAULT_MODEL_MAX_TOKENS = 8192
 DEFAULT_MODEL_INPUT: list[str] = ["text"]
 
 DEFAULT_MODEL_ALIASES: dict[str, str] = {
+    "default": "anthropic/claude-sonnet-4-6",
     "opus": "anthropic/claude-opus-4-6",
     "sonnet": "anthropic/claude-sonnet-4-6",
-    "gpt": "openai/gpt-5.2",
-    "gpt-mini": "openai/gpt-5-mini",
-    "gemini": "google/gemini-3-pro-preview",
-    "gemini-flash": "google/gemini-3-flash-preview",
+    "haiku": "anthropic/claude-haiku-4-5",
+    "gpt": "openai/gpt-4o",
+    "gpt-mini": "openai/gpt-4o-mini",
+    "gpt-4.1": "openai/gpt-4.1-2025-04-14",
+    "gemini": "google/gemini-2.5-pro",
+    "gemini-flash": "google/gemini-2.5-flash",
+    "deepseek": "deepseek/deepseek-chat",
+    "r1": "deepseek/deepseek-reasoner",
+    "qwen": "qwen/qwen-max",
+    "kimi": "moonshot/kimi-k2.5",
+    "moonshot": "moonshot/kimi-k2.5",
+    "glm": "zhipu/glm-4-plus",
+    "grok": "xai/grok-3",
+    "ernie": "qianfan/ernie-4.5-turbo-128k",
+    "yi": "yi/yi-lightning",
 }
 
 DEFAULT_MODEL_COST: dict[str, float] = {
@@ -74,21 +86,29 @@ DEFAULT_REDACT_SENSITIVE = "tools"
 
 _PROVIDER_DEFAULTS: dict[str, tuple[str, str]] = {
     # provider_id -> (default_base_url, default_model)
-    "ollama": ("http://localhost:11434/v1", "llama3"),
-    "vllm": ("http://localhost:8000/v1", "default"),
-    "litellm": ("http://localhost:4000/v1", "gpt-4o"),
+    "anthropic": ("https://api.anthropic.com", "claude-sonnet-4-6"),
+    "openai": ("https://api.openai.com/v1", "gpt-4o"),
+    "google": ("https://generativelanguage.googleapis.com", "gemini-2.5-flash"),
     "deepseek": ("https://api.deepseek.com/v1", "deepseek-chat"),
+    "mistral": ("https://api.mistral.ai/v1", "mistral-large-latest"),
+    "xai": ("https://api.x.ai/v1", "grok-3"),
     "qwen": ("https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen-max"),
-    "moonshot": ("https://api.moonshot.cn/v1", "moonshot-v1-128k"),
-    "volcengine": ("https://ark.cn-beijing.volces.com/api/v3", "doubao-pro-256k"),
+    "moonshot": ("https://api.moonshot.cn/v1", "kimi-k2.5"),
     "zhipu": ("https://open.bigmodel.cn/api/paas/v4", "glm-4-plus"),
-    "minimax": ("https://api.minimax.chat/v1", "abab6.5s-chat"),
+    "volcengine": ("https://ark.cn-beijing.volces.com/api/v3", "doubao-pro-256k"),
+    "yi": ("https://api.lingyiwanwu.com/v1", "yi-lightning"),
+    "qianfan": ("https://aip.baidubce.com/rpc/2.0/ai_custom/v1", "ernie-4.5-turbo-128k"),
+    "minimax": ("https://api.minimax.chat/v1", "MiniMax-M2.5"),
+    "siliconflow": ("https://api.siliconflow.cn/v1", "deepseek-ai/DeepSeek-V3"),
     "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
-    "together": ("https://api.together.xyz/v1", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
+    "ollama": ("http://localhost:11434/v1", "llama3"),
     "openrouter": ("https://openrouter.ai/api/v1", "anthropic/claude-sonnet-4-6"),
+    "together": ("https://api.together.xyz/v1", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
     "fireworks": ("https://api.fireworks.ai/inference/v1", "accounts/fireworks/models/llama-v3p3-70b-instruct"),
     "perplexity": ("https://api.perplexity.ai", "sonar-pro"),
-    "xai": ("https://api.x.ai/v1", "grok-3"),
+    "amazon-bedrock": ("", "anthropic.claude-sonnet-4-6"),
+    "vllm": ("http://localhost:8000/v1", "default"),
+    "litellm": ("http://localhost:4000/v1", "default"),
 }
 
 

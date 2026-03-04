@@ -11,12 +11,26 @@ from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 logger = logging.getLogger("pyclaw.channels")
 
 
+def _record_metric(channel_id: str, event: str) -> None:
+    """Record a metric event if the gateway channels module is loaded."""
+    try:
+        from pyclaw.gateway.methods.channels import record_channel_metric
+        record_channel_metric(channel_id, event)
+    except Exception:
+        pass
+
+
 class ChannelManager:
     """Manages lifecycle and message routing for all registered channels."""
 
     def __init__(self) -> None:
         self._channels: dict[str, ChannelPlugin] = {}
         self._message_handler: Any = None
+
+    @property
+    def channels(self) -> list[ChannelPlugin]:
+        """All registered channel plugins (iterable by gateway methods)."""
+        return list(self._channels.values())
 
     def register(self, channel: ChannelPlugin) -> None:
         self._channels[channel.id] = channel
@@ -35,9 +49,16 @@ class ChannelManager:
         tasks = []
         for ch in self._channels.values():
             logger.info("Starting channel: %s", ch.id)
-            tasks.append(asyncio.create_task(ch.start()))
+            tasks.append(asyncio.create_task(self._start_channel(ch)))
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _start_channel(self, ch: ChannelPlugin) -> None:
+        try:
+            await ch.start()
+            _record_metric(ch.id, "connect")
+        except Exception:
+            logger.exception("Failed to start channel %s", ch.id)
 
     async def stop_all(self) -> None:
         """Stop all running channels."""
@@ -46,6 +67,7 @@ class ChannelManager:
                 logger.info("Stopping channel: %s", ch.id)
                 try:
                     await ch.stop()
+                    _record_metric(ch.id, "disconnect")
                 except Exception:
                     logger.exception("Error stopping channel %s", ch.id)
 
@@ -86,5 +108,7 @@ class ChannelManager:
                 )
                 try:
                     await channel.send_reply(reply)
+                    _record_metric(msg.channel_id, "msg_sent")
                 except Exception:
                     logger.exception("Error sending reply on %s", msg.channel_id)
+                    _record_metric(msg.channel_id, "msg_failed")

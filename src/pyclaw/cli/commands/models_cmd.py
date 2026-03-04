@@ -82,32 +82,42 @@ class ProviderStatus:
 # Built-in Model Registry
 # ---------------------------------------------------------------------------
 
-BUILTIN_MODELS: list[ModelInfo] = [
-    ModelInfo("gpt-4o", "GPT-4o", "openai", [ModelCapability.TEXT, ModelCapability.VISION], 128000, 16384),
-    ModelInfo("gpt-4o-mini", "GPT-4o Mini", "openai", [ModelCapability.TEXT, ModelCapability.VISION], 128000, 16384),
-    ModelInfo("o3-mini", "o3-mini", "openai", [ModelCapability.TEXT], 200000, 100000),
-    ModelInfo("claude-sonnet-4-20250514", "Claude Sonnet 4", "anthropic", [ModelCapability.TEXT, ModelCapability.VISION], 200000, 64000),
-    ModelInfo("claude-3-5-haiku-20241022", "Claude 3.5 Haiku", "anthropic", [ModelCapability.TEXT], 200000, 8192),
-    ModelInfo("gemini-2.0-flash", "Gemini 2.0 Flash", "google", [ModelCapability.TEXT, ModelCapability.VISION, ModelCapability.AUDIO], 1048576, 8192),
-    ModelInfo("gemini-2.5-pro-preview-05-06", "Gemini 2.5 Pro", "google", [ModelCapability.TEXT, ModelCapability.VISION], 1048576, 65536),
-    ModelInfo("deepseek-chat", "DeepSeek V3", "deepseek", [ModelCapability.TEXT, ModelCapability.CODE], 64000, 8192),
-    ModelInfo("deepseek-reasoner", "DeepSeek R1", "deepseek", [ModelCapability.TEXT], 64000, 8192),
-    ModelInfo("moonshot-v1-128k", "Moonshot v1 128K", "moonshot", [ModelCapability.TEXT], 128000, 8192),
-    ModelInfo("qwen-max", "Qwen Max", "qwen", [ModelCapability.TEXT], 32000, 8192),
-    ModelInfo("glm-4-plus", "GLM-4 Plus", "zhipu", [ModelCapability.TEXT], 128000, 4096),
-]
+def _build_builtin_models() -> list[ModelInfo]:
+    """Generate BUILTIN_MODELS from the canonical ModelCatalog."""
+    from pyclaw.agents.model_catalog import ModelCatalog as _MC
+
+    cat = _MC()
+    result: list[ModelInfo] = []
+    for m in cat.list_models():
+        caps = [ModelCapability.TEXT]
+        if m.supports_vision:
+            caps.append(ModelCapability.VISION)
+        if m.supports_thinking:
+            caps.append(ModelCapability.CODE)
+        result.append(ModelInfo(
+            model_id=m.model_id,
+            display_name=m.display_name,
+            provider=m.provider,
+            capabilities=caps,
+            context_window=m.context_window,
+            max_output=m.max_tokens,
+        ))
+    return result
+
+
+BUILTIN_MODELS: list[ModelInfo] = _build_builtin_models()
 
 DEFAULT_ALIASES: list[ModelAlias] = [
-    ModelAlias("default", "gpt-4o", "openai"),
+    ModelAlias("default", "claude-sonnet-4-6", "anthropic"),
     ModelAlias("fast", "gpt-4o-mini", "openai"),
-    ModelAlias("smart", "claude-sonnet-4-20250514", "anthropic"),
-    ModelAlias("reasoning", "o3-mini", "openai"),
+    ModelAlias("smart", "claude-opus-4-6", "anthropic"),
+    ModelAlias("reasoning", "deepseek-reasoner", "deepseek"),
     ModelAlias("code", "deepseek-chat", "deepseek"),
 ]
 
 DEFAULT_FALLBACK_CHAINS: list[FallbackChain] = [
-    FallbackChain("gpt-4o", ["claude-sonnet-4-20250514", "gemini-2.0-flash"]),
-    FallbackChain("claude-sonnet-4-20250514", ["gpt-4o", "gemini-2.5-pro-preview-05-06"]),
+    FallbackChain("claude-sonnet-4-6", ["gpt-4o", "gemini-2.5-flash"]),
+    FallbackChain("gpt-4o", ["claude-sonnet-4-6", "gemini-2.5-flash"]),
 ]
 
 

@@ -183,16 +183,34 @@ class ChannelDefaultsConfig(_CamelModel):
 
 class ChannelsConfig(_CamelModel):
     defaults: ChannelDefaultsConfig | None = None
+    # Core channels
     telegram: dict[str, Any] | None = None
     discord: dict[str, Any] | None = None
     slack: dict[str, Any] | None = None
     whatsapp: dict[str, Any] | None = None
     signal: dict[str, Any] | None = None
     imessage: dict[str, Any] | None = None
+    # Extended channels
     webchat: dict[str, Any] | None = None
     googlechat: dict[str, Any] | None = Field(None, alias="googlechat")
     dingtalk: dict[str, Any] | None = None
     qq: dict[str, Any] | None = None
+    feishu: dict[str, Any] | None = None
+    matrix: dict[str, Any] | None = None
+    line: dict[str, Any] | None = None
+    irc: dict[str, Any] | None = None
+    msteams: dict[str, Any] | None = Field(None, alias="msteams")
+    mattermost: dict[str, Any] | None = None
+    twitch: dict[str, Any] | None = None
+    bluebubbles: dict[str, Any] | None = None
+    nostr: dict[str, Any] | None = None
+    nextcloud: dict[str, Any] | None = None
+    synology: dict[str, Any] | None = None
+    tlon: dict[str, Any] | None = None
+    zalo: dict[str, Any] | None = None
+    zalouser: dict[str, Any] | None = None
+    voice_call: dict[str, Any] | None = Field(None, alias="voiceCall")
+    onebot: dict[str, Any] | None = None
 
 
 # --- Agent ---

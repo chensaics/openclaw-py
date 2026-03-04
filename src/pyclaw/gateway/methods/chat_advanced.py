@@ -13,6 +13,8 @@ Provides:
 from __future__ import annotations
 
 import logging
+
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 import re
 import time
 from dataclasses import dataclass, field
@@ -46,8 +48,8 @@ class ChatParams:
     """Validated chat parameters."""
     message: str
     agent_id: str = "main"
-    provider: str = "openai"
-    model: str = "gpt-4o"
+    provider: str = DEFAULT_PROVIDER
+    model: str = DEFAULT_MODEL
     api_key: str = ""
     system_prompt: str = ""
     attachments: list[ChatAttachment] = field(default_factory=list)
@@ -97,8 +99,8 @@ def validate_chat_params(params: dict[str, Any]) -> tuple[ChatParams | None, str
     return ChatParams(
         message=message.strip(),
         agent_id=params.get("agentId", params.get("agent_id", "main")),
-        provider=params.get("provider", "openai"),
-        model=params.get("model", "gpt-4o"),
+        provider=params.get("provider", DEFAULT_PROVIDER),
+        model=params.get("model", DEFAULT_MODEL),
         api_key=params.get("apiKey", params.get("api_key", "")),
         system_prompt=params.get("systemPrompt", params.get("system_prompt", "")),
         attachments=attachments,

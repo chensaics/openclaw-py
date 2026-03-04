@@ -10,6 +10,7 @@ import logging
 from collections.abc import Callable, Coroutine
 from typing import Any
 
+from pyclaw.config.defaults import DEFAULT_PROVIDER
 from pyclaw.ui.i18n import t
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,8 @@ def build_toolbar(
     on_voice: Callable[[], Coroutine[Any, Any, None]] | None = None,
     on_clear: Callable[[], Coroutine[Any, Any, None]] | None = None,
     on_model_change: Callable[[str], Coroutine[Any, Any, None]] | None = None,
-    current_model: str = "gpt-4o",
+    current_model: str = "",
+    current_provider: str = "",
     available_models: list[str] | None = None,
 ) -> Any:
     """Build a toolbar Row for the chat input area.
@@ -33,13 +35,19 @@ def build_toolbar(
     except ImportError:
         return None
 
-    models = available_models or [
-        "gpt-4o",
-        "gpt-4o-mini",
-        "claude-sonnet-4-20250514",
-        "claude-3-5-haiku-20241022",
-        "gemini-2.0-flash",
-    ]
+    if available_models:
+        models = available_models
+    else:
+        from pyclaw.agents.model_catalog import ModelCatalog
+        catalog = ModelCatalog()
+        provider = current_provider or DEFAULT_PROVIDER
+        provider_models = catalog.list_models(provider)
+        models = [m.model_id for m in provider_models]
+        if not current_model:
+            current_model = catalog.default_model_for_provider(provider)
+
+    if not current_model and models:
+        current_model = models[0]
 
     model_dropdown = ft.Dropdown(
         value=current_model,

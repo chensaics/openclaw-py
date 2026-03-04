@@ -387,7 +387,7 @@ class TestModelRegistry:
     def test_alias(self) -> None:
         reg = ModelRegistry()
         resolved = reg.resolve_alias("default")
-        assert resolved == "gpt-4o"
+        assert resolved == "claude-sonnet-4-6"
 
     def test_set_alias(self) -> None:
         reg = ModelRegistry()

@@ -7,6 +7,7 @@ from collections.abc import Callable, Coroutine
 from pathlib import Path
 from typing import Any
 
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 from pyclaw.ui.i18n import t
 
 logger = logging.getLogger(__name__)
@@ -36,9 +37,9 @@ def build_agents_panel(
 
     detail_column = ft.Column(expand=True, spacing=8)
     name_field = ft.TextField(label=t("agents.name", default="Agent Name"), dense=True)
-    model_field = ft.TextField(label=t("agents.model", default="Model"), dense=True, value="gpt-4o")
+    model_field = ft.TextField(label=t("agents.model", default="Model"), dense=True, value=DEFAULT_MODEL)
     provider_field = ft.TextField(
-        label=t("agents.provider", default="Provider"), dense=True, value="openai"
+        label=t("agents.provider", default="Provider"), dense=True, value=DEFAULT_PROVIDER
     )
     system_prompt_field = ft.TextField(
         label=t("agents.system_prompt", default="System Prompt"),
@@ -156,8 +157,8 @@ def build_agents_panel(
         agent_path.mkdir(parents=True, exist_ok=True)
 
         config = {
-            "model": model_field.value or "gpt-4o",
-            "provider": provider_field.value or "openai",
+            "model": model_field.value or DEFAULT_MODEL,
+            "provider": provider_field.value or DEFAULT_PROVIDER,
             "systemPrompt": system_prompt_field.value or "",
         }
         (agent_path / "agent.json").write_text(json.dumps(config, indent=2), encoding="utf-8")

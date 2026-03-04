@@ -353,7 +353,7 @@ class CopilotProxyExtension:
                 "Editor-Version": "pyclaw/1.0",
             },
             "body": {
-                "model": model or "gpt-4o",
+                "model": model or "claude-sonnet-4-6",
                 "messages": messages,
                 "stream": False,
             },
