@@ -121,7 +121,7 @@ class TestSecretsAudit:
                 "providers": {
                     "openai": {
                         "baseUrl": "https://api.openai.com/v1",
-                        "apiKey": "sk-1234567890abcdef1234567890abcdef",
+                        "apiKey": "sk-test-fake-key",
                     }
                 }
             }

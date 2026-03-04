@@ -489,7 +489,7 @@ class TestSkillScanner:
 
     def test_hardcoded_secret(self, tmp_path: Path) -> None:
         secret_file = tmp_path / "config.py"
-        secret_file.write_text("api_key = 'sk-abcdefghijklmnopqrstuvwxyz'")
+        secret_file.write_text("api_key = 'FAKE-KEY-FOR-TESTING-ONLY'")
         findings = scan_skill_file(secret_file)
         assert any("secret" in f.detail.lower() for f in findings)
 
