@@ -127,6 +127,9 @@ dev = [
 [project.scripts]
 pyclaw = "pyclaw.main:main"
 
+[tool.hatch.build.targets.sdist]
+exclude = ["flutter_app", "build", ".venv"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/pyclaw"]
 
