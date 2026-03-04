@@ -37,6 +37,7 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
     # ------------------------------------------------------------------
 
     async def handle_tts_speak(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        """Placeholder: TTS synthesis not yet implemented. Returns not_implemented error."""
         text = (params or {}).get("text", "")
         if not text:
             await conn.send_error("tts.speak", "invalid_params", "Missing 'text'")
@@ -255,6 +256,7 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
     # ------------------------------------------------------------------
 
     async def handle_wizard_start(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        """Placeholder: Setup wizard not yet implemented. Returns not_implemented error."""
         await conn.send_error(
             "wizard.start",
             "not_implemented",
@@ -262,6 +264,7 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
         )
 
     async def handle_wizard_step(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        """Placeholder: Setup wizard not yet implemented. Returns not_implemented error."""
         await conn.send_error(
             "wizard.step",
             "not_implemented",
@@ -273,6 +276,7 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
     # ------------------------------------------------------------------
 
     async def handle_push_send(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        """Placeholder: Push notification delivery not yet implemented. Returns not_implemented error."""
         await conn.send_error(
             "push.send",
             "not_implemented",
@@ -284,6 +288,7 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
     # ------------------------------------------------------------------
 
     async def handle_voicewake_status(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        """Placeholder: Voice wake-word detection not yet available. Returns not_implemented error."""
         await conn.send_error(
             "voicewake.status",
             "not_implemented",

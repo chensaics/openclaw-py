@@ -11,6 +11,7 @@ from typing import Any
 
 import flet as ft
 
+from pyclaw.ui.components import empty_state_simple, error_state
 from pyclaw.ui.i18n import t
 
 # Icon mapping — covers all known channels
@@ -92,31 +93,45 @@ class ChannelStatusPanel(ft.Column):
             horizontal_alignment=ft.CrossAxisAlignment.START,
         )
 
-    def update_channels(self, channels: list[dict[str, Any]]) -> None:
-        """Refresh the channel list display with capability badges and metrics."""
+    def update_channels(
+        self,
+        channels: list[dict[str, Any]],
+        *,
+        error: str | None = None,
+        on_retry: Any = None,
+    ) -> None:
+        """Refresh the channel list display with capability badges and metrics.
+
+        When error is set, show error state with optional retry. When channels
+        is empty and no error, show empty state.
+        """
         self._channel_list.controls.clear()
 
-        total = len(channels)
-        running = sum(1 for c in channels if c.get("running") or c.get("status") == "running")
-        configured = sum(1 for c in channels if c.get("status") == "configured")
-
-        self._summary_row.controls = [
-            self._stat_chip(f"{total}", "Total"),
-            self._stat_chip(f"{running}", "Running", ft.Colors.GREEN),
-            self._stat_chip(f"{configured}", "Configured", ft.Colors.AMBER),
-        ]
-        self._safe_update(self._summary_row)
-
-        if not channels:
-            from pyclaw.ui.components import empty_state
-
+        if error:
             self._channel_list.controls.append(
-                empty_state(ft.Icons.LINK_OFF, t("channels.no_configured")),
+                error_state(error, on_retry=on_retry or self._on_refresh),
             )
+            self._summary_row.controls = []
         else:
-            for ch in channels:
-                self._channel_list.controls.append(self._build_channel_tile(ch))
+            total = len(channels)
+            running = sum(1 for c in channels if c.get("running") or c.get("status") == "running")
+            configured = sum(1 for c in channels if c.get("status") == "configured")
 
+            self._summary_row.controls = [
+                self._stat_chip(f"{total}", "Total"),
+                self._stat_chip(f"{running}", "Running", ft.Colors.GREEN),
+                self._stat_chip(f"{configured}", "Configured", ft.Colors.AMBER),
+            ]
+
+            if not channels:
+                self._channel_list.controls.append(
+                    empty_state_simple("暂无频道配置", icon=ft.Icons.LINK_OFF),
+                )
+            else:
+                for ch in channels:
+                    self._channel_list.controls.append(self._build_channel_tile(ch))
+
+        self._safe_update(self._summary_row)
         self._safe_update(self._channel_list)
 
     @staticmethod

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import uuid
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -43,6 +44,18 @@ class GatewayConnection:
         self.message_channel: str = ""
         headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in ws.scope.get("headers", [])}
         self.message_channel = headers.get("message-channel") or headers.get("x-message-channel") or ""
+        self._current_request_id: str | None = None
+        self._trace_id: str | None = None
+
+    def _payload_with_trace(self, payload: Any) -> Any:
+        """Merge _trace into payload for log correlation, without mutating the original."""
+        if self._trace_id is None:
+            return payload
+        if payload is None:
+            return {"_trace": self._trace_id}
+        if isinstance(payload, dict):
+            return {**payload, "_trace": self._trace_id}
+        return payload
 
     async def send_response(self, response: ResponseFrame) -> None:
         await self.ws.send_json(response.to_dict())
@@ -53,10 +66,17 @@ class GatewayConnection:
         await self.ws.send_json(frame.to_dict())
 
     async def send_ok(self, frame_id: str, payload: Any = None) -> None:
-        await self.send_response(ResponseFrame.ok_response(frame_id, payload))
+        request_id = self._current_request_id if self._current_request_id is not None else frame_id
+        payload_with_trace = self._payload_with_trace(payload)
+        await self.send_response(ResponseFrame.ok_response(request_id, payload_with_trace))
 
     async def send_error(self, frame_id: str, code: str, message: str, **kwargs: Any) -> None:
-        await self.send_response(ResponseFrame.error_response(frame_id, code, message, **kwargs))
+        request_id = self._current_request_id if self._current_request_id is not None else frame_id
+        payload_with_trace = self._payload_with_trace(kwargs.pop("payload", None))
+        response = ResponseFrame.error_response(request_id, code, message, **kwargs)
+        if payload_with_trace is not None:
+            response.payload = payload_with_trace
+        await self.send_response(response)
 
 
 class GatewayServer:
@@ -155,30 +175,38 @@ class GatewayServer:
             if not frame:
                 continue
 
-            # First message must be "connect"
-            if not conn.authenticated and frame.method != "connect":
-                await conn.send_error(frame.id, "auth_required", "First message must be 'connect'.")
-                continue
+            conn._current_request_id = frame.id
+            conn._trace_id = uuid.uuid4().hex[:8]
+            try:
+                logger.debug("request %s %s [trace=%s]", frame.method, frame.id, conn._trace_id)
 
-            handler = self._handlers.get(frame.method)
-            if handler:
-                try:
-                    await handler(frame.params, conn)
-                    # If handler didn't send a response, we don't auto-respond
-                    # (handlers are responsible for sending their own response)
-                except Exception as e:
-                    logger.exception("Handler error for %s", frame.method)
+                # First message must be "connect"
+                if not conn.authenticated and frame.method != "connect":
+                    await conn.send_error(frame.id, "auth_required", "First message must be 'connect'.")
+                    continue
+
+                handler = self._handlers.get(frame.method)
+                if handler:
+                    try:
+                        await handler(frame.params, conn)
+                        # If handler didn't send a response, we don't auto-respond
+                        # (handlers are responsible for sending their own response)
+                    except Exception as e:
+                        logger.exception("Handler error for %s [trace=%s]", frame.method, conn._trace_id)
+                        await conn.send_error(
+                            frame.id,
+                            "internal_error",
+                            str(e),
+                        )
+                else:
                     await conn.send_error(
                         frame.id,
-                        "internal_error",
-                        str(e),
+                        "unknown_method",
+                        f"Unknown method: {frame.method}",
                     )
-            else:
-                await conn.send_error(
-                    frame.id,
-                    "unknown_method",
-                    f"Unknown method: {frame.method}",
-                )
+            finally:
+                conn._current_request_id = None
+                conn._trace_id = None
 
     async def broadcast_event(self, event: str, payload: Any = None) -> None:
         """Send an event to all connected authenticated clients."""

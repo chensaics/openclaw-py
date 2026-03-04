@@ -38,6 +38,7 @@ def _use_embedded_runner() -> bool:
             return cast(bool, runner_cfg.get("mode", "embedded") != "legacy")
         return True
     except Exception:
+        logger.warning("Failed to load runner config, defaulting to embedded", exc_info=True)
         return True
 
 
@@ -240,7 +241,7 @@ def _resolve_gateway_model(provider: str, model_id: str, api_key: str) -> tuple[
                         effective_model = cfg_model or model_id
                     effective_base = prov.get("baseUrl") or None
     except Exception:
-        pass
+        logger.warning("Failed to resolve gateway model from config", exc_info=True)
 
     if not effective_base:
         default_base, default_model = get_provider_defaults(effective_provider)
@@ -437,7 +438,7 @@ async def _run_embedded(
             output_tokens=record.total_output_tokens,
         )
     except Exception:
-        pass
+        logger.warning("Failed to record session usage", exc_info=True)
 
     from pyclaw.agents.embedded_runner.run import RunState
 

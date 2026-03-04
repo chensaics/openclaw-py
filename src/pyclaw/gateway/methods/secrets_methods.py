@@ -6,12 +6,15 @@ Ported from gateway secrets reload handler.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pyclaw.gateway.server import GatewayConnection, MethodHandler
 
 logger = logging.getLogger(__name__)
 
 
-async def handle_secrets_reload(conn: Any, params: dict[str, Any]) -> None:
+async def handle_secrets_reload(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
     """Re-resolve all cached SecretRefs and update the runtime snapshot."""
     from pyclaw.secrets.runtime import SecretsRuntime
 
@@ -25,6 +28,8 @@ async def handle_secrets_reload(conn: Any, params: dict[str, Any]) -> None:
         await conn.send_ok({"reloaded": True, "count": 0})
 
 
-SECRETS_METHODS = {
-    "secrets.reload": handle_secrets_reload,
-}
+def create_secrets_handlers() -> dict[str, MethodHandler]:
+    """Create handlers for secrets.* RPC methods."""
+    return {
+        "secrets.reload": handle_secrets_reload,
+    }

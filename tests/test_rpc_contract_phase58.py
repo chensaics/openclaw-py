@@ -120,6 +120,10 @@ class TestRegisteredMethods:
     def test_logs_tail(self, registered: set[str]) -> None:
         assert "logs.tail" in registered
 
+    @pytest.mark.parametrize("method", ["sessions.get", "sessions.create", "sessions.cleanup"])
+    def test_sessions_methods(self, registered: set[str], method: str) -> None:
+        assert method in registered, f"{method} not found in handler sources"
+
 
 # ---------------------------------------------------------------------------
 # 2. Chat advanced integration
@@ -232,7 +236,96 @@ class TestCLIFallbackWarning:
 
 
 # ---------------------------------------------------------------------------
-# 7. Documentation consistency
+# 7. RPC parameter contracts — method handlers reference expected param names
+# ---------------------------------------------------------------------------
+
+
+def _source_for_method(method: str) -> tuple[Path, str]:
+    """Return (file_path, handler_name) for a given method key."""
+    methods_dir = PROJECT_ROOT / "src" / "pyclaw" / "gateway" / "methods"
+    mapping = {
+        "sessions.get": ("sessions.py", "handle_sessions_get"),
+        "sessions.create": ("sessions.py", "handle_sessions_create"),
+        "channels.status": ("channels.py", "handle_channels_status"),
+        "chat.send": ("chat.py", "handle_chat_send"),
+    }
+    rel_path, handler_name = mapping[method]
+    return methods_dir / rel_path, handler_name
+
+
+class TestRpcParameterContracts:
+    """Validate method handler source code contains expected parameter names."""
+
+    @pytest.mark.parametrize(
+        "method,expected_params",
+        [
+            ("sessions.get", ["sessionId"]),
+            ("sessions.create", ["title"]),
+            ("channels.status", ["channel_id", "channelId"]),
+            ("chat.send", ["text", "message"]),
+        ],
+    )
+    def test_method_references_expected_params(self, method: str, expected_params: list[str]) -> None:
+        path, _ = _source_for_method(method)
+        src = path.read_text(encoding="utf-8")
+        found = [p for p in expected_params if p in src]
+        assert found, f"{method} handler in {path.name} should reference one of {expected_params}, found none"
+
+
+# ---------------------------------------------------------------------------
+# 8. Connect protocol version
+# ---------------------------------------------------------------------------
+
+
+class TestConnectProtocolVersion:
+    """Verify connect handler uses PROTOCOL_VERSION and value is 3."""
+
+    def test_connect_references_protocol_version(self) -> None:
+        connect_src = (PROJECT_ROOT / "src" / "pyclaw" / "gateway" / "methods" / "connect.py").read_text()
+        assert "PROTOCOL_VERSION" in connect_src
+
+    def test_protocol_version_is_3(self) -> None:
+        frames_src = (PROJECT_ROOT / "src" / "pyclaw" / "gateway" / "protocol" / "frames.py").read_text()
+        assert "PROTOCOL_VERSION = 3" in frames_src
+
+
+# ---------------------------------------------------------------------------
+# 9. Registration handlers have corresponding source files
+# ---------------------------------------------------------------------------
+
+
+def _collect_handler_modules_from_registration() -> list[str]:
+    """Parse registration.py for imported handler modules."""
+    reg_path = PROJECT_ROOT / "src" / "pyclaw" / "gateway" / "methods" / "registration.py"
+    src = reg_path.read_text(encoding="utf-8")
+    modules: list[str] = []
+    for match in re.finditer(
+        r"from pyclaw\.gateway\.methods\.(\w+) import create_\w+",
+        src,
+    ):
+        modules.append(match.group(1))
+    return modules
+
+
+class TestRegistrationHandlerModulesExist:
+    """Verify each create_*_handlers in registration.py maps to an importable module."""
+
+    def test_all_handler_modules_have_py_files(self) -> None:
+        methods_dir = PROJECT_ROOT / "src" / "pyclaw" / "gateway" / "methods"
+        modules = _collect_handler_modules_from_registration()
+        missing: list[str] = []
+        for mod in modules:
+            py_file = methods_dir / f"{mod}.py"
+            if not py_file.exists():
+                missing.append(mod)
+        assert not missing, (
+            f"registration.py imports from missing modules: {missing}. "
+            f"Expected .py files: {[f'{m}.py' for m in missing]}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 10. Documentation consistency
 # ---------------------------------------------------------------------------
 
 

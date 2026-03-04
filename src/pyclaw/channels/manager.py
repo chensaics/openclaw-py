@@ -18,7 +18,7 @@ def _record_metric(channel_id: str, event: str) -> None:
 
         record_channel_metric(channel_id, event)
     except Exception:
-        pass
+        logger.warning("Failed to record channel metric for %s event %s", channel_id, event, exc_info=True)
 
 
 class ChannelManager:

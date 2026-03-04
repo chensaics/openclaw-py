@@ -18,7 +18,7 @@ ws://localhost:18789/ws
 
 ```json
 {
-  "type": "request",
+  "type": "req",
   "id": "unique-request-id",
   "method": "method.name",
   "params": { ... }
@@ -29,9 +29,9 @@ ws://localhost:18789/ws
 
 ```json
 {
-  "type": "response",
+  "type": "res",
   "id": "same-request-id",
-  "status": "ok",
+  "ok": true,
   "payload": { ... }
 }
 ```
@@ -40,9 +40,9 @@ ws://localhost:18789/ws
 
 ```json
 {
-  "type": "response",
+  "type": "res",
   "id": "same-request-id",
-  "status": "error",
+  "ok": false,
   "error": {
     "code": "NOT_FOUND",
     "message": "Session not found"
@@ -63,17 +63,18 @@ ws://localhost:18789/ws
 
 ### 认证
 
-连接后第一个请求必须是 `connect`，携带认证 token：
+连接后第一个请求必须是 `connect`，携带认证参数：
 
 ```json
 {
-  "type": "request",
+  "type": "req",
   "id": "1",
   "method": "connect",
   "params": {
-    "token": "your-auth-token",
+    "minProtocol": 1,
+    "maxProtocol": 3,
     "clientName": "my-app",
-    "protocolVersion": 3
+    "auth": { "token": "your-auth-token" }
   }
 }
 ```
@@ -84,7 +85,7 @@ ws://localhost:18789/ws
 
 | 方法 | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `connect` | `token`, `clientName`, `protocolVersion` | `{ connected: true }` | 认证并建立连接 |
+| `connect` | `minProtocol`, `maxProtocol`, `clientName`, `auth.token` | `{ protocol, server }` | 认证并建立连接 |
 | `health` | (无) | `{ status, uptime, connections }` | 健康检查 |
 
 #### 聊天
@@ -111,11 +112,10 @@ ws://localhost:18789/ws
 
 | 方法 | 参数 | 返回 | 说明 |
 |------|------|------|------|
-| `sessions.list` | `limit?`, `offset?` | `[{ id, title, ... }]` | 列出会话 |
-| `sessions.get` | `sessionId` | `{ id, messages, ... }` | 获取会话详情 |
-| `sessions.create` | `title?`, `agentId?` | `{ id }` | 创建新会话 |
-| `sessions.delete` | `sessionId` | `{ deleted }` | 删除会话 |
-| `sessions.cleanup` | `olderThanDays?` | `{ removed }` | 清理旧会话 |
+| `sessions.list` | (无) | `{ sessions: [{ agentId, file, path, size }] }` | 列出会话 |
+| `sessions.preview` | `path`, `limit?` | `{ messages }` | 预览会话消息 |
+| `sessions.delete` | `path` | `{ deleted }` | 删除会话 |
+| `sessions.reset` | `path` | `{ reset }` | 重置会话（清空内容保留文件） |
 
 #### Agent 管理
 
@@ -129,7 +129,7 @@ ws://localhost:18789/ws
 | 方法 | 参数 | 返回 | 说明 |
 |------|------|------|------|
 | `channels.list` | (无) | `[{ id, type, status }]` | 列出通道 |
-| `channels.status` | (无) | `[{ id, connected, issues }]` | 通道状态 |
+| `channels.status` | `channel_id` 或 `channelId` | `{ channel_id, name, running, status, metrics? }` | 通道状态 |
 
 #### 模型
 
@@ -174,6 +174,7 @@ ws://localhost:18789/ws
 | `cron.list` | (无) | `[{ id, cron, ... }]` | 列出定时任务 |
 | `cron.add` | `cron`, `message`, `agentId?` | `{ id }` | 添加任务 |
 | `cron.remove` | `id` | `{ ok }` | 删除任务 |
+| `cron.history` | `jobId?`, `limit?` | `{ records, count }` | 执行历史 |
 
 #### 工具
 
@@ -181,6 +182,22 @@ ws://localhost:18789/ws
 |------|------|------|------|
 | `tools.list` | (无) | `[{ name, description }]` | 列出可用工具 |
 | `tools.exec_approve` | `requestId`, `approved` | `{ ok }` | 审批命令执行请求 |
+
+#### 计划管理
+
+| 方法 | 参数 | 返回 | 说明 |
+|------|------|------|------|
+| `plan.list` | (无) | `{ plans, count }` | 列出计划 |
+| `plan.get` | `planId` | `{ id, status, steps, ... }` | 获取计划详情 |
+| `plan.resume` | `planId` | `{ resumed, plan? }` | 恢复暂停的计划 |
+| `plan.delete` | `planId` | `{ deleted }` | 删除计划 |
+
+#### 备份
+
+| 方法 | 参数 | 返回 | 说明 |
+|------|------|------|------|
+| `backup.export` | (无) | `{ path, files }` | 导出备份 |
+| `backup.status` | (无) | `{ backups: [{ path, size }], count }` | 备份列表与状态 |
 
 #### 设备配对
 

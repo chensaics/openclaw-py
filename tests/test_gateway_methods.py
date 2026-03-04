@@ -34,7 +34,15 @@ class TestHandlerFactories:
     def test_session_handlers(self):
         handlers = create_session_handlers()
         assert isinstance(handlers, dict)
-        expected = ["sessions.list", "sessions.preview", "sessions.delete", "sessions.reset"]
+        expected = [
+            "sessions.list",
+            "sessions.preview",
+            "sessions.delete",
+            "sessions.reset",
+            "sessions.get",
+            "sessions.create",
+            "sessions.cleanup",
+        ]
         for key in expected:
             assert key in handlers, f"Missing handler: {key}"
 

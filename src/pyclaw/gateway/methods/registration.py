@@ -26,6 +26,7 @@ def register_core_handlers(server: GatewayServer, *, config_path: str | None = N
     from pyclaw.gateway.methods.logs_methods import create_logs_handlers
     from pyclaw.gateway.methods.models import create_models_handlers
     from pyclaw.gateway.methods.plan_methods import create_plan_handlers
+    from pyclaw.gateway.methods.secrets_methods import create_secrets_handlers
     from pyclaw.gateway.methods.sessions import create_session_handlers
     from pyclaw.gateway.methods.tools_catalog import create_tools_handlers
 
@@ -51,3 +52,4 @@ def register_core_handlers(server: GatewayServer, *, config_path: str | None = N
     server.register_handlers(create_plan_handlers())
     server.register_handlers(create_cron_history_handlers())
     server.register_handlers(create_backup_handlers())
+    server.register_handlers(create_secrets_handlers())

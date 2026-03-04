@@ -1329,8 +1329,7 @@ class PyClawApp:
         self._bottom_nav = ft.NavigationBar(
             selected_index=0,
             destinations=[
-                ft.NavigationBarDestination(icon=ic, selected_icon=sel, label=lbl)
-                for ic, sel, lbl in nav_items[:5]  # show first 5 on mobile
+                ft.NavigationBarDestination(icon=ic, selected_icon=sel, label=lbl) for ic, sel, lbl in nav_items
             ],
             on_change=self._handle_nav_change,
             visible=False,
@@ -1910,6 +1909,39 @@ class PyClawApp:
 
         self._session_sidebar.update_sessions(sessions)
 
+    # ─── UI state helpers ────────────────────────────────────────────────
+
+    def _error_state(self, message: str, on_retry=None) -> ft.Container:
+        return ft.Container(
+            content=ft.Column(
+                [
+                    ft.Icon(ft.Icons.ERROR_OUTLINE, size=48, color=ft.Colors.ERROR),
+                    ft.Text(message, size=14, color=ft.Colors.ERROR),
+                    *([ft.ElevatedButton("重试", on_click=lambda e: _fire_async(on_retry))] if on_retry else []),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=12,
+            ),
+            alignment=ft.alignment.center,
+            expand=True,
+        )
+
+    def _empty_state(self, message: str, icon=ft.Icons.INBOX) -> ft.Container:
+        return ft.Container(
+            content=ft.Column(
+                [
+                    ft.Icon(icon, size=48, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Text(message, size=14, color=ft.Colors.ON_SURFACE_VARIANT),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=12,
+            ),
+            alignment=ft.alignment.center,
+            expand=True,
+        )
+
     @staticmethod
     def _session_date_group(mtime_str: str, now: datetime) -> str:
         try:
@@ -1947,14 +1979,14 @@ class PyClawApp:
         )
 
     async def _refresh_plans(self) -> None:
-        from pyclaw.ui.components import card_tile, empty_state, status_chip
+        from pyclaw.ui.components import card_tile, status_chip
         from pyclaw.ui.theme import StatusColors
 
         if not self._gw_connected or not self._gw:
             self._plan_list.controls = [
-                empty_state(
-                    ft.Icons.CLOUD_OFF,
+                self._error_state(
                     t("plans.offline", default="Connect to gateway to view plans."),
+                    on_retry=self._refresh_plans,
                 ),
             ]
             self._safe_update(self._plan_list)
@@ -1965,10 +1997,7 @@ class PyClawApp:
             self._plan_list.controls.clear()
             if not plans:
                 self._plan_list.controls.append(
-                    empty_state(
-                        ft.Icons.CHECKLIST,
-                        t("plans.empty", default="No active plans."),
-                    ),
+                    self._empty_state("暂无执行计划", icon=ft.Icons.CHECKLIST),
                 )
             for p in plans:
                 status = p.get("status", "pending")
@@ -2029,7 +2058,11 @@ class PyClawApp:
                 self._plan_list.controls.append(card_tile(tile_content))
             self._safe_update(self._plan_list)
         except Exception:
-            pass
+            logger.warning("_refresh_plans failed", exc_info=True)
+            self._plan_list.controls = [
+                self._error_state("加载失败", on_retry=self._refresh_plans),
+            ]
+            self._safe_update(self._plan_list)
 
     async def _resume_plan(self, plan_id: str) -> None:
         if self._gw:
@@ -2037,7 +2070,7 @@ class PyClawApp:
                 await self._gw.call("plan.resume", {"planId": plan_id})
                 await self._refresh_plans()
             except Exception:
-                pass
+                logger.warning("_resume_plan failed", exc_info=True)
 
     async def _delete_plan(self, plan_id: str) -> None:
         if self._gw:
@@ -2045,7 +2078,7 @@ class PyClawApp:
                 await self._gw.call("plan.delete", {"planId": plan_id})
                 await self._refresh_plans()
             except Exception:
-                pass
+                logger.warning("_delete_plan failed", exc_info=True)
 
     # ─── Cron panel ──────────────────────────────────────────────────
 
@@ -2125,11 +2158,22 @@ class PyClawApp:
         from pyclaw.ui.theme import StatusColors
 
         if not self._gw_connected or not self._gw:
+            self._cron_list.controls = [
+                self._error_state(
+                    "请连接 Gateway 以查看定时任务",
+                    on_retry=self._refresh_cron,
+                ),
+            ]
+            self._safe_update(self._cron_list)
             return
         try:
             result = await self._gw.call("cron.list")
             jobs = result.get("jobs", [])
             self._cron_list.controls.clear()
+            if not jobs:
+                self._cron_list.controls.append(
+                    self._empty_state("暂无定时任务", icon=ft.Icons.SCHEDULE),
+                )
             for job in jobs:
                 enabled = job.get("enabled", True)
                 job_color = StatusColors.SUCCESS if enabled else "#94a3b8"
@@ -2167,7 +2211,12 @@ class PyClawApp:
                 self._cron_list.controls.append(card_tile(tile_content))
             self._safe_update(self._cron_list)
         except Exception:
-            pass
+            logger.warning("_refresh_cron (jobs) failed", exc_info=True)
+            self._cron_list.controls = [
+                self._error_state("加载失败", on_retry=self._refresh_cron),
+            ]
+            self._safe_update(self._cron_list)
+            return
 
         try:
             history = await self._gw.call("cron.history", {"limit": 20})
@@ -2196,7 +2245,7 @@ class PyClawApp:
                 )
             self._safe_update(self._cron_history_list)
         except Exception:
-            pass
+            logger.warning("_refresh_cron (history) failed", exc_info=True)
 
     async def _delete_cron_job(self, job_id: str) -> None:
         if self._gw:
@@ -2204,7 +2253,7 @@ class PyClawApp:
                 await self._gw.call("cron.remove", {"id": job_id})
                 await self._refresh_cron()
             except Exception:
-                pass
+                logger.warning("_delete_cron_job failed", exc_info=True)
 
     # ─── System panel ────────────────────────────────────────────────
 
@@ -2255,11 +2304,12 @@ class PyClawApp:
         )
 
     async def _refresh_system(self) -> None:
-        from pyclaw.ui.components import empty_state
-
         if not self._gw_connected or not self._gw:
             self._system_info_col.controls = [
-                empty_state(ft.Icons.CLOUD_OFF, "Connect to gateway to view system info."),
+                self._error_state(
+                    "请连接 Gateway 以查看系统信息",
+                    on_retry=self._refresh_system,
+                ),
             ]
             self._safe_update(self._system_info_col)
             return
@@ -2278,7 +2328,11 @@ class PyClawApp:
                 )
             self._safe_update(self._system_info_col)
         except Exception:
-            pass
+            logger.warning("_refresh_system (info) failed", exc_info=True)
+            self._system_info_col.controls = [
+                self._error_state("加载失败", on_retry=self._refresh_system),
+            ]
+            self._safe_update(self._system_info_col)
 
         try:
             logs_result = await self._gw.call("logs.tail", {"limit": 50})
@@ -2289,7 +2343,7 @@ class PyClawApp:
                 self._system_logs_list.controls.append(ft.Text(text, size=10, font_family="monospace", max_lines=2))
             self._safe_update(self._system_logs_list)
         except Exception:
-            pass
+            logger.warning("_refresh_system (logs) failed", exc_info=True)
 
     async def _export_backup(self) -> None:
         if self._gw:
@@ -2339,7 +2393,7 @@ class PyClawApp:
                         )
                 self._safe_update(self._system_info_col)
             except Exception:
-                pass
+                logger.warning("_run_doctor failed", exc_info=True)
 
     # ─── Channel refresh ─────────────────────────────────────────────
 
@@ -2351,7 +2405,13 @@ class PyClawApp:
                 self._channels_panel.update_channels(gw_channels)
                 return
             except Exception:
-                pass
+                logger.warning("_refresh_channels failed", exc_info=True)
+                self._channels_panel.update_channels(
+                    [],
+                    error="加载失败",
+                    on_retry=self._refresh_channels,
+                )
+                return
 
         from pyclaw.config.io import load_config
         from pyclaw.config.paths import resolve_config_path
@@ -2376,7 +2436,12 @@ class PyClawApp:
                     info.update(entry_meta)
                     channels.append(info)
         except Exception:
-            pass
+            self._channels_panel.update_channels(
+                [],
+                error="加载失败",
+                on_retry=self._refresh_channels,
+            )
+            return
         self._channels_panel.update_channels(channels)
 
     @staticmethod

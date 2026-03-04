@@ -1,6 +1,6 @@
 # OpenClaw Python 重写 -- 执行进度
 
-> 最后更新: 2026-03-02
+> 最后更新: 2026-03-04
 > 项目路径: `/Users/cs/projects/openclaw-py/`
 
 ## 当前状态概览
@@ -77,12 +77,21 @@
 | Phase 65: Office 文件技能包 | **已完成** | PDF/DOCX/XLSX/PPTX 读取工具 + SKILL.md + pyproject office extra |
 | Phase 66: Heartbeat 增强 | **已完成** | HEARTBEAT.md 文件驱动 + compound 间隔 (2h30m) + target=last 通道分发 + 活跃时段 |
 | Phase 67: MCP 热重载 | **已完成** | McpConfigWatcher 配置变更自动重连 + 文档更新 |
+| Phase 68: 任务规划 + 运行时增强 | **已完成** | Plan/Step 模型 + 用户中断 + 意图分析 + 消息总线 + 上下文注入 + Timeline + 每日摘要 + Cron 增强 + 子代理增强 + 数据备份 |
+| Phase 69: Flet UI Phase 1 重构 | **已完成** | Gateway WebSocket Client + 流式聊天 + 中断按钮 + 编辑/重发 + 管理页面 + 响应式布局 + 8 页导航 |
+| Phase 70: Flutter App 搭建 | **已完成** | Flutter 原生客户端 + 9 个功能页面 + 6 个通用组件 + Material 3 + Riverpod |
+| Phase 71: Flutter App 完善 | **已完成** | 动画系统 + LaTeX 公式 + 图片预览 + 文件附件 + 离线缓存 + 乐观更新 + Dynamic Color + PWA |
+| Phase 72: Flet + Flutter 融合 | **已完成** | Flet 为唯一客户端 + Flutter App 归档 + Material 3 配色/Shimmer 动画反哺 + flet build 配置 |
+| Phase 73: 文档-接口契约收敛 | **已完成** | api-reference.md 帧格式修正 (request→req) + sessions.get/create/cleanup RPC 实现 + 契约测试扩展 (参数/协议版本/模块存在性) |
+| Phase 74: 可靠性与可观测性 | **已完成** | 全量替换静默 except:pass 为结构化日志 (ui/app.py + chat.py + manager.py) + Gateway 统一 trace_id (请求关联 + 响应内嵌 _trace) |
+| Phase 75: Flet 多端可用性收敛 | **已完成** | 移动端导航全 8 项可达 + 统一 error_state/empty_state 组件 + Plans/Cron/Channels/System 面板错误态与重试按钮 |
+| Phase 76: 接口治理与孤立清理 | **已完成** | secrets.reload 注册规范化 + NOT_IMPLEMENTED 存根文档化 + registration.py 完整性验证 |
 
 ## 代码统计
 
-- 源码: **~58,000 行** (~410 个 .py 文件)
-- 测试: **~17,300 行** (78 个测试文件, 1848 个测试)
-- 测试状态: **1848/1848 通过**
+- 源码: **~70,500 行** (~443 个 .py 文件)
+- 测试: **~20,350 行** (94 个测试文件, 2202 个测试)
+- 测试状态: **2202/2202 通过**
 - 通道总数: **25 个** (6 核心 + 7 P3 扩展 + 12 P4/P5 扩展)
 
 ---
@@ -644,14 +653,15 @@ openclaw-py/
 
 ## 当前状态
 
-Phase 0-58 均已完成。项目包含:
+Phase 0-76 均已完成。项目包含:
 
-- **~375 个 .py 源码文件** / **~51,000 LOC**
-- **63 个测试文件** / **1,681 个测试全部通过**
-- **23 个消息通道** (Telegram, Discord, Slack, WhatsApp, Signal, iMessage, IRC, MS Teams, Matrix, Feishu, Twitch, BlueBubbles, Google Chat, Synology, Mattermost, Nextcloud, Tlon, Zalo, ZaloUser, Nostr, LINE, Voice Call, Web)
+- **~443 个 .py 源码文件** / **~70,500 LOC**
+- **94 个测试文件** / **2,202 个测试全部通过**
+- **25 个消息通道** (Telegram, Discord, Slack, WhatsApp, Signal, iMessage, IRC, MS Teams, Matrix, Feishu, Twitch, BlueBubbles, Google Chat, Synology, Mattermost, Nextcloud, Tlon, Zalo, ZaloUser, Nostr, LINE, Voice Call, Web, DingTalk, QQ)
 - **CI/CD** (GitHub Actions: test + lint + release to PyPI)
 - **原生 App 打包** (Flet build macOS/Linux/Windows/iOS/Android)
 - **安全加固** (Exec approval bindings, sandbox boundaries, env hashing, webhook replay protection)
+- **可观测性** (统一 trace_id 关联 + 结构化异常日志 + 错误态/重试 UI)
 
 ## 功能对齐状态
 
@@ -726,6 +736,41 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 - **ui_upgrade_plan.md 更新**: Phase 2 从 "Flutter 原生美化" 改为 "Flet 高级增强 + Flutter 设计反哺"，技术选型更新，里程碑状态更新
 - **flet build 配置**: `pyproject.toml` 新增 `[tool.flet]` 构建配置，`flet_app.py` 已支持 `flet build` + `flet run` 双模式
 - **构建脚本**: `scripts/build-desktop.sh` + `scripts/build-mobile.sh` 使用 `--module-name flet_app`
+
+### 文档-接口契约收敛 (Phase 73, 2026-03-04)
+
+审查发现 `docs/api-reference.md` 与实际代码存在多处漂移，集中修复：
+
+- **协议帧格式修正**: `"type": "request"` → `"type": "req"`，`"type": "response"` → `"type": "res"`，`status: "ok"/"error"` → `ok: true/false`
+- **Sessions RPC 补齐**: 移除文档中不存在的 `sessions.get/create/cleanup`，替换为实际方法 `sessions.list/preview/delete/reset`；同时在代码中实现 `sessions.get`（完整消息加载）、`sessions.create`（新建空会话）、`sessions.cleanup`（按天数清理旧会话 + dryRun 支持）
+- **文档补齐**: 新增 `plan.*` (list/get/resume/delete)、`backup.*` (export/status)、`cron.history` 方法文档
+- **参数修正**: `channels.status` 补充 `channel_id` 参数、`connect` 修正为 `minProtocol/maxProtocol/auth.token`
+- **契约测试扩展**: 新增 `TestRpcParameterContracts`（参数名验证）、`TestConnectProtocolVersion`（协议版本=3）、`TestRegistrationHandlerModulesExist`（模块文件存在性）
+
+### 可靠性与可观测性 (Phase 74, 2026-03-04)
+
+消除静默错误吞没，增加请求追踪能力：
+
+- **静默异常替换**: `ui/app.py` 8 处 `except: pass` → `logger.warning(..., exc_info=True)`；`gateway/methods/chat.py` 3 处；`channels/manager.py` 1 处
+- **Gateway trace_id**: 每个 RPC 请求自动生成 8 字符 trace_id，日志记录 `request method id [trace=xxx]`，响应 payload 内嵌 `_trace` 字段用于关联
+- **请求 ID 回显**: `send_ok`/`send_error` 自动回显请求帧 `id`，客户端可直接匹配请求-响应
+
+### Flet 多端可用性收敛 (Phase 75, 2026-03-04)
+
+修复移动端导航可达性，统一面板状态反馈：
+
+- **移动端导航**: `_bottom_nav` 从 `nav_items[:5]` 改为 `nav_items`，全部 8 个页面（Chat/Agents/Channels/Plans/Cron/Voice/System/Settings）在移动端均可达
+- **统一状态组件**: 新增 `_error_state(message, on_retry)` 和 `_empty_state(message, icon)` 辅助方法
+- **面板错误态**: Plans ("暂无执行计划" / 加载失败重试)、Cron ("暂无定时任务" / 重试)、Channels ("暂无频道配置" / 重试)、System (系统信息加载失败重试) 四个面板全部支持空态和错误态
+- **ChannelStatusPanel 增强**: `update_channels()` 新增 `error`/`on_retry` 参数，共享组件通过 `components.py` 的 `error_state`/`empty_state_simple`
+
+### 接口治理与孤立清理 (Phase 76, 2026-03-04)
+
+治理孤立注册和占位接口：
+
+- **secrets.reload 规范化**: 处理器签名修正为 `MethodHandler` 标准格式，改用 `create_secrets_handlers()` 工厂函数，在 `registration.py` 统一注册
+- **NOT_IMPLEMENTED 存根文档化**: `extended.py` 中 `tts.speak`、`wizard.start/step`、`push.send`、`voicewake.status` 五个占位方法添加文档级说明
+- **注册完整性验证**: 确认 `registration.py` 覆盖所有 `create_*_handlers` 工厂函数（含新增的 `create_secrets_handlers`）
 
 ## 参考文档
 

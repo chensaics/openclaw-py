@@ -6,11 +6,57 @@ across all panels, backported from Flutter reference design patterns.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import flet as ft
 
 from pyclaw.ui.theme import get_theme
+
+
+def _fire_async(handler: Any, *args: Any) -> None:
+    """Schedule an async handler from a sync callback (e.g. button on_click)."""
+    if handler:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(handler(*args))
+        except RuntimeError:
+            pass
+
+
+def error_state(message: str, on_retry: Any = None) -> ft.Container:
+    """Standard error state: icon + message + optional retry button."""
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Icon(ft.Icons.ERROR_OUTLINE, size=48, color=ft.Colors.ERROR),
+                ft.Text(message, size=14, color=ft.Colors.ERROR),
+                *([ft.ElevatedButton("重试", on_click=lambda e: _fire_async(on_retry))] if on_retry else []),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=12,
+        ),
+        alignment=ft.alignment.center,
+        expand=True,
+    )
+
+
+def empty_state_simple(message: str, icon: str = ft.Icons.INBOX) -> ft.Container:
+    """Simple empty state: icon + message, no action button."""
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Icon(icon, size=48, color=ft.Colors.ON_SURFACE_VARIANT),
+                ft.Text(message, size=14, color=ft.Colors.ON_SURFACE_VARIANT),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=12,
+        ),
+        alignment=ft.alignment.center,
+        expand=True,
+    )
 
 
 def page_header(
