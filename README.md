@@ -93,10 +93,10 @@ curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/script
 irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.ps1 | iex
 
 # From PyPI
-pip install pyclaw
+pip install openclaw-py
 
 # Or via pipx (isolated environment, recommended for CLI usage)
-pipx install pyclaw
+pipx install openclaw-py
 
 # macOS via Homebrew
 brew install chensaics/tap/pyclaw

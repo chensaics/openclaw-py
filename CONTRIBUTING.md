@@ -225,7 +225,7 @@ ls dist/
 python -m zipfile -l dist/pyclaw-*.whl | head -20
 
 # 本地安装测试
-pip install dist/pyclaw-*.whl
+pip install dist/openclaw_py-*.whl
 pyclaw --version
 ```
 
@@ -233,16 +233,16 @@ pyclaw --version
 
 ```bash
 # 最小安装（核心 + CLI + Gateway）
-pip install pyclaw
+pip install openclaw-py
 
 # 带 UI 客户端
-pip install pyclaw[ui]
+pip install openclaw-py[ui]
 
 # 带消息通道 SDK
-pip install pyclaw[channels]
+pip install openclaw-py[channels]
 
 # 全功能安装
-pip install pyclaw[all]
+pip install openclaw-py[all]
 
 # Docker
 docker pull ghcr.io/chensaics/openclaw-py:latest

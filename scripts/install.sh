@@ -88,7 +88,7 @@ if [[ "$FROM_SOURCE" == true ]]; then
 else
     SPEC="pyclaw"
     if [[ -n "$VERSION" ]]; then
-        SPEC="pyclaw==${VERSION}"
+        SPEC="openclaw-py==${VERSION}"
     fi
 fi
 

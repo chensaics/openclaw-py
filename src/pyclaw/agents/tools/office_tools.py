@@ -44,7 +44,7 @@ class ReadPdfTool(BaseTool):
             from pypdf import PdfReader
         except ImportError:
             return ToolResult.text(
-                "pypdf required. Install with: pip install 'pyclaw[office]'",
+                "pypdf required. Install with: pip install 'openclaw-py[office]'",
                 is_error=True,
             )
 
@@ -98,7 +98,7 @@ class ReadDocxTool(BaseTool):
             from docx import Document
         except ImportError:
             return ToolResult.text(
-                "python-docx required. Install with: pip install 'pyclaw[office]'",
+                "python-docx required. Install with: pip install 'openclaw-py[office]'",
                 is_error=True,
             )
 
@@ -164,7 +164,7 @@ class ReadXlsxTool(BaseTool):
             from openpyxl import load_workbook
         except ImportError:
             return ToolResult.text(
-                "openpyxl required. Install with: pip install 'pyclaw[office]'",
+                "openpyxl required. Install with: pip install 'openclaw-py[office]'",
                 is_error=True,
             )
 
@@ -225,7 +225,7 @@ class ReadPptxTool(BaseTool):
             from pptx import Presentation
         except ImportError:
             return ToolResult.text(
-                "python-pptx required. Install with: pip install 'pyclaw[office]'",
+                "python-pptx required. Install with: pip install 'openclaw-py[office]'",
                 is_error=True,
             )
 

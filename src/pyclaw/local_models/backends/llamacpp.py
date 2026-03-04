@@ -16,7 +16,9 @@ class LlamaCppBackend:
         try:
             from llama_cpp import Llama
         except ImportError as exc:
-            raise ImportError("llama-cpp-python is required. Install with: pip install 'pyclaw[llamacpp]'") from exc
+            raise ImportError(
+                "llama-cpp-python is required. Install with: pip install 'openclaw-py[llamacpp]'"
+            ) from exc
 
         self._model_path = model_path
         self._llm = Llama(

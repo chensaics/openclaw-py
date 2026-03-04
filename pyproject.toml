@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pyclaw"
+name = "openclaw-py"
 version = "0.1.1"
 description = "Multi-channel AI gateway with extensible messaging integrations"
 readme = "README.md"
@@ -110,11 +110,11 @@ office = [
 ]
 # Everything (except platform-specific: whatsapp, llamacpp, mlx)
 all = [
-    "pyclaw[channels,ui,media,voice,gemini,matrix,office]",
+    "openclaw-py[channels,ui,media,voice,gemini,matrix,office]",
 ]
 # Docker: excludes llamacpp/mlx (C++ compilers) and whatsapp (protobuf conflict)
 docker = [
-    "pyclaw[channels,ui,media,voice,gemini,matrix,office]",
+    "openclaw-py[channels,ui,media,voice,gemini,matrix,office]",
 ]
 dev = [
     "pytest>=8",

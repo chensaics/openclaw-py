@@ -133,7 +133,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "Waiting for TestPyPI to index version ${VERSION}..."
           sleep 30
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "pyclaw==${VERSION}" || echo "TestPyPI verification skipped (package not yet indexed)"
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "openclaw-py==${VERSION}" || echo "TestPyPI verification skipped (package not yet indexed)"
 
   # ── PyPI Publish ──────────────────────────────────────────────────
   publish-pypi:

@@ -71,7 +71,7 @@ try {
 
 # --- Build spec ---
 $spec = "pyclaw"
-if ($Version) { $spec = "pyclaw==$Version" }
+if ($Version) { $spec = "openclaw-py==$Version" }
 
 $tmpDir = $null
 if ($FromSource) {

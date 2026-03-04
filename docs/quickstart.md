@@ -21,10 +21,10 @@ curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/script
 irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/install.ps1 | iex
 
 # 通过 pip
-pip install pyclaw
+pip install openclaw-py
 
 # 通过 pipx（推荐，隔离环境）
-pipx install pyclaw
+pipx install openclaw-py
 ```
 
 更多安装方式（Docker、Homebrew、源码等）请参阅 [安装指南](install.md)。

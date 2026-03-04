@@ -39,13 +39,13 @@ irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/insta
 ### pip
 
 ```bash
-pip install pyclaw
+pip install openclaw-py
 ```
 
 ### pipx（推荐，隔离环境）
 
 ```bash
-pipx install pyclaw
+pipx install openclaw-py
 ```
 
 ### Homebrew (macOS)
@@ -90,7 +90,7 @@ docker run -d \
 
 ## 可选依赖（extras）
 
-安装时通过 `pip install pyclaw[extra1,extra2]` 选择需要的功能：
+安装时通过 `pip install openclaw-py[extra1,extra2]` 选择需要的功能：
 
 | Extra | 功能 | 包含的库 |
 |-------|------|----------|
@@ -108,10 +108,10 @@ docker run -d \
 
 ```bash
 # 安装 UI 和语音支持
-pip install pyclaw[ui,voice]
+pip install openclaw-py[ui,voice]
 
 # 安装全部
-pip install pyclaw[all]
+pip install openclaw-py[all]
 ```
 
 ## 安装后设置
@@ -128,10 +128,10 @@ pyclaw setup --non-interactive
 
 ```bash
 # pip
-pip install --upgrade pyclaw
+pip install --upgrade openclaw-py
 
 # pipx
-pipx upgrade pyclaw
+pipx upgrade openclaw-py
 
 # Homebrew
 brew upgrade pyclaw
@@ -141,10 +141,10 @@ brew upgrade pyclaw
 
 ```bash
 # pip
-pip uninstall pyclaw
+pip uninstall openclaw-py
 
 # pipx
-pipx uninstall pyclaw
+pipx uninstall openclaw-py
 
 # 清理状态目录（可选）
 rm -rf ~/.pyclaw

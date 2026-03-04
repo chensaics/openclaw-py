@@ -1360,8 +1360,8 @@ def uninstall(
                 typer.echo(f"Removed: {d}")
         typer.echo("All pyclaw data and config purged.")
     else:
-        typer.echo("To uninstall pyclaw:")
-        typer.echo("  pipx uninstall pyclaw")
-        typer.echo("  # or: pip uninstall pyclaw")
+        typer.echo("To uninstall openclaw-py:")
+        typer.echo("  pipx uninstall openclaw-py")
+        typer.echo("  # or: pip uninstall openclaw-py")
         typer.echo("")
         typer.echo("To also remove data and config, add --purge")

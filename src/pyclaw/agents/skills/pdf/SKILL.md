@@ -21,4 +21,4 @@ Read and extract text from PDF files.
 
 ## Requirements
 
-Install the `office` extra: `pip install 'pyclaw[office]'`
+Install the `office` extra: `pip install 'openclaw-py[office]'`

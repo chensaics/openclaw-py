@@ -122,7 +122,7 @@ class LocalModelManager:
         except ImportError as exc:
             raise ImportError(
                 "huggingface_hub is required for model downloads. "
-                "Install with: pip install 'pyclaw[llamacpp]' or pip install huggingface_hub"
+                "Install with: pip install 'openclaw-py[llamacpp]' or pip install huggingface_hub"
             ) from exc
 
         _ensure_models_dir()

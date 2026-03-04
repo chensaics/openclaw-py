@@ -422,8 +422,8 @@ pyclaw gateway discover --json
 
 | 后端 | 安装 | 说明 |
 |------|------|------|
-| `llamacpp` | `pip install 'pyclaw[llamacpp]'` | llama.cpp (GGUF 格式, CPU/GPU) |
-| `mlx` | `pip install 'pyclaw[mlx]'` | MLX (Apple Silicon 专用) |
+| `llamacpp` | `pip install 'openclaw-py[llamacpp]'` | llama.cpp (GGUF 格式, CPU/GPU) |
+| `mlx` | `pip install 'openclaw-py[mlx]'` | MLX (Apple Silicon 专用) |
 | `ollama` | 外部安装 Ollama | 通过 OpenAI 兼容 API 接入 |
 
 ### 示例

@@ -16,7 +16,9 @@ class MLXBackend:
         try:
             from mlx_lm import load
         except ImportError as exc:
-            raise ImportError("mlx-lm is required for MLX backend. Install with: pip install 'pyclaw[mlx]'") from exc
+            raise ImportError(
+                "mlx-lm is required for MLX backend. Install with: pip install 'openclaw-py[mlx]'"
+            ) from exc
 
         self._model_path = model_path
         self._max_tokens = max_tokens
