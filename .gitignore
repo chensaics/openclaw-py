@@ -57,6 +57,9 @@ skills-lock.json
 .agent/workflows/flows/*/logs/*
 !.agent/workflows/flows/*/logs/.gitkeep
 
+./my-cache/*
+.ruff_cache/*
+
 # Misc
 .serena/
 .tgz

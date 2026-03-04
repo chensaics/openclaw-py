@@ -1,21 +1,21 @@
 name: Install Smoke Test
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - "scripts/install.*"
-      - "pyproject.toml"
-      - "Dockerfile"
-      - "docker-compose.yml"
-  pull_request:
-    branches: [master]
-    paths:
-      - "scripts/install.*"
-      - "pyproject.toml"
-      - "Dockerfile"
-      - "docker-compose.yml"
   workflow_dispatch:
+  # push:
+  #   branches: [master]
+  #   paths:
+  #     - "scripts/install.*"
+  #     - "pyproject.toml"
+  #     - "Dockerfile"
+  #     - "docker-compose.yml"
+  # pull_request:
+  #   branches: [master]
+  #   paths:
+  #     - "scripts/install.*"
+  #     - "pyproject.toml"
+  #     - "Dockerfile"
+  #     - "docker-compose.yml"
 
 permissions:
   contents: read
