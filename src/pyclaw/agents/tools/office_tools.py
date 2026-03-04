@@ -179,11 +179,9 @@ class ReadXlsxTool(BaseTool):
                     continue
                 ws = wb[sn]
                 parts.append(f"\n--- Sheet: {sn} ---")
-                row_count = 0
-                for row in ws.iter_rows(values_only=True):
+                for row_count, row in enumerate(ws.iter_rows(values_only=True), 1):
                     cells = [str(c) if c is not None else "" for c in row]
                     parts.append(" | ".join(cells))
-                    row_count += 1
                     if row_count >= max_rows:
                         parts.append(f"... (truncated at {max_rows} rows)")
                         break

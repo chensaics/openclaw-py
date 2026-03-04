@@ -213,7 +213,4 @@ def _apply_hunks(content: str, hunks: list[dict[str, Any]]) -> str:
 def _lines_match(lines: list[str], start: int, removes: list[str]) -> bool:
     if start + len(removes) > len(lines):
         return False
-    for i, r in enumerate(removes):
-        if lines[start + i].rstrip("\n") != r.rstrip("\n"):
-            return False
-    return True
+    return all(lines[start + i].rstrip("\n") == r.rstrip("\n") for i, r in enumerate(removes))

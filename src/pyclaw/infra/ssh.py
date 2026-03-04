@@ -11,15 +11,14 @@ Provides:
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
 class SSHHostConfig:
     """Parsed SSH host configuration."""
+
     host: str
     hostname: str = ""
     user: str = ""
@@ -88,9 +87,11 @@ def resolve_host(hosts: list[SSHHostConfig], alias: str) -> SSHHostConfig | None
 # SSH Tunnel
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TunnelConfig:
     """SSH tunnel configuration."""
+
     ssh_host: str
     local_port: int
     remote_host: str = "127.0.0.1"
@@ -124,6 +125,7 @@ class TunnelConfig:
 @dataclass
 class TunnelState:
     """Runtime state of an SSH tunnel."""
+
     config: TunnelConfig
     active: bool = False
     pid: int = 0
@@ -134,9 +136,11 @@ class TunnelState:
 # SCP Transfer
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SCPTransfer:
     """SCP file transfer specification."""
+
     source: str
     destination: str
     ssh_host: str

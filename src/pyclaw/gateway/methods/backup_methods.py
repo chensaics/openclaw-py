@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from datetime import UTC
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
@@ -11,15 +12,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def create_backup_handlers() -> dict[str, "MethodHandler"]:
-
-    async def handle_backup_export(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+def create_backup_handlers() -> dict[str, MethodHandler]:
+    async def handle_backup_export(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         """Trigger a backup export and return the file path."""
-        import zipfile
         import json
-        from datetime import datetime, timezone
+        import zipfile
+        from datetime import datetime
+
         from pyclaw.config.paths import resolve_state_dir
 
         state_dir = resolve_state_dir()
@@ -27,7 +26,7 @@ def create_backup_handlers() -> dict[str, "MethodHandler"]:
             await conn.send_error("backup.export", "no_data", "No pyclaw data found")
             return
 
-        datestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        datestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         output_path = state_dir / f"pyclaw-backup-{datestamp}.zip"
 
         count = 0
@@ -47,27 +46,31 @@ def create_backup_handlers() -> dict[str, "MethodHandler"]:
 
             manifest = {
                 "version": 1,
-                "createdAt": datetime.now(timezone.utc).isoformat(),
+                "createdAt": datetime.now(UTC).isoformat(),
                 "files": count,
             }
             zf.writestr("manifest.json", json.dumps(manifest, indent=2))
 
-        await conn.send_ok("backup.export", {
-            "path": str(output_path),
-            "files": count,
-        })
+        await conn.send_ok(
+            "backup.export",
+            {
+                "path": str(output_path),
+                "files": count,
+            },
+        )
 
-    async def handle_backup_status(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_backup_status(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.config.paths import resolve_state_dir
 
         state_dir = resolve_state_dir()
         backups = sorted(state_dir.glob("pyclaw-backup-*.zip"), reverse=True)[:10]
-        await conn.send_ok("backup.status", {
-            "backups": [{"path": str(b), "size": b.stat().st_size} for b in backups],
-            "count": len(backups),
-        })
+        await conn.send_ok(
+            "backup.status",
+            {
+                "backups": [{"path": str(b), "size": b.stat().st_size} for b in backups],
+                "count": len(backups),
+            },
+        )
 
     return {
         "backup.export": handle_backup_export,

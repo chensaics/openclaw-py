@@ -10,7 +10,6 @@ from typer.testing import CliRunner
 
 from pyclaw.cli.app import app
 
-
 runner = CliRunner()
 
 
@@ -74,8 +73,8 @@ def test_pyproject_exports_pyclaw_script() -> None:
     project_root = Path(__file__).resolve().parents[1]
     pyproject = project_root / "pyproject.toml"
     content = pyproject.read_text(encoding="utf-8")
-    assert "pyclaw = \"pyclaw.main:main\"" in content
-    assert "openclaw = \"pyclaw.main:main\"" not in content
+    assert 'pyclaw = "pyclaw.main:main"' in content
+    assert 'openclaw = "pyclaw.main:main"' not in content
 
 
 def test_sessions_root_flags() -> None:
@@ -163,4 +162,3 @@ def test_browser_start_and_status_json(tmp_path: Path, monkeypatch: pytest.Monke
     status = runner.invoke(app, ["browser", "--json", "status"], env=env)
     assert status.exit_code == 0
     assert '"started": true' in status.stdout
-

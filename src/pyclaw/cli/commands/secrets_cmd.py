@@ -6,7 +6,6 @@ Ported from ``src/cli/secrets-cli.ts``.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import typer
@@ -65,8 +64,8 @@ def apply(
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without writing."),
 ) -> None:
     """Apply a secrets plan to update config with SecretRefs."""
-    from pyclaw.secrets.plan import SecretsApplyPlan
     from pyclaw.secrets.apply import run_secrets_apply
+    from pyclaw.secrets.plan import SecretsApplyPlan
 
     if not plan_file.exists():
         typer.echo(f"Plan file not found: {plan_file}", err=True)
@@ -105,20 +104,24 @@ def reload(
         try:
             ws = await websockets.connect(gateway_url)
             # Connect
-            connect_msg = json.dumps({
-                "id": 1,
-                "method": "connect",
-                "params": {"protocolVersion": 3, "clientName": "secrets-cli"},
-            })
+            connect_msg = json.dumps(
+                {
+                    "id": 1,
+                    "method": "connect",
+                    "params": {"protocolVersion": 3, "clientName": "secrets-cli"},
+                }
+            )
             await ws.send(connect_msg)
             await ws.recv()
 
             # Request secrets reload
-            reload_msg = json.dumps({
-                "id": 2,
-                "method": "secrets.reload",
-                "params": {},
-            })
+            reload_msg = json.dumps(
+                {
+                    "id": 2,
+                    "method": "secrets.reload",
+                    "params": {},
+                }
+            )
             await ws.send(reload_msg)
             response = json.loads(await ws.recv())
 

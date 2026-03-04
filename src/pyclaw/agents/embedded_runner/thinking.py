@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -32,6 +32,7 @@ class ThinkingMode(str, Enum):
 @dataclass
 class ThinkingConfig:
     """Configuration for thinking/reasoning."""
+
     mode: ThinkingMode = ThinkingMode.DISABLED
     budget_tokens: int = 10000
     strip_from_output: bool = False
@@ -41,6 +42,7 @@ class ThinkingConfig:
 @dataclass
 class ThinkingBlock:
     """A thinking/reasoning block from the LLM response."""
+
     content: str
     token_count: int = 0
     position: int = 0  # index in response
@@ -64,10 +66,12 @@ def extract_thinking_blocks(text: str) -> list[ThinkingBlock]:
     blocks: list[ThinkingBlock] = []
     for pattern in _THINKING_PATTERNS:
         for match in pattern.finditer(text):
-            blocks.append(ThinkingBlock(
-                content=match.group(1).strip(),
-                position=match.start(),
-            ))
+            blocks.append(
+                ThinkingBlock(
+                    content=match.group(1).strip(),
+                    position=match.start(),
+                )
+            )
     return blocks
 
 
@@ -125,9 +129,11 @@ def parse_thinking_content_block(block: dict[str, Any]) -> ThinkingBlock | None:
 # Context Pruning Extension
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PruningConfig:
     """Configuration for context pruning."""
+
     max_messages: int = 100
     max_tool_result_chars: int = 10000
     prune_empty_tool_results: bool = True
@@ -163,7 +169,7 @@ def prune_context(
         # Truncate overly long tool results
         if msg.get("role") == "tool" and isinstance(content, str):
             if len(content) > config.max_tool_result_chars:
-                msg = {**msg, "content": content[:config.max_tool_result_chars] + "\n...(truncated)"}
+                msg = {**msg, "content": content[: config.max_tool_result_chars] + "\n...(truncated)"}
 
         # Deduplicate identical content
         if config.prune_duplicate_content and isinstance(content, str):
@@ -190,9 +196,11 @@ def prune_context(
 # Compaction Safety Guard
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CompactionGuardConfig:
     """Configuration for compaction safety."""
+
     min_messages_after: int = 4
     protect_tool_pairs: bool = True
     max_compaction_ratio: float = 0.5
@@ -231,6 +239,7 @@ def is_compaction_safe(
 # ---------------------------------------------------------------------------
 # Abort Detection
 # ---------------------------------------------------------------------------
+
 
 class AbortSignal:
     """Simple abort signal for embedded runs."""

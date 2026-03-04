@@ -6,14 +6,12 @@ Ported from ``src/security/audit.ts``.
 from __future__ import annotations
 
 import logging
-import os
 import stat
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
-from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir, resolve_state_dir
+from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir
 
 logger = logging.getLogger(__name__)
 
@@ -55,13 +53,15 @@ def _check_config_permissions(result: AuditResult) -> None:
     try:
         mode = config_path.stat().st_mode
         if mode & stat.S_IROTH:
-            result.findings.append(AuditFinding(
-                id="config-world-readable",
-                severity=AuditSeverity.WARNING,
-                title="Config file is world-readable",
-                detail=str(config_path),
-                remediation=f"chmod 600 {config_path}",
-            ))
+            result.findings.append(
+                AuditFinding(
+                    id="config-world-readable",
+                    severity=AuditSeverity.WARNING,
+                    title="Config file is world-readable",
+                    detail=str(config_path),
+                    remediation=f"chmod 600 {config_path}",
+                )
+            )
     except OSError:
         pass
 
@@ -74,13 +74,15 @@ def _check_credentials_permissions(result: AuditResult) -> None:
     try:
         mode = creds_dir.stat().st_mode
         if mode & stat.S_IROTH:
-            result.findings.append(AuditFinding(
-                id="credentials-world-readable",
-                severity=AuditSeverity.CRITICAL,
-                title="Credentials directory is world-readable",
-                detail=str(creds_dir),
-                remediation=f"chmod 700 {creds_dir}",
-            ))
+            result.findings.append(
+                AuditFinding(
+                    id="credentials-world-readable",
+                    severity=AuditSeverity.CRITICAL,
+                    title="Credentials directory is world-readable",
+                    detail=str(creds_dir),
+                    remediation=f"chmod 700 {creds_dir}",
+                )
+            )
     except OSError:
         pass
 
@@ -97,13 +99,15 @@ def _check_gateway_auth(result: AuditResult, config: dict[str, Any] | None = Non
 
     if not token and not password:
         severity = AuditSeverity.CRITICAL if bind != "loopback" else AuditSeverity.WARNING
-        result.findings.append(AuditFinding(
-            id="gateway-no-auth",
-            severity=severity,
-            title="Gateway has no authentication configured",
-            detail=f"bind={bind}, no token or password set",
-            remediation="Set gateway.token or gateway.password in config",
-        ))
+        result.findings.append(
+            AuditFinding(
+                id="gateway-no-auth",
+                severity=severity,
+                title="Gateway has no authentication configured",
+                detail=f"bind={bind}, no token or password set",
+                remediation="Set gateway.token or gateway.password in config",
+            )
+        )
 
 
 def _check_secrets_in_config(result: AuditResult, config: dict[str, Any] | None = None) -> None:
@@ -112,6 +116,7 @@ def _check_secrets_in_config(result: AuditResult, config: dict[str, Any] | None 
         return
 
     import re
+
     secret_pattern = re.compile(
         r"(sk-[a-zA-Z0-9]{20}|ghp_[a-zA-Z0-9]{20}|xoxb-[a-zA-Z0-9\-]{20})",
     )
@@ -119,13 +124,15 @@ def _check_secrets_in_config(result: AuditResult, config: dict[str, Any] | None 
     def _walk(obj: Any, path: str = "") -> None:
         if isinstance(obj, str):
             if secret_pattern.search(obj):
-                result.findings.append(AuditFinding(
-                    id="secret-in-config",
-                    severity=AuditSeverity.CRITICAL,
-                    title="Plaintext secret detected in config",
-                    detail=f"Path: {path}",
-                    remediation="Use environment variable or file reference instead",
-                ))
+                result.findings.append(
+                    AuditFinding(
+                        id="secret-in-config",
+                        severity=AuditSeverity.CRITICAL,
+                        title="Plaintext secret detected in config",
+                        detail=f"Path: {path}",
+                        remediation="Use environment variable or file reference instead",
+                    )
+                )
         elif isinstance(obj, dict):
             for k, v in obj.items():
                 _walk(v, f"{path}.{k}" if path else k)
@@ -143,13 +150,15 @@ def _check_logging_redaction(result: AuditResult, config: dict[str, Any] | None 
     logging_cfg = config.get("logging", {})
     redact = logging_cfg.get("redactSensitive", "tools")
     if redact == "off":
-        result.findings.append(AuditFinding(
-            id="logging-redaction-off",
-            severity=AuditSeverity.WARNING,
-            title="Log redaction is disabled",
-            detail="logging.redactSensitive = off",
-            remediation='Set logging.redactSensitive to "tools"',
-        ))
+        result.findings.append(
+            AuditFinding(
+                id="logging-redaction-off",
+                severity=AuditSeverity.WARNING,
+                title="Log redaction is disabled",
+                detail="logging.redactSensitive = off",
+                remediation='Set logging.redactSensitive to "tools"',
+            )
+        )
 
 
 def _check_exec_security(result: AuditResult, config: dict[str, Any] | None = None) -> None:
@@ -159,12 +168,14 @@ def _check_exec_security(result: AuditResult, config: dict[str, Any] | None = No
     exec_cfg = config.get("exec", {})
     security = exec_cfg.get("security", "allowlist")
     if security == "full":
-        result.findings.append(AuditFinding(
-            id="exec-security-full",
-            severity=AuditSeverity.WARNING,
-            title='Exec security is set to "full" — all commands allowed',
-            remediation='Use "allowlist" mode for production deployments',
-        ))
+        result.findings.append(
+            AuditFinding(
+                id="exec-security-full",
+                severity=AuditSeverity.WARNING,
+                title='Exec security is set to "full" — all commands allowed',
+                remediation='Use "allowlist" mode for production deployments',
+            )
+        )
 
 
 def run_security_audit(
@@ -188,10 +199,12 @@ def run_security_audit(
     _check_exec_security(result, config)
 
     if not result.findings:
-        result.findings.append(AuditFinding(
-            id="all-clear",
-            severity=AuditSeverity.INFO,
-            title="No security issues found",
-        ))
+        result.findings.append(
+            AuditFinding(
+                id="all-clear",
+                severity=AuditSeverity.INFO,
+                title="No security issues found",
+            )
+        )
 
     return result

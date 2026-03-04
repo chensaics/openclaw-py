@@ -128,9 +128,7 @@ class SessionConfig(_CamelModel):
     reset_by_type: dict[str, SessionResetConfig] | None = Field(None, alias="resetByType")
     reset_by_channel: dict[str, SessionResetConfig] | None = Field(None, alias="resetByChannel")
     store: str | None = None
-    typing_mode: Literal["never", "instant", "thinking", "message"] | None = Field(
-        None, alias="typingMode"
-    )
+    typing_mode: Literal["never", "instant", "thinking", "message"] | None = Field(None, alias="typingMode")
     main_key: str | None = Field(None, alias="mainKey")
     send_policy: SessionSendPolicyConfig | None = Field(None, alias="sendPolicy")
     maintenance: SessionMaintenanceConfig | None = None

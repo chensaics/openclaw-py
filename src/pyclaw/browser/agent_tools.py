@@ -45,6 +45,7 @@ class BrowserActionType(str, Enum):
 @dataclass
 class BrowserAction:
     """A browser action request from the agent."""
+
     action_type: BrowserActionType
     selector: str = ""
     value: str = ""
@@ -55,6 +56,7 @@ class BrowserAction:
 @dataclass
 class BrowserActionResult:
     """Result of a browser action."""
+
     success: bool
     action_type: BrowserActionType
     data: Any = None
@@ -80,11 +82,9 @@ class BrowserActionResult:
             if len(text) > 4000:
                 text = text[:4000] + f"\n... (truncated, {len(self.data)} chars total)"
             parts.append(text)
-        elif isinstance(self.data, dict):
+        elif isinstance(self.data, dict | list):
             import json
-            parts.append(json.dumps(self.data, indent=2, ensure_ascii=False)[:4000])
-        elif isinstance(self.data, list):
-            import json
+
             parts.append(json.dumps(self.data, indent=2, ensure_ascii=False)[:4000])
         elif self.data is not None:
             parts.append(str(self.data))
@@ -99,8 +99,10 @@ class BrowserActionResult:
 # Page Protocol — abstracts Playwright Page for testability
 # ---------------------------------------------------------------------------
 
+
 class PageProtocol(Protocol):
     """Minimal page interface for browser tools."""
+
     async def goto(self, url: str, **kwargs: Any) -> Any: ...
     async def click(self, selector: str, **kwargs: Any) -> None: ...
     async def fill(self, selector: str, value: str, **kwargs: Any) -> None: ...
@@ -119,6 +121,7 @@ class PageProtocol(Protocol):
 # ---------------------------------------------------------------------------
 # Action Executor
 # ---------------------------------------------------------------------------
+
 
 class BrowserToolExecutor:
     """Execute browser actions via Playwright page."""
@@ -145,23 +148,25 @@ class BrowserToolExecutor:
                 elapsed_ms=(time.time() - start) * 1000,
             )
 
-    async def _dispatch(
-        self, page: PageProtocol, action: BrowserAction
-    ) -> BrowserActionResult:
+    async def _dispatch(self, page: PageProtocol, action: BrowserAction) -> BrowserActionResult:
         at = action.action_type
 
         if at == BrowserActionType.NAVIGATE:
             await page.goto(action.url or action.value, timeout=self._timeout_ms)
             return BrowserActionResult(
-                success=True, action_type=at,
-                url=page.url, title=await page.title(),
+                success=True,
+                action_type=at,
+                url=page.url,
+                title=await page.title(),
             )
 
         if at == BrowserActionType.CLICK:
             await page.click(action.selector, timeout=self._timeout_ms)
             return BrowserActionResult(
-                success=True, action_type=at,
-                url=page.url, title=await page.title(),
+                success=True,
+                action_type=at,
+                url=page.url,
+                title=await page.title(),
             )
 
         if at == BrowserActionType.TYPE:
@@ -179,52 +184,58 @@ class BrowserToolExecutor:
             )
             b64 = base64.b64encode(raw).decode("ascii")
             return BrowserActionResult(
-                success=True, action_type=at,
+                success=True,
+                action_type=at,
                 screenshot_b64=b64,
-                url=page.url, title=await page.title(),
+                url=page.url,
+                title=await page.title(),
             )
 
         if at == BrowserActionType.GET_TEXT:
-            text = await page.evaluate(
-                f'document.querySelector("{action.selector}")?.innerText || ""'
-            )
+            text = await page.evaluate(f'document.querySelector("{action.selector}")?.innerText || ""')
             return BrowserActionResult(success=True, action_type=at, data=text)
 
         if at == BrowserActionType.GET_ATTRIBUTE:
             attr = action.options.get("attribute", "href")
-            val = await page.evaluate(
-                f'document.querySelector("{action.selector}")?.getAttribute("{attr}")'
-            )
+            val = await page.evaluate(f'document.querySelector("{action.selector}")?.getAttribute("{attr}")')
             return BrowserActionResult(success=True, action_type=at, data=val)
 
         if at == BrowserActionType.SNAPSHOT:
             html = await page.content()
             title = await page.title()
             return BrowserActionResult(
-                success=True, action_type=at,
+                success=True,
+                action_type=at,
                 data={"html_length": len(html), "title": title, "url": page.url},
-                url=page.url, title=title,
+                url=page.url,
+                title=title,
             )
 
         if at == BrowserActionType.GO_BACK:
             await page.go_back(timeout=self._timeout_ms)
             return BrowserActionResult(
-                success=True, action_type=at,
-                url=page.url, title=await page.title(),
+                success=True,
+                action_type=at,
+                url=page.url,
+                title=await page.title(),
             )
 
         if at == BrowserActionType.GO_FORWARD:
             await page.go_forward(timeout=self._timeout_ms)
             return BrowserActionResult(
-                success=True, action_type=at,
-                url=page.url, title=await page.title(),
+                success=True,
+                action_type=at,
+                url=page.url,
+                title=await page.title(),
             )
 
         if at == BrowserActionType.RELOAD:
             await page.reload(timeout=self._timeout_ms)
             return BrowserActionResult(
-                success=True, action_type=at,
-                url=page.url, title=await page.title(),
+                success=True,
+                action_type=at,
+                url=page.url,
+                title=await page.title(),
             )
 
         if at == BrowserActionType.CLOSE_TAB:
@@ -234,11 +245,13 @@ class BrowserToolExecutor:
         if at == BrowserActionType.WAIT:
             wait_ms = action.options.get("ms", 1000)
             import asyncio
+
             await asyncio.sleep(wait_ms / 1000)
             return BrowserActionResult(success=True, action_type=at)
 
         return BrowserActionResult(
-            success=False, action_type=at,
+            success=False,
+            action_type=at,
             error=f"Unknown action type: {at}",
         )
 

@@ -31,12 +31,11 @@ def build_menubar(
         return None
 
     async def _wrap(handler: Any) -> None:
-        if handler:
-            if callable(handler):
-                try:
-                    await handler()
-                except TypeError:
-                    handler()
+        if handler and callable(handler):
+            try:
+                await handler()
+            except TypeError:
+                handler()
 
     def _make_click(handler: Any) -> Callable[[Any], Any] | None:
         if handler is None:
@@ -91,9 +90,7 @@ def build_menubar(
             ft.MenuItemButton(
                 content=ft.Text("Documentation"),
                 leading=ft.Icon(ft.Icons.BOOK),
-                on_click=lambda e: (
-                    e.page.launch_url("https://docs.openclaw.ai") if e.page else None
-                ),
+                on_click=lambda e: e.page.launch_url("https://docs.openclaw.ai") if e.page else None,
             ),
         ],
     )

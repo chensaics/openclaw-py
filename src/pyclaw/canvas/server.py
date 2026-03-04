@@ -75,7 +75,7 @@ class CanvasHostServer:
         await ws.prepare(request)
         self._ws_clients.append(ws)
         try:
-            async for msg in ws:
+            async for _msg in ws:
                 pass  # only server→client messages
         finally:
             self._ws_clients.remove(ws)

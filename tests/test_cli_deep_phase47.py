@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from pyclaw.cli.app import app
@@ -18,6 +17,7 @@ runner = CliRunner()
 # ---------------------------------------------------------------------------
 # 47a: sessions cleanup
 # ---------------------------------------------------------------------------
+
 
 class TestSessionsCleanup:
     """Verify sessions cleanup command surface and behavior."""
@@ -60,6 +60,7 @@ class TestSessionsCleanup:
         old_file.write_text('{"msg": "old"}\n')
         # Make it very old
         import time
+
         old_time = time.time() - (31 * 86400)
         os.utime(old_file, (old_time, old_time))
 
@@ -73,6 +74,7 @@ class TestSessionsCleanup:
 # ---------------------------------------------------------------------------
 # 47b: security audit
 # ---------------------------------------------------------------------------
+
 
 class TestSecurityAudit:
     """Verify security audit command surface and behavior."""
@@ -93,9 +95,13 @@ class TestSecurityAudit:
 
     def test_audit_detects_bind_all(self, tmp_path: Path) -> None:
         config_file = tmp_path / "pyclaw.json"
-        config_file.write_text(json.dumps({
-            "gateway": {"bind": "0.0.0.0", "port": 18789},
-        }))
+        config_file.write_text(
+            json.dumps(
+                {
+                    "gateway": {"bind": "0.0.0.0", "port": 18789},
+                }
+            )
+        )
         with patch("pyclaw.cli.commands.security_cmd.resolve_config_path", return_value=config_file):
             result = runner.invoke(app, ["security", "audit", "--json"])
         assert result.exit_code == 0
@@ -108,6 +114,7 @@ class TestSecurityAudit:
 # ---------------------------------------------------------------------------
 # 47c: system CLI RPC fallback
 # ---------------------------------------------------------------------------
+
 
 class TestSystemRPC:
     """Verify system commands try RPC first and fall back gracefully."""
@@ -148,6 +155,7 @@ class TestSystemRPC:
 # ---------------------------------------------------------------------------
 # 47d: root help regression
 # ---------------------------------------------------------------------------
+
 
 class TestRootHelpRegression:
     """Verify new commands show in root help."""

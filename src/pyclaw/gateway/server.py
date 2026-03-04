@@ -86,15 +86,18 @@ class GatewayServer:
             channels_healthy = 0
             if self._channel_health_monitor:
                 from pyclaw.gateway.channel_health import HealthStatus
+
                 statuses = self._channel_health_monitor.get_all_statuses()
                 channels_healthy = sum(1 for s in statuses.values() if s == HealthStatus.HEALTHY)
             uptime = time.time() - self._started_at if self._started_at else 0
-            return JSONResponse({
-                "status": "ok",
-                "protocol": PROTOCOL_VERSION,
-                "channels_healthy": channels_healthy,
-                "uptime": round(uptime, 1),
-            })
+            return JSONResponse(
+                {
+                    "status": "ok",
+                    "protocol": PROTOCOL_VERSION,
+                    "channels_healthy": channels_healthy,
+                    "uptime": round(uptime, 1),
+                }
+            )
 
         @self.app.websocket("/")
         async def websocket_endpoint(ws: WebSocket) -> None:
@@ -118,7 +121,9 @@ class GatewayServer:
             return
         try:
             from pathlib import Path
+
             import json5
+
             path = Path(self.config_path)
             if not path.exists():
                 return

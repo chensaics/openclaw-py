@@ -48,7 +48,7 @@ def detect_mime_type(
     """
     if data:
         for sig, mime in _MAGIC_SIGNATURES:
-            if data[:len(sig)] == sig:
+            if data[: len(sig)] == sig:
                 # Additional check for RIFF containers (WEBP vs WAV)
                 if sig == b"RIFF" and len(data) >= 12:
                     fourcc = data[8:12]

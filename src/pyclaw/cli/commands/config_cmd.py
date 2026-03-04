@@ -12,7 +12,6 @@ from pyclaw.terminal.palette import PALETTE
 
 def config_get(key: str) -> None:
     """Get a configuration value by dotted key path."""
-    from pyclaw.config.io import load_config
     from pyclaw.config.paths import resolve_config_path
 
     p = PALETTE
@@ -27,7 +26,7 @@ def config_get(key: str) -> None:
         typer.echo(f"{p.warn}Key '{key}' not found.{p.reset}")
         raise typer.Exit(1)
 
-    if isinstance(value, (dict, list)):
+    if isinstance(value, dict | list):
         typer.echo(json.dumps(value, indent=2))
     else:
         typer.echo(str(value))
@@ -35,7 +34,6 @@ def config_get(key: str) -> None:
 
 def config_set(key: str, value: str) -> None:
     """Set a configuration value by dotted key path."""
-    from pyclaw.config.io import load_config, save_config
     from pyclaw.config.paths import resolve_config_path
 
     p = PALETTE
@@ -75,7 +73,7 @@ def config_validate() -> None:
         if cfg.models and cfg.models.providers:
             print(f"  Providers: {', '.join(cfg.models.providers.keys())}")
         if cfg.channels:
-            print(f"  Channels: configured")
+            print("  Channels: configured")
     except Exception as e:
         print(f"Config invalid: {e}")
         raise SystemExit(1)
@@ -123,5 +121,5 @@ def _print_flat(data: dict[str, Any], prefix: str) -> None:
         if isinstance(value, dict):
             _print_flat(value, full_key)
         else:
-            display = json.dumps(value) if isinstance(value, (list, bool)) else str(value)
+            display = json.dumps(value) if isinstance(value, list | bool) else str(value)
             typer.echo(f"  {p.muted}{full_key}{p.reset} = {display}")

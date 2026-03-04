@@ -60,9 +60,7 @@ class MessageTool(BaseTool):
         text = arguments.get("text", "")
 
         if not channel or not recipient or not text:
-            return ToolResult.text(
-                "Error: channel, recipient, and text are all required.", is_error=True
-            )
+            return ToolResult.text("Error: channel, recipient, and text are all required.", is_error=True)
 
         if self._send_fn:
             try:

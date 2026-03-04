@@ -123,9 +123,7 @@ async def request_permission(kind: PermissionKind) -> PermissionResult:
         ph = ft.PermissionHandler()
         status = await ph.request_permission(kind.value)
         mapped = _map_status(status)
-        return PermissionResult(
-            kind=kind, status=mapped, can_request_again=mapped != PermissionStatus.RESTRICTED
-        )
+        return PermissionResult(kind=kind, status=mapped, can_request_again=mapped != PermissionStatus.RESTRICTED)
     except Exception as exc:
         logger.debug("Permission request failed for %s: %s", kind.value, exc)
         return PermissionResult(kind=kind, status=PermissionStatus.DENIED)
@@ -177,10 +175,12 @@ async def ensure_platform_permissions(page: Any = None) -> list[PermissionResult
     results: list[PermissionResult] = []
     for kind in required:
         granted = await ensure_permission(kind, page)
-        results.append(PermissionResult(
-            kind=kind,
-            status=PermissionStatus.GRANTED if granted else PermissionStatus.DENIED,
-        ))
+        results.append(
+            PermissionResult(
+                kind=kind,
+                status=PermissionStatus.GRANTED if granted else PermissionStatus.DENIED,
+            )
+        )
     return results
 
 
@@ -207,7 +207,8 @@ def build_permission_guard_panel(
         ft.Text("Permissions Required", size=18, weight=ft.FontWeight.BOLD),
         ft.Text(
             "The app needs the following permissions to work properly.",
-            size=13, color=ft.Colors.ON_SURFACE_VARIANT,
+            size=13,
+            color=ft.Colors.ON_SURFACE_VARIANT,
         ),
         ft.Divider(height=1),
     ]
@@ -216,14 +217,21 @@ def build_permission_guard_panel(
         explanation = PERMISSION_EXPLANATIONS.get(kind.value, "")
         rows.append(
             ft.Container(
-                content=ft.Row([
-                    ft.Icon(_permission_icon(kind), size=24, color=ft.Colors.PRIMARY),
-                    ft.Column([
-                        ft.Text(kind.value.replace("_", " ").title(),
-                                size=14, weight=ft.FontWeight.BOLD),
-                        ft.Text(explanation, size=11, color=ft.Colors.ON_SURFACE_VARIANT),
-                    ], spacing=2, expand=True, tight=True),
-                ], spacing=12),
+                content=ft.Row(
+                    [
+                        ft.Icon(_permission_icon(kind), size=24, color=ft.Colors.PRIMARY),
+                        ft.Column(
+                            [
+                                ft.Text(kind.value.replace("_", " ").title(), size=14, weight=ft.FontWeight.BOLD),
+                                ft.Text(explanation, size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                            ],
+                            spacing=2,
+                            expand=True,
+                            tight=True,
+                        ),
+                    ],
+                    spacing=12,
+                ),
                 padding=ft.padding.symmetric(horizontal=8, vertical=6),
             )
         )
@@ -253,6 +261,7 @@ def build_permission_guard_panel(
 
 def _permission_icon(kind: PermissionKind) -> str:
     import flet as ft
+
     return {
         PermissionKind.MICROPHONE: ft.Icons.MIC,
         PermissionKind.CAMERA: ft.Icons.CAMERA_ALT,

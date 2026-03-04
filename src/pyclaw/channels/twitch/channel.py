@@ -42,9 +42,12 @@ class TwitchChannel(ChannelPlugin):
 
     async def start(self) -> None:
         import ssl
+
         ssl_ctx = ssl.create_default_context()
         self._reader, self._writer = await asyncio.open_connection(
-            TWITCH_IRC_HOST, TWITCH_IRC_PORT, ssl=ssl_ctx,
+            TWITCH_IRC_HOST,
+            TWITCH_IRC_PORT,
+            ssl=ssl_ctx,
         )
         await self._send(f"PASS oauth:{self._oauth_token}")
         await self._send(f"NICK {self._nick}")
@@ -69,7 +72,7 @@ class TwitchChannel(ChannelPlugin):
         channel = recipient.lstrip("#")
         text = reply.text
         for i in range(0, len(text), TEXT_CHUNK_LIMIT):
-            chunk = text[i:i + TEXT_CHUNK_LIMIT]
+            chunk = text[i : i + TEXT_CHUNK_LIMIT]
             await self._send(f"PRIVMSG #{channel} :{chunk}")
 
     def on_message(self, handler: Any) -> None:

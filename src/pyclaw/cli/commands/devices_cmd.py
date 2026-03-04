@@ -25,7 +25,10 @@ def devices_list() -> None:
             typer.echo(f"\n{channel}:")
             for e in entries:
                 import datetime
-                added = datetime.datetime.fromtimestamp(e.added_at).strftime("%Y-%m-%d %H:%M") if e.added_at else "unknown"
+
+                added = (
+                    datetime.datetime.fromtimestamp(e.added_at).strftime("%Y-%m-%d %H:%M") if e.added_at else "unknown"
+                )
                 name = e.display_name or e.sender_id
                 typer.echo(f"  {name} (via {e.paired_via}, added {added})")
 
@@ -48,6 +51,7 @@ def devices_approve(channel: str, code: str) -> None:
 def devices_remove(channel: str, sender_id: str) -> None:
     """Remove a paired device from a channel's allowFrom store."""
     import json
+
     from pyclaw.pairing.store import _allow_from_path, read_allow_from_store
 
     entries = read_allow_from_store(channel)

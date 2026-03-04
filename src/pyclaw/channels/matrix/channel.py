@@ -79,7 +79,7 @@ class MatrixChannel(ChannelPlugin):
             return
 
         try:
-            from nio import RoomSendResponse
+            import nio  # noqa: F401
         except ImportError:
             return
 
@@ -106,15 +106,9 @@ class MatrixChannel(ChannelPlugin):
         if self._allow_from and event.sender not in self._allow_from:
             return
 
-        is_group = (
-            len(getattr(room, "member_count", []) or []) > 2
-            if hasattr(room, "member_count")
-            else True
-        )
+        is_group = len(getattr(room, "member_count", []) or []) > 2 if hasattr(room, "member_count") else True
 
-        display_name = (
-            room.user_name(event.sender) if hasattr(room, "user_name") else event.sender
-        )
+        display_name = room.user_name(event.sender) if hasattr(room, "user_name") else event.sender
         msg = ChannelMessage(
             channel_id="matrix",
             sender_id=event.sender,

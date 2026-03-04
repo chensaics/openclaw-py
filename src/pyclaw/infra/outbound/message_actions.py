@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ class ActionType(str, Enum):
 @dataclass
 class ActionSpec:
     """Specification for a post-delivery action."""
+
     type: ActionType
     message_id: str
     channel_id: str
@@ -45,6 +47,7 @@ class ActionSpec:
 @dataclass
 class ActionResult:
     """Result of executing an action."""
+
     success: bool
     action_type: ActionType
     message_id: str = ""

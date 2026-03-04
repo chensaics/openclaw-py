@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
-import os
 import math
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+import os
+from dataclasses import dataclass
 from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
@@ -17,6 +16,7 @@ EmbeddingProviderId = Literal["openai", "gemini", "voyage", "mistral", "local", 
 @dataclass
 class EmbeddingProvider:
     """An embedding provider that can generate vector embeddings."""
+
     id: str = ""
     model: str = ""
     max_input_tokens: int = 8192
@@ -157,6 +157,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
 
 # ─── Factory ─────────────────────────────────────────────────────────────
 
+
 async def create_embedding_provider(
     *,
     provider: EmbeddingProviderId = "auto",
@@ -224,6 +225,7 @@ async def create_embedding_provider(
 
 # ─── Utilities ───────────────────────────────────────────────────────────
 
+
 def sanitize_and_normalize(vec: list[float]) -> list[float]:
     """Sanitize (replace non-finite) and L2-normalize an embedding vector."""
     clean = [v if math.isfinite(v) else 0.0 for v in vec]
@@ -237,7 +239,7 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
     """Compute cosine similarity between two vectors."""
     if len(a) != len(b):
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:

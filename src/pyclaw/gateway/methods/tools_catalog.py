@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection
 
-from pyclaw.agents.tools.registry import ToolRegistry, create_default_tools
+from pyclaw.agents.tools.registry import create_default_tools
 
 
 async def _handle_tools_catalog(

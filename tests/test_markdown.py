@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
-
-from pyclaw.markdown.ir import MarkdownStyle, markdown_to_ir, chunk_markdown_ir
-from pyclaw.markdown.render import render_markdown_with_markers
-from pyclaw.markdown.tables import TableMode, convert_markdown_tables
-from pyclaw.markdown.fences import parse_fence_spans, is_safe_fence_break
 from pyclaw.markdown.channel_formats import (
-    markdown_to_whatsapp,
-    markdown_to_telegram_html,
     markdown_to_signal_text,
     markdown_to_slack_mrkdwn,
+    markdown_to_telegram_html,
+    markdown_to_whatsapp,
 )
+from pyclaw.markdown.fences import is_safe_fence_break, parse_fence_spans
+from pyclaw.markdown.ir import MarkdownStyle, chunk_markdown_ir, markdown_to_ir
+from pyclaw.markdown.render import render_markdown_with_markers
+from pyclaw.markdown.tables import TableMode, convert_markdown_tables
 
 
 class TestMarkdownIR:

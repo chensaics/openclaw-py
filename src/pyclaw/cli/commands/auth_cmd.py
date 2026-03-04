@@ -25,7 +25,6 @@ def auth_login(
     method: str = "auto",
 ) -> None:
     """Add or update an auth profile (API key, OAuth, or device-code)."""
-    p = PALETTE
 
     effective_method = method
     if effective_method == "auto":
@@ -110,7 +109,7 @@ def _login_device_code(provider: str, profile_id: str | None) -> None:
 async def _run_device_code_flow(provider: str) -> OAuthTokens | None:
     import httpx
 
-    from pyclaw.agents.providers.oauth_providers import CopilotDeviceFlow, OAuthTokens
+    from pyclaw.agents.providers.oauth_providers import CopilotDeviceFlow
 
     flow = CopilotDeviceFlow()
     req_body = flow.build_device_code_request()

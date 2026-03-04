@@ -15,6 +15,7 @@ _AUDIO_TAG_RE = re.compile(r"\[\[audio_as_voice\]\]", re.IGNORECASE)
 @dataclass
 class AudioTag:
     """Parsed audio tag from LLM output."""
+
     tag: str
     as_voice: bool = False
 
@@ -41,11 +42,13 @@ def extract_media_tokens(text: str) -> list[dict[str, Any]]:
     tokens: list[dict[str, Any]] = []
 
     for m in _AUDIO_TAG_RE.finditer(text):
-        tokens.append({
-            "type": "audio_voice",
-            "value": m.group(0),
-            "start": m.start(),
-            "end": m.end(),
-        })
+        tokens.append(
+            {
+                "type": "audio_voice",
+                "value": m.group(0),
+                "start": m.start(),
+                "end": m.end(),
+            }
+        )
 
     return tokens

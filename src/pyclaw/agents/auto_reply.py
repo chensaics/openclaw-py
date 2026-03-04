@@ -54,11 +54,13 @@ class AutoReplyConfig:
     suppress_no_reply: bool = True
     suppress_heartbeat: bool = True
     filter_streaming_sentinels: bool = True
-    heartbeat_keywords: list[str] = field(default_factory=lambda: [
-        "HEARTBEAT_PING",
-        "HEARTBEAT_KEEPALIVE",
-        "HEARTBEAT_CHECK",
-    ])
+    heartbeat_keywords: list[str] = field(
+        default_factory=lambda: [
+            "HEARTBEAT_PING",
+            "HEARTBEAT_KEEPALIVE",
+            "HEARTBEAT_CHECK",
+        ]
+    )
 
 
 @dataclass
@@ -131,6 +133,7 @@ def evaluate_reply(text: str, *, config: AutoReplyConfig | None = None) -> Reply
 # Streaming sentinel filter
 # ---------------------------------------------------------------------------
 
+
 class StreamingSentinelFilter:
     """Filters partial NO_REPLY / HEARTBEAT sentinels from streaming text.
 
@@ -202,6 +205,7 @@ class StreamingSentinelFilter:
 # ---------------------------------------------------------------------------
 # Conversation timestamp helper
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ConversationTimestamp:

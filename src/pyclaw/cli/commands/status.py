@@ -162,9 +162,7 @@ def status_command(
     typer.echo(f"{p.muted}{'─' * 50}{p.reset}")
 
     # Config
-    config_status = (
-        f"{p.success}valid{p.reset}" if summary.config_valid else f"{p.error}invalid{p.reset}"
-    )
+    config_status = f"{p.success}valid{p.reset}" if summary.config_valid else f"{p.error}invalid{p.reset}"
     typer.echo(f"  Config:    {config_status} ({summary.config_path})")
     typer.echo(f"  State dir: {summary.state_dir}")
 
@@ -179,11 +177,7 @@ def status_command(
 
     # Gateway
     if deep or all_info:
-        gw_status = (
-            f"{p.success}running{p.reset}"
-            if summary.gateway_running
-            else f"{p.error}not running{p.reset}"
-        )
+        gw_status = f"{p.success}running{p.reset}" if summary.gateway_running else f"{p.error}not running{p.reset}"
         typer.echo(f"  Gateway:   {gw_status} (port {summary.gateway_port})")
 
     # Agents
@@ -212,10 +206,7 @@ def status_command(
     if usage:
         typer.echo(f"\n{p.info}Usage (7d):{p.reset}")
         if usage_snapshot:
-            typer.echo(
-                f"  Sessions: {usage_snapshot.get('sessions', 0)} | "
-                f"Calls: {usage_snapshot.get('calls', 0)}"
-            )
+            typer.echo(f"  Sessions: {usage_snapshot.get('sessions', 0)} | Calls: {usage_snapshot.get('calls', 0)}")
             typer.echo(
                 f"  Tokens: {usage_snapshot.get('total_input_tokens', 0)} in / "
                 f"{usage_snapshot.get('total_output_tokens', 0)} out"
@@ -227,8 +218,7 @@ def status_command(
                 for provider in sorted(providers):
                     row = providers[provider]
                     typer.echo(
-                        f"    - {provider}: {row.get('total_tokens', 0)} tokens, "
-                        f"{row.get('estimated_cost', '$0.0000')}"
+                        f"    - {provider}: {row.get('total_tokens', 0)} tokens, {row.get('estimated_cost', '$0.0000')}"
                     )
         else:
             typer.echo(f"  {p.muted}No usage data available.{p.reset}")

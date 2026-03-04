@@ -95,7 +95,7 @@ async def _send_via_gateway(
                         elif event == "chat.done":
                             sys.stdout.write("\n")
                             break
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     typer.echo("\nTimeout waiting for response.", err=True)
                     break
 

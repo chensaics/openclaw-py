@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helper: fake GatewayConnection
 # ---------------------------------------------------------------------------
+
 
 class FakeConn:
     def __init__(self) -> None:
@@ -28,6 +28,7 @@ class FakeConn:
 # ---------------------------------------------------------------------------
 # 46a: doctor.run returns real checks
 # ---------------------------------------------------------------------------
+
 
 class TestDoctorRPC:
     """Verify doctor.run now returns non-empty check results."""
@@ -69,6 +70,7 @@ class TestDoctorRPC:
 # ---------------------------------------------------------------------------
 # 46b: system.logs reads from real log file
 # ---------------------------------------------------------------------------
+
 
 class TestSystemLogsRPC:
     """Verify system.logs returns file content (or empty when no file)."""
@@ -129,6 +131,7 @@ class TestSystemLogsRPC:
 # 46c: skills.list returns discoverable skills
 # ---------------------------------------------------------------------------
 
+
 class TestSkillsListRPC:
     """Verify skills.list attempts skill discovery."""
 
@@ -166,8 +169,10 @@ class TestSkillsListRPC:
             return [mock_skill]
 
         # Patch at both module levels since __init__.py re-exports
-        with patch("pyclaw.agents.skills.load_skill_entries", side_effect=fake_load), \
-             patch("pyclaw.agents.skills.loader.load_skill_entries", side_effect=fake_load):
+        with (
+            patch("pyclaw.agents.skills.load_skill_entries", side_effect=fake_load),
+            patch("pyclaw.agents.skills.loader.load_skill_entries", side_effect=fake_load),
+        ):
             await handlers["skills.list"](None, conn)
 
         payload = conn.responses[0][1]
@@ -179,6 +184,7 @@ class TestSkillsListRPC:
 # ---------------------------------------------------------------------------
 # 46d: extended handlers total count (after browser removal + log materialization)
 # ---------------------------------------------------------------------------
+
 
 class TestExtendedHandlerCount:
     """Verify the correct number of handlers are registered."""

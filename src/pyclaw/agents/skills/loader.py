@@ -157,8 +157,7 @@ def _parse_metadata(frontmatter: dict[str, str]) -> SkillMetadata:
 def _parse_invocation(frontmatter: dict[str, str]) -> SkillInvocationPolicy:
     return SkillInvocationPolicy(
         user_invocable=frontmatter.get("userInvocable", "true").lower() != "false",
-        disable_model_invocation=frontmatter.get("disableModelInvocation", "false").lower()
-        == "true",
+        disable_model_invocation=frontmatter.get("disableModelInvocation", "false").lower() == "true",
     )
 
 

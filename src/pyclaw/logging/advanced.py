@@ -11,22 +11,21 @@ Provides:
 
 from __future__ import annotations
 
-import logging
-import os
 import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # File Rotation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RotationConfig:
     """Configuration for log file rotation."""
+
     max_size_bytes: int = 10 * 1024 * 1024  # 10 MB
     max_files: int = 5
     compress: bool = False
@@ -36,6 +35,7 @@ class RotationConfig:
 @dataclass
 class RotationResult:
     """Result of a rotation check."""
+
     rotated: bool = False
     files_removed: int = 0
     current_size: int = 0
@@ -112,9 +112,11 @@ def redact_api_key(key: str) -> str:
 # Diagnostic Session State
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DiagnosticSessionState:
     """Capture diagnostic state for a session."""
+
     session_id: str
     agent_id: str = ""
     model: str = ""
@@ -142,9 +144,11 @@ class DiagnosticSessionState:
 # Log Line Parsing
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ParsedLogLine:
     """A parsed log line."""
+
     timestamp: str = ""
     level: str = ""
     subsystem: str = ""

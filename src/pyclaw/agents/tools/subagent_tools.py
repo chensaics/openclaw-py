@@ -39,9 +39,7 @@ class AgentsListTool(BaseTool):
         for d in sorted(agents_dir.iterdir()):
             if d.is_dir():
                 sessions_dir = d / "sessions"
-                session_count = (
-                    len(list(sessions_dir.glob("*.jsonl"))) if sessions_dir.is_dir() else 0
-                )
+                session_count = len(list(sessions_dir.glob("*.jsonl"))) if sessions_dir.is_dir() else 0
                 agents.append(f"  {d.name}: {session_count} session(s)")
 
         if not agents:
@@ -157,10 +155,7 @@ class SubagentsTool(BaseTool):
                 return ToolResult.text("No active subagents.")
             lines = []
             for sa in active:
-                lines.append(
-                    f"  {sa['session_id'][:8]}... ({sa['state']}) depth={sa['depth']} "
-                    f"agent={sa['agent_id']}"
-                )
+                lines.append(f"  {sa['session_id'][:8]}... ({sa['state']}) depth={sa['depth']} agent={sa['agent_id']}")
             return ToolResult.text(f"Active subagents ({len(active)}):\n" + "\n".join(lines))
 
         session_id = arguments.get("session_id", "")

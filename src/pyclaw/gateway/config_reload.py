@@ -15,18 +15,19 @@ import hashlib
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ReloadStrategy(str, Enum):
-    HOT = "hot"           # Apply changes without restart
-    RESTART = "restart"   # Full gateway restart required
-    IGNORE = "ignore"     # No action needed
+    HOT = "hot"  # Apply changes without restart
+    RESTART = "restart"  # Full gateway restart required
+    IGNORE = "ignore"  # No action needed
 
 
 class ChangeType(str, Enum):
@@ -38,6 +39,7 @@ class ChangeType(str, Enum):
 @dataclass
 class ConfigChange:
     """A single config key change."""
+
     key: str
     change_type: ChangeType
     old_value: Any = None
@@ -47,6 +49,7 @@ class ConfigChange:
 @dataclass
 class ConfigDiff:
     """Diff between two config snapshots."""
+
     changes: list[ConfigChange] = field(default_factory=list)
     strategy: ReloadStrategy = ReloadStrategy.IGNORE
     timestamp: float = 0.0
@@ -61,13 +64,15 @@ class ConfigDiff:
 
 
 # Keys that require full restart
-RESTART_KEYS = frozenset({
-    "gateway.port",
-    "gateway.bind",
-    "gateway.tls",
-    "gateway.mode",
-    "daemon",
-})
+RESTART_KEYS = frozenset(
+    {
+        "gateway.port",
+        "gateway.bind",
+        "gateway.tls",
+        "gateway.mode",
+        "daemon",
+    }
+)
 
 # Keys safe for hot reload
 HOT_RELOAD_PREFIXES = (
@@ -107,10 +112,14 @@ def compute_config_diff(old: dict[str, Any], new: dict[str, Any]) -> ConfigDiff:
         elif key not in new_flat:
             changes.append(ConfigChange(key=key, change_type=ChangeType.REMOVED, old_value=old_flat[key]))
         elif old_flat[key] != new_flat[key]:
-            changes.append(ConfigChange(
-                key=key, change_type=ChangeType.MODIFIED,
-                old_value=old_flat[key], new_value=new_flat[key],
-            ))
+            changes.append(
+                ConfigChange(
+                    key=key,
+                    change_type=ChangeType.MODIFIED,
+                    old_value=old_flat[key],
+                    new_value=new_flat[key],
+                )
+            )
 
     strategy = determine_strategy(changes)
     return ConfigDiff(changes=changes, strategy=strategy, timestamp=time.time())
@@ -141,13 +150,14 @@ def file_hash(path: str | Path) -> str:
     try:
         data = Path(path).read_bytes()
         return hashlib.sha256(data).hexdigest()
-    except (OSError, IOError):
+    except OSError:
         return ""
 
 
 @dataclass
 class WatcherConfig:
     """Configuration for the config file watcher."""
+
     config_path: str = ""
     poll_interval_s: float = 2.0
     debounce_s: float = 0.5

@@ -32,6 +32,7 @@ class ChannelCategory(str, Enum):
 @dataclass
 class MediaLimits:
     """Media upload constraints for a channel."""
+
     max_file_size_mb: float = 50.0
     max_image_size_mb: float = 10.0
     max_video_size_mb: float = 50.0
@@ -39,15 +40,14 @@ class MediaLimits:
     supported_image_types: list[str] = field(
         default_factory=lambda: ["image/png", "image/jpeg", "image/gif", "image/webp"]
     )
-    supported_audio_types: list[str] = field(
-        default_factory=lambda: ["audio/mp3", "audio/ogg", "audio/wav"]
-    )
+    supported_audio_types: list[str] = field(default_factory=lambda: ["audio/mp3", "audio/ogg", "audio/wav"])
     max_message_length: int = 4096
 
 
 @dataclass
 class ActionSpec:
     """Per-channel action capabilities."""
+
     supports_reactions: bool = False
     supports_buttons: bool = False
     supports_pins: bool = False
@@ -64,6 +64,7 @@ class ActionSpec:
 @dataclass
 class AccountHelper:
     """Setup instructions for a channel account."""
+
     steps: list[str] = field(default_factory=list)
     required_fields: list[str] = field(default_factory=list)
     optional_fields: list[str] = field(default_factory=list)
@@ -75,6 +76,7 @@ class AccountHelper:
 @dataclass
 class CatalogEntry:
     """A channel entry in the catalog."""
+
     channel_type: str
     display_name: str
     description: str = ""
@@ -101,9 +103,15 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#0088cc",
         media_limits=MediaLimits(max_message_length=4096, max_file_size_mb=50),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_buttons=True, supports_pins=True,
-            supports_threads=True, supports_editing=True, supports_deletion=True,
-            supports_typing=True, max_buttons=8, button_styles=["inline", "reply"],
+            supports_reactions=True,
+            supports_buttons=True,
+            supports_pins=True,
+            supports_threads=True,
+            supports_editing=True,
+            supports_deletion=True,
+            supports_typing=True,
+            max_buttons=8,
+            button_styles=["inline", "reply"],
         ),
         account_helper=AccountHelper(
             steps=["Create bot via @BotFather", "Copy the bot token", "Set bot token in config"],
@@ -121,9 +129,14 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#5865F2",
         media_limits=MediaLimits(max_message_length=2000, max_file_size_mb=25),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_buttons=True, supports_threads=True,
-            supports_editing=True, supports_deletion=True, supports_typing=True,
-            max_buttons=5, button_styles=["primary", "secondary", "danger", "link"],
+            supports_reactions=True,
+            supports_buttons=True,
+            supports_threads=True,
+            supports_editing=True,
+            supports_deletion=True,
+            supports_typing=True,
+            max_buttons=5,
+            button_styles=["primary", "secondary", "danger", "link"],
         ),
         account_helper=AccountHelper(
             steps=["Create app at Discord Developer Portal", "Add bot to app", "Copy bot token"],
@@ -141,9 +154,14 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#4A154B",
         media_limits=MediaLimits(max_message_length=40000, max_file_size_mb=1000),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_buttons=True, supports_threads=True,
-            supports_editing=True, supports_deletion=True, supports_typing=True,
-            max_buttons=5, reaction_style="emoji",
+            supports_reactions=True,
+            supports_buttons=True,
+            supports_threads=True,
+            supports_editing=True,
+            supports_deletion=True,
+            supports_typing=True,
+            max_buttons=5,
+            reaction_style="emoji",
         ),
         account_helper=AccountHelper(
             steps=["Create Slack App", "Install to workspace", "Copy Bot Token + App Token"],
@@ -160,7 +178,8 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#25D366",
         media_limits=MediaLimits(max_message_length=65536, max_file_size_mb=64),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_typing=True,
+            supports_reactions=True,
+            supports_typing=True,
             supports_read_receipts=True,
         ),
         account_helper=AccountHelper(
@@ -208,8 +227,10 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#3370FF",
         media_limits=MediaLimits(max_message_length=30000, max_file_size_mb=25),
         action_spec=ActionSpec(
-            supports_typing=True, supports_threads=True,
-            supports_editing=True, supports_deletion=True,
+            supports_typing=True,
+            supports_threads=True,
+            supports_editing=True,
+            supports_deletion=True,
         ),
         account_helper=AccountHelper(
             steps=["Create app at Feishu Open Platform", "Enable Bot capability", "Copy App ID and Secret"],
@@ -226,8 +247,11 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#0DBD8B",
         media_limits=MediaLimits(max_message_length=65536, max_file_size_mb=100),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_threads=True, supports_typing=True,
-            supports_editing=True, supports_deletion=True,
+            supports_reactions=True,
+            supports_threads=True,
+            supports_typing=True,
+            supports_editing=True,
+            supports_deletion=True,
         ),
         account_helper=AccountHelper(
             steps=["Create Matrix account", "Generate access token"],
@@ -257,8 +281,11 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#6264A7",
         media_limits=MediaLimits(max_message_length=28000, max_file_size_mb=250),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_typing=True, supports_threads=True,
-            supports_editing=True, supports_deletion=True,
+            supports_reactions=True,
+            supports_typing=True,
+            supports_threads=True,
+            supports_editing=True,
+            supports_deletion=True,
         ),
         account_helper=AccountHelper(
             steps=["Register app in Azure AD", "Create Teams Bot", "Copy credentials"],
@@ -274,7 +301,8 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#00AC47",
         media_limits=MediaLimits(max_message_length=4096),
         action_spec=ActionSpec(
-            supports_threads=True, supports_typing=True,
+            supports_threads=True,
+            supports_typing=True,
         ),
         account_helper=AccountHelper(
             steps=["Create Google Cloud project", "Enable Chat API", "Configure OAuth"],
@@ -362,7 +390,8 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#00B900",
         media_limits=MediaLimits(max_message_length=5000, max_file_size_mb=200),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_typing=True,
+            supports_reactions=True,
+            supports_typing=True,
         ),
         account_helper=AccountHelper(
             steps=["Create LINE channel", "Copy channel access token and secret"],
@@ -378,8 +407,11 @@ BUILTIN_CATALOG: dict[str, CatalogEntry] = {
         color="#0058CC",
         media_limits=MediaLimits(max_message_length=16383, max_file_size_mb=50),
         action_spec=ActionSpec(
-            supports_reactions=True, supports_threads=True, supports_typing=True,
-            supports_editing=True, supports_deletion=True,
+            supports_reactions=True,
+            supports_threads=True,
+            supports_typing=True,
+            supports_editing=True,
+            supports_deletion=True,
         ),
         account_helper=AccountHelper(
             steps=["Create Mattermost bot account", "Copy access token"],
@@ -576,7 +608,8 @@ class ChannelCatalog:
         }
 
     def validate_against_implementations(
-        self, implementations_dir: str | None = None,
+        self,
+        implementations_dir: str | None = None,
     ) -> dict[str, list[str]]:
         """Check catalog ↔ on-disk channel implementations alignment.
 
@@ -586,9 +619,7 @@ class ChannelCatalog:
         import pathlib
 
         if implementations_dir is None:
-            implementations_dir = str(
-                pathlib.Path(__file__).resolve().parent.parent
-            )
+            implementations_dir = str(pathlib.Path(__file__).resolve().parent.parent)
         impl_path = pathlib.Path(implementations_dir)
         implemented: set[str] = set()
         for child in impl_path.iterdir():
@@ -609,7 +640,7 @@ def _schema_channel_fields(config_cls: type) -> set[str]:
     """Extract channel field names from a ChannelsConfig Pydantic model."""
     skip = {"defaults"}
     fields: set[str] = set()
-    for name, info in config_cls.model_fields.items():
+    for name, _info in config_cls.model_fields.items():
         if name in skip:
             continue
         fields.add(name)

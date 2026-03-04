@@ -9,7 +9,6 @@ from typing import Any
 
 from .commands_registry import CommandContext, CommandRegistry, CommandResult
 
-
 THINK_LEVELS = {"low", "medium", "high"}
 
 

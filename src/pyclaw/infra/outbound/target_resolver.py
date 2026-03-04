@@ -22,12 +22,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DeliveryTarget:
     """A resolved delivery target."""
+
     channel_id: str
     chat_id: str
     sender_id: str = ""
     thread_id: str = ""
     reply_to_message_id: str = ""
-    channel_type: str = ""       # "telegram" | "discord" | "slack" | ...
+    channel_type: str = ""  # "telegram" | "discord" | "slack" | ...
     account_id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -35,6 +36,7 @@ class DeliveryTarget:
 @dataclass
 class TargetResolutionContext:
     """Context for resolving delivery targets."""
+
     session_id: str
     agent_id: str = ""
     channel_id: str = ""
@@ -47,6 +49,7 @@ class TargetResolutionContext:
 @dataclass
 class TargetResolutionResult:
     """Result of target resolution."""
+
     targets: list[DeliveryTarget]
     errors: list[str] = field(default_factory=list)
 
@@ -84,36 +87,42 @@ class TargetResolver:
             bound_channel = binding.get("channel_id")
             bound_chat = binding.get("chat_id")
             if bound_channel and bound_chat:
-                targets.append(DeliveryTarget(
-                    channel_id=bound_channel,
-                    chat_id=bound_chat,
-                    sender_id=binding.get("sender_id", ""),
-                    channel_type=binding.get("channel_type", ""),
-                    account_id=context.account_id,
-                ))
+                targets.append(
+                    DeliveryTarget(
+                        channel_id=bound_channel,
+                        chat_id=bound_chat,
+                        sender_id=binding.get("sender_id", ""),
+                        channel_type=binding.get("channel_type", ""),
+                        account_id=context.account_id,
+                    )
+                )
 
         if targets:
             return TargetResolutionResult(targets=targets)
 
         # Session origin
         if context.channel_id:
-            targets.append(DeliveryTarget(
-                channel_id=context.channel_id,
-                chat_id=context.sender_id,
-                sender_id=context.sender_id,
-                account_id=context.account_id,
-            ))
+            targets.append(
+                DeliveryTarget(
+                    channel_id=context.channel_id,
+                    chat_id=context.sender_id,
+                    sender_id=context.sender_id,
+                    account_id=context.account_id,
+                )
+            )
             return TargetResolutionResult(targets=targets)
 
         # Fallback
         if context.available_channels:
             for ch in context.available_channels:
-                targets.append(DeliveryTarget(
-                    channel_id=ch,
-                    chat_id=context.sender_id,
-                    sender_id=context.sender_id,
-                    account_id=context.account_id,
-                ))
+                targets.append(
+                    DeliveryTarget(
+                        channel_id=ch,
+                        chat_id=context.sender_id,
+                        sender_id=context.sender_id,
+                        account_id=context.account_id,
+                    )
+                )
             return TargetResolutionResult(targets=targets)
 
         errors.append("No delivery targets found")

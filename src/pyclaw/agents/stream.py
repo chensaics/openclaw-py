@@ -155,9 +155,7 @@ async def _stream_anthropic(
 
     system_msgs = [m for m in messages if m["role"] == "system"]
     non_system = [m for m in messages if m["role"] != "system"]
-    system_text = "\n\n".join(
-        m["content"] if isinstance(m["content"], str) else str(m["content"]) for m in system_msgs
-    )
+    system_text = "\n\n".join(m["content"] if isinstance(m["content"], str) else str(m["content"]) for m in system_msgs)
 
     kwargs: dict[str, Any] = {
         "model": model.model_id,
@@ -301,10 +299,7 @@ def _build_completion_event(text: str, tool_calls_acc: dict[int, dict[str, Any]]
         delta=text if text else None,
         result={
             "text": text,
-            "tool_calls": [
-                {"id": tc.id, "name": tc.name, "arguments": tc.arguments}
-                for tc in parsed_tool_calls
-            ],
+            "tool_calls": [{"id": tc.id, "name": tc.name, "arguments": tc.arguments} for tc in parsed_tool_calls],
         },
     )
 

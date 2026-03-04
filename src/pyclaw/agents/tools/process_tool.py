@@ -136,12 +136,8 @@ class ProcessTool(BaseTool):
                         "pid": pid,
                         "done": bg_proc.done,
                         "returncode": bg_proc.proc.returncode,
-                        "stdout": stdout.decode("utf-8", errors="replace")[-_MAX_OUTPUT:]
-                        if stdout
-                        else "",
-                        "stderr": stderr.decode("utf-8", errors="replace")[-_MAX_OUTPUT:]
-                        if stderr
-                        else "",
+                        "stdout": stdout.decode("utf-8", errors="replace")[-_MAX_OUTPUT:] if stdout else "",
+                        "stderr": stderr.decode("utf-8", errors="replace")[-_MAX_OUTPUT:] if stderr else "",
                     }
                 )
             )

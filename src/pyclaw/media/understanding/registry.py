@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-from pyclaw.media.understanding.types import MediaCapability, MediaUnderstandingProvider
-from pyclaw.media.understanding.providers.openai import OpenAIMediaProvider
-from pyclaw.media.understanding.providers.google import GoogleMediaProvider
 from pyclaw.media.understanding.providers.anthropic import AnthropicMediaProvider
+from pyclaw.media.understanding.providers.google import GoogleMediaProvider
+from pyclaw.media.understanding.providers.openai import OpenAIMediaProvider
+from pyclaw.media.understanding.types import MediaCapability, MediaUnderstandingProvider
 
 logger = logging.getLogger(__name__)
 

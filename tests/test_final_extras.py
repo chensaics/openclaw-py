@@ -3,22 +3,16 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 from pathlib import Path
+from typing import Any
 
-import pytest
-
-# Phase 38a: Bundled Hooks
-from pyclaw.hooks.bundled.extra_hooks import (
-    BootCheckItem,
-    CommandLogEntry,
-    CommandLogger,
-    DEFAULT_EXTRA_FILES,
-    ExtraFileSpec,
-    format_extra_files_for_prompt,
-    load_extra_files,
-    parse_boot_md,
-    run_boot_checks,
+# Phase 38e: Extra Providers
+from pyclaw.agents.providers.extra_providers import (
+    EXTRA_PROVIDERS,
+    create_openai_config,
+    get_all_extra_models,
+    get_extra_provider,
+    list_extra_providers,
 )
 
 # Phase 38b: Models Deep
@@ -34,11 +28,36 @@ from pyclaw.cli.commands.models_deep import (
     set_default_model,
 )
 
+# Phase 38a: Bundled Hooks
+from pyclaw.hooks.bundled.extra_hooks import (
+    DEFAULT_EXTRA_FILES,
+    BootCheckItem,
+    CommandLogEntry,
+    CommandLogger,
+    ExtraFileSpec,
+    format_extra_files_for_prompt,
+    load_extra_files,
+    parse_boot_md,
+    run_boot_checks,
+)
+
+# Phase 38d: Misc Extras
+from pyclaw.infra.misc_extras import (
+    RespawnConfig,
+    RespawnTracker,
+    TLSFingerprint,
+    VoiceManager,
+    VoiceWakeConfig,
+    VoiceWakeState,
+    cleanup_agent_schema,
+    validate_channel_type,
+)
+
 # Phase 38c: Wizard Session
 from pyclaw.wizard.session import (
-    WizardSession,
-    WizardState,
+    GatewaySetupGuide,
     StepStatus,
+    WizardState,
     create_channel_wizard,
     create_setup_wizard,
     format_completion,
@@ -47,38 +66,12 @@ from pyclaw.wizard.session import (
     generate_bash_completion,
     generate_fish_completion,
     generate_zsh_completion,
-    GatewaySetupGuide,
 )
-
-# Phase 38d: Misc Extras
-from pyclaw.infra.misc_extras import (
-    RespawnConfig,
-    RespawnTracker,
-    TLSFingerprint,
-    VALID_CHANNEL_TYPES,
-    VoiceConnection,
-    VoiceConnectionState,
-    VoiceManager,
-    VoiceWakeConfig,
-    VoiceWakeState,
-    cleanup_agent_schema,
-    validate_channel_type,
-)
-
-# Phase 38e: Extra Providers
-from pyclaw.agents.providers.extra_providers import (
-    EXTRA_PROVIDERS,
-    ExtraProviderConfig,
-    create_openai_config,
-    get_all_extra_models,
-    get_extra_provider,
-    list_extra_providers,
-)
-
 
 # =====================================================================
 # Phase 38a: Bundled Hooks
 # =====================================================================
+
 
 class TestBootMd:
     def test_parse(self) -> None:
@@ -167,6 +160,7 @@ class TestCommandLogger:
 # Phase 38b: Models Deep
 # =====================================================================
 
+
 class TestModelProbe:
     def test_probe_with_key(self) -> None:
         result = probe_model("gpt-4o", "openai", api_key="sk-test")
@@ -222,8 +216,14 @@ class TestModelDefault:
 class TestTableFormatting:
     def test_models_table(self) -> None:
         results = [
-            ProbeResult(model="gpt-4o", provider="openai", available=True,
-                        context_window=128000, supports_tools=True, supports_vision=True),
+            ProbeResult(
+                model="gpt-4o",
+                provider="openai",
+                available=True,
+                context_window=128000,
+                supports_tools=True,
+                supports_vision=True,
+            ),
             ProbeResult(model="llama3", provider="ollama", available=False, error="no key"),
         ]
         table = format_models_table(results)
@@ -244,6 +244,7 @@ class TestTableFormatting:
 # =====================================================================
 # Phase 38c: Wizard Session
 # =====================================================================
+
 
 class TestWizardSession:
     def test_create_setup(self) -> None:
@@ -346,6 +347,7 @@ class TestGatewayGuide:
 # Phase 38d: Misc Extras
 # =====================================================================
 
+
 class TestVoiceManager:
     def test_join_and_leave(self) -> None:
         mgr = VoiceManager()
@@ -425,6 +427,7 @@ class TestAgentSchemaCleanup:
 # =====================================================================
 # Phase 38e: Extra Providers
 # =====================================================================
+
 
 class TestExtraProviders:
     def test_providers_registered(self) -> None:

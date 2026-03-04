@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
 import time
-from typing import Any
 
-import pytest
+# Phase 35e: Helpers
+from pyclaw.agents.embedded_runner.helpers import (
+    BootstrapConfig,
+    build_anthropic_turns,
+    build_bootstrap,
+    build_google_turns,
+    build_openai_turns,
+    clean_schema_for_gemini,
+    deduplicate_messages,
+    map_provider_error,
+)
 
 # Phase 35a: Run
 from pyclaw.agents.embedded_runner.run import (
@@ -36,8 +43,6 @@ from pyclaw.agents.embedded_runner.session_manager import (
 from pyclaw.agents.embedded_runner.thinking import (
     AbortSignal,
     CompactionGuardConfig,
-    PruningConfig,
-    ThinkingBlock,
     ThinkingConfig,
     ThinkingMode,
     build_thinking_param,
@@ -60,22 +65,10 @@ from pyclaw.agents.embedded_runner.tool_guards import (
     truncate_tool_result,
 )
 
-# Phase 35e: Helpers
-from pyclaw.agents.embedded_runner.helpers import (
-    BootstrapConfig,
-    build_anthropic_turns,
-    build_bootstrap,
-    build_google_turns,
-    build_openai_turns,
-    clean_schema_for_gemini,
-    deduplicate_messages,
-    map_provider_error,
-)
-
-
 # =====================================================================
 # Phase 35a: Run
 # =====================================================================
+
 
 class TestRunConfig:
     def test_build_payload(self) -> None:
@@ -120,18 +113,27 @@ class TestImageHandling:
 
     def test_prune_images(self) -> None:
         messages = [
-            Message(role="user", content=[
-                {"type": "text", "text": "First"},
-                {"type": "image_url", "image_url": {"url": "img1"}},
-            ]),
-            Message(role="user", content=[
-                {"type": "text", "text": "Second"},
-                {"type": "image_url", "image_url": {"url": "img2"}},
-            ]),
-            Message(role="user", content=[
-                {"type": "text", "text": "Third"},
-                {"type": "image_url", "image_url": {"url": "img3"}},
-            ]),
+            Message(
+                role="user",
+                content=[
+                    {"type": "text", "text": "First"},
+                    {"type": "image_url", "image_url": {"url": "img1"}},
+                ],
+            ),
+            Message(
+                role="user",
+                content=[
+                    {"type": "text", "text": "Second"},
+                    {"type": "image_url", "image_url": {"url": "img2"}},
+                ],
+            ),
+            Message(
+                role="user",
+                content=[
+                    {"type": "text", "text": "Third"},
+                    {"type": "image_url", "image_url": {"url": "img3"}},
+                ],
+            ),
         ]
         pruned = prune_images(messages, keep_last_n=2)
         assert pruned == 1
@@ -178,6 +180,7 @@ class TestMessage:
 # =====================================================================
 # Phase 35b: Session Manager
 # =====================================================================
+
 
 class TestEmbeddedSessionManager:
     def test_get_or_create(self) -> None:
@@ -256,6 +259,7 @@ class TestLaneResolution:
 # Phase 35c: Thinking
 # =====================================================================
 
+
 class TestThinking:
     def test_extract_blocks(self) -> None:
         text = "Hello <thinking>I should analyze this</thinking> World"
@@ -272,7 +276,8 @@ class TestThinking:
     def test_process_response_strip(self) -> None:
         config = ThinkingConfig(strip_from_output=True)
         cleaned, blocks = process_thinking_response(
-            "Reply <reasoning>step 1</reasoning> done", config,
+            "Reply <reasoning>step 1</reasoning> done",
+            config,
         )
         assert "step 1" not in cleaned
         assert len(blocks) == 1
@@ -280,7 +285,8 @@ class TestThinking:
     def test_process_response_keep(self) -> None:
         config = ThinkingConfig(strip_from_output=False)
         text, blocks = process_thinking_response(
-            "Reply <thinking>thought</thinking> done", config,
+            "Reply <thinking>thought</thinking> done",
+            config,
         )
         assert "<thinking>" in text
         assert len(blocks) == 1
@@ -296,6 +302,7 @@ class TestThinking:
 
     def test_parse_thinking_content_block(self) -> None:
         from pyclaw.agents.embedded_runner.thinking import parse_thinking_content_block
+
         block = parse_thinking_content_block({"type": "thinking", "thinking": "deep thought"})
         assert block is not None
         assert block.content == "deep thought"
@@ -339,6 +346,7 @@ class TestCompactionSafety:
 # =====================================================================
 # Phase 35d: Tool Guards
 # =====================================================================
+
 
 class TestToolAllowlist:
     def test_filter_all(self) -> None:
@@ -464,6 +472,7 @@ class TestToolCache:
 # Phase 35e: Helpers
 # =====================================================================
 
+
 class TestErrorMapping:
     def test_rate_limit(self) -> None:
         err = map_provider_error("Rate limit exceeded, please retry after 30s")
@@ -556,14 +565,17 @@ class TestBootstrap:
 
     def test_with_tools(self) -> None:
         result = build_bootstrap(
-            "Base", BootstrapConfig(include_tool_hints=True),
+            "Base",
+            BootstrapConfig(include_tool_hints=True),
             tool_names=["search", "bash"],
         )
         assert "search" in result
 
     def test_no_extras(self) -> None:
         config = BootstrapConfig(
-            include_datetime=False, include_model_info=False, include_tool_hints=False,
+            include_datetime=False,
+            include_model_info=False,
+            include_tool_hints=False,
         )
         result = build_bootstrap("Only this", config)
         assert result == "Only this"

@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
 from pyclaw.routing.bindings import (
     AgentBinding,
     AgentBindingMatch,
     PeerMatch,
     apply_agent_bindings,
     binding_from_dict,
-    binding_match_key,
     binding_to_dict,
     describe_binding,
     parse_binding_spec,
@@ -18,10 +15,10 @@ from pyclaw.routing.bindings import (
     resolve_agent_route,
 )
 
-
 # ---------------------------------------------------------------------------
 # Binding spec parsing
 # ---------------------------------------------------------------------------
+
 
 class TestParseBindingSpec:
     def test_channel_only(self) -> None:
@@ -44,51 +41,66 @@ class TestParseBindingSpec:
 # Apply bindings
 # ---------------------------------------------------------------------------
 
+
 class TestApplyBindings:
     def test_add_new_binding(self) -> None:
         existing: list[AgentBinding] = []
-        incoming = [AgentBinding(
-            agent_id="main",
-            match=AgentBindingMatch(channel="telegram"),
-        )]
+        incoming = [
+            AgentBinding(
+                agent_id="main",
+                match=AgentBindingMatch(channel="telegram"),
+            )
+        ]
         result = apply_agent_bindings(existing, incoming)
         assert len(result.added) == 1
         assert result.added[0].match.channel == "telegram"
 
     def test_skip_duplicate(self) -> None:
-        existing = [AgentBinding(
-            agent_id="main",
-            match=AgentBindingMatch(channel="telegram"),
-        )]
-        incoming = [AgentBinding(
-            agent_id="main",
-            match=AgentBindingMatch(channel="telegram"),
-        )]
+        existing = [
+            AgentBinding(
+                agent_id="main",
+                match=AgentBindingMatch(channel="telegram"),
+            )
+        ]
+        incoming = [
+            AgentBinding(
+                agent_id="main",
+                match=AgentBindingMatch(channel="telegram"),
+            )
+        ]
         result = apply_agent_bindings(existing, incoming)
         assert len(result.skipped) == 1
         assert len(result.added) == 0
 
     def test_conflict(self) -> None:
-        existing = [AgentBinding(
-            agent_id="main",
-            match=AgentBindingMatch(channel="telegram"),
-        )]
-        incoming = [AgentBinding(
-            agent_id="other",
-            match=AgentBindingMatch(channel="telegram"),
-        )]
+        existing = [
+            AgentBinding(
+                agent_id="main",
+                match=AgentBindingMatch(channel="telegram"),
+            )
+        ]
+        incoming = [
+            AgentBinding(
+                agent_id="other",
+                match=AgentBindingMatch(channel="telegram"),
+            )
+        ]
         result = apply_agent_bindings(existing, incoming)
         assert len(result.conflicts) == 1
 
     def test_upgrade_to_account_scoped(self) -> None:
-        existing = [AgentBinding(
-            agent_id="main",
-            match=AgentBindingMatch(channel="discord"),
-        )]
-        incoming = [AgentBinding(
-            agent_id="main",
-            match=AgentBindingMatch(channel="discord", account_id="123"),
-        )]
+        existing = [
+            AgentBinding(
+                agent_id="main",
+                match=AgentBindingMatch(channel="discord"),
+            )
+        ]
+        incoming = [
+            AgentBinding(
+                agent_id="main",
+                match=AgentBindingMatch(channel="discord", account_id="123"),
+            )
+        ]
         result = apply_agent_bindings(existing, incoming)
         assert len(result.updated) == 1
         assert result.updated[0].match.account_id == "123"
@@ -97,6 +109,7 @@ class TestApplyBindings:
 # ---------------------------------------------------------------------------
 # Remove bindings
 # ---------------------------------------------------------------------------
+
 
 class TestRemoveBindings:
     def test_remove_by_spec(self) -> None:
@@ -115,9 +128,7 @@ class TestRemoveBindings:
             AgentBinding(agent_id="main", match=AgentBindingMatch(channel="telegram")),
             AgentBinding(agent_id="other", match=AgentBindingMatch(channel="discord")),
         ]
-        remaining, removed = remove_agent_bindings(
-            existing, [], agent_id="main", remove_all=True
-        )
+        remaining, removed = remove_agent_bindings(existing, [], agent_id="main", remove_all=True)
         assert len(remaining) == 1
         assert remaining[0].agent_id == "other"
         assert len(removed) == 1
@@ -126,6 +137,7 @@ class TestRemoveBindings:
 # ---------------------------------------------------------------------------
 # Route resolution (7-tier)
 # ---------------------------------------------------------------------------
+
 
 class TestResolveAgentRoute:
     def test_channel_only(self) -> None:
@@ -150,9 +162,7 @@ class TestResolveAgentRoute:
                 ),
             ),
         ]
-        result = resolve_agent_route(
-            bindings, "discord", peer_kind="direct", peer_id="user123"
-        )
+        result = resolve_agent_route(bindings, "discord", peer_kind="direct", peer_id="user123")
         assert result is not None
         assert result.agent_id == "specific"
 
@@ -184,6 +194,7 @@ class TestResolveAgentRoute:
 # ---------------------------------------------------------------------------
 # Serialization
 # ---------------------------------------------------------------------------
+
 
 class TestBindingSerialization:
     def test_roundtrip(self) -> None:

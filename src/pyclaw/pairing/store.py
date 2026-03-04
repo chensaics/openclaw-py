@@ -10,7 +10,7 @@ import json
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from pyclaw.config.paths import resolve_credentials_dir
@@ -116,7 +116,7 @@ def upsert_pairing_request(
 
     # Enforce max pending
     if len(requests) >= MAX_PENDING:
-        requests = requests[-(MAX_PENDING - 1):]
+        requests = requests[-(MAX_PENDING - 1) :]
 
     req = PairingRequest(
         sender_id=sender_id,
@@ -198,12 +198,14 @@ def add_allow_from_entry(
     if any(e.sender_id == sender_id for e in entries):
         return
 
-    entries.append(AllowFromEntry(
-        sender_id=sender_id,
-        added_at=time.time(),
-        display_name=display_name,
-        paired_via=paired_via,
-    ))
+    entries.append(
+        AllowFromEntry(
+            sender_id=sender_id,
+            added_at=time.time(),
+            display_name=display_name,
+            paired_via=paired_via,
+        )
+    )
 
     path = _allow_from_path(channel, creds_dir)
     path.parent.mkdir(parents=True, exist_ok=True)

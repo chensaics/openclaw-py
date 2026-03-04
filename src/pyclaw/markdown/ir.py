@@ -8,7 +8,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 
 class MarkdownStyle(str, Enum):
@@ -146,9 +145,14 @@ def markdown_to_ir(
         if idx >= 0:
             block_text = f"```{lang}\n{content}```"
             ir.text = ir.text.replace(ph, block_text, 1)
-            styles.append(StyleSpan(
-                MarkdownStyle.CODE_BLOCK, idx, idx + len(block_text), language=lang,
-            ))
+            styles.append(
+                StyleSpan(
+                    MarkdownStyle.CODE_BLOCK,
+                    idx,
+                    idx + len(block_text),
+                    language=lang,
+                )
+            )
 
     ir.styles = sorted(styles, key=lambda s: s.start)
     ir.links = sorted(links, key=lambda l: l.start)
@@ -179,9 +183,7 @@ def chunk_markdown_ir(ir: MarkdownIR, max_chars: int = 4096) -> list[MarkdownIR]
             if s.start < end and s.end > pos
         ]
         chunk_links = [
-            LinkSpan(l.start - pos, l.end - pos, l.url, l.title)
-            for l in ir.links
-            if l.start < end and l.end > pos
+            LinkSpan(l.start - pos, l.end - pos, l.url, l.title) for l in ir.links if l.start < end and l.end > pos
         ]
         chunks.append(MarkdownIR(text=chunk_text, styles=chunk_styles, links=chunk_links))
         pos = end

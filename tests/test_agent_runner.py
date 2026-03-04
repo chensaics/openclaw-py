@@ -1,14 +1,14 @@
 """Tests for the agent runner core loop."""
 
 import asyncio
-from unittest.mock import AsyncMock, patch
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
 from pyclaw.agents.runner import run_agent
 from pyclaw.agents.session import SessionManager
-from pyclaw.agents.types import AgentEvent, AgentTool, ModelConfig, ToolResult
+from pyclaw.agents.types import AgentEvent, ModelConfig, ToolResult
 
 
 class MockTool:
@@ -65,9 +65,7 @@ async def test_agent_simple_response():
         )
 
     with patch("pyclaw.agents.runner.stream_llm", side_effect=mock_stream):
-        events = await _collect_events(
-            run_agent("Hi", session=session, model=model)
-        )
+        events = await _collect_events(run_agent("Hi", session=session, model=model))
 
     types = [e.type for e in events]
     assert types[0] == "agent_start"
@@ -165,9 +163,7 @@ async def test_agent_unknown_tool():
             )
 
     with patch("pyclaw.agents.runner.stream_llm", side_effect=mock_stream):
-        events = await _collect_events(
-            run_agent("Do something", session=session, model=model)
-        )
+        events = await _collect_events(run_agent("Do something", session=session, model=model))
 
     tool_end_events = [e for e in events if e.type == "tool_end"]
     assert len(tool_end_events) == 1
@@ -186,9 +182,7 @@ async def test_agent_abort():
         yield AgentEvent(type="_completion", result={"text": "hi", "tool_calls": []})
 
     with patch("pyclaw.agents.runner.stream_llm", side_effect=mock_stream):
-        events = await _collect_events(
-            run_agent("Hi", session=session, model=model, abort_event=abort)
-        )
+        events = await _collect_events(run_agent("Hi", session=session, model=model, abort_event=abort))
 
     types = [e.type for e in events]
     assert "error" in types

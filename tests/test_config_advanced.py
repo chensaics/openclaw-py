@@ -9,6 +9,12 @@ import time
 
 import pytest
 
+from pyclaw.config.backup import (
+    BackupConfig,
+    atomic_write,
+    create_backup,
+    list_backups,
+)
 from pyclaw.config.env_substitution import (
     MissingEnvVarError,
     list_env_refs,
@@ -18,22 +24,8 @@ from pyclaw.config.env_substitution import (
 )
 from pyclaw.config.includes import (
     CircularIncludeError,
-    IncludeResult,
-    MaxDepthError,
     resolve_include_path,
     resolve_includes,
-)
-from pyclaw.config.backup import (
-    BackupConfig,
-    atomic_write,
-    create_backup,
-    list_backups,
-)
-from pyclaw.config.session_store import (
-    DeliveryInfo,
-    SessionMetadata,
-    SessionStore,
-    StoreConfig,
 )
 from pyclaw.config.runtime_overrides import (
     ChannelCapabilityOverride,
@@ -43,9 +35,15 @@ from pyclaw.config.runtime_overrides import (
     create_config_snapshot,
     redact_config,
 )
-
+from pyclaw.config.session_store import (
+    DeliveryInfo,
+    SessionMetadata,
+    SessionStore,
+    StoreConfig,
+)
 
 # ===== Environment Variable Substitution =====
+
 
 class TestEnvSubstitution:
     def test_simple_substitution(self) -> None:
@@ -99,6 +97,7 @@ class TestEnvSubstitution:
 
 
 # ===== Config Includes =====
+
 
 class TestConfigIncludes:
     def test_resolve_path_relative(self) -> None:
@@ -171,6 +170,7 @@ class TestConfigIncludes:
 
 # ===== Backup Rotation =====
 
+
 class TestBackup:
     def test_create_backup(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -241,6 +241,7 @@ class TestBackup:
 
 # ===== Session Store =====
 
+
 class TestSessionStore:
     def _make_store(self, tmpdir: str) -> SessionStore:
         return SessionStore(StoreConfig(base_dir=tmpdir))
@@ -292,9 +293,14 @@ class TestSessionStore:
         with tempfile.TemporaryDirectory() as tmpdir:
             store = self._make_store(tmpdir)
             store.create_session(SessionMetadata(session_id="s1"))
-            store.record_delivery("s1", DeliveryInfo(
-                message_id="m1", channel_id="telegram", chat_id="123",
-            ))
+            store.record_delivery(
+                "s1",
+                DeliveryInfo(
+                    message_id="m1",
+                    channel_id="telegram",
+                    chat_id="123",
+                ),
+            )
 
     def test_list_sessions(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -323,6 +329,7 @@ class TestSessionStore:
 
 # ===== Runtime Overrides =====
 
+
 class TestRuntimeOverrides:
     def test_group_policy(self) -> None:
         overrides = RuntimeOverrides()
@@ -339,11 +346,13 @@ class TestRuntimeOverrides:
 
     def test_channel_override(self) -> None:
         overrides = RuntimeOverrides()
-        overrides.set_channel_override(ChannelCapabilityOverride(
-            channel_id="ch1",
-            streaming_enabled=False,
-            max_message_length=2000,
-        ))
+        overrides.set_channel_override(
+            ChannelCapabilityOverride(
+                channel_id="ch1",
+                streaming_enabled=False,
+                max_message_length=2000,
+            )
+        )
         ov = overrides.get_channel_override("ch1")
         assert ov is not None
         assert ov.streaming_enabled is False
@@ -351,11 +360,13 @@ class TestRuntimeOverrides:
     def test_plugin_auto_enable(self) -> None:
         overrides = RuntimeOverrides()
         overrides.add_plugin_rule(PluginAutoEnable(plugin_name="memory", condition="always"))
-        overrides.add_plugin_rule(PluginAutoEnable(
-            plugin_name="telegram-ext",
-            condition="if_channel",
-            channel_types=["telegram"],
-        ))
+        overrides.add_plugin_rule(
+            PluginAutoEnable(
+                plugin_name="telegram-ext",
+                condition="if_channel",
+                channel_types=["telegram"],
+            )
+        )
         plugins = overrides.get_auto_enable_plugins()
         assert "memory" in plugins
 

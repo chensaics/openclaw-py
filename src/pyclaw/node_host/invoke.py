@@ -10,7 +10,6 @@ import asyncio
 import logging
 import os
 import shutil
-import subprocess
 from dataclasses import dataclass
 from typing import Any
 
@@ -103,12 +102,13 @@ async def _handle_system_run(request: InvokeRequest, params: dict[str, Any]) -> 
                 "stderr": stderr.decode("utf-8", errors="replace")[:10_000],
             },
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return InvokeResult(id=request.id, success=False, error="Timeout")
 
 
 def _handle_exec_approvals_get(request: InvokeRequest) -> InvokeResult:
-    from pyclaw.infra.exec_approvals import load_exec_approvals, _serialize_agent_config
+    from pyclaw.infra.exec_approvals import _serialize_agent_config, load_exec_approvals
+
     approvals = load_exec_approvals()
     data: dict[str, Any] = {"version": approvals.version}
     if approvals.defaults:
@@ -118,7 +118,11 @@ def _handle_exec_approvals_get(request: InvokeRequest) -> InvokeResult:
 
 
 def _handle_exec_approvals_set(request: InvokeRequest, params: dict[str, Any]) -> InvokeResult:
-    from pyclaw.infra.exec_approvals import load_exec_approvals, save_exec_approvals, _parse_approvals
+    from pyclaw.infra.exec_approvals import (
+        _parse_approvals,
+        save_exec_approvals,
+    )
+
     approvals = _parse_approvals(params)
     save_exec_approvals(approvals)
     return InvokeResult(id=request.id, result={"ok": True})

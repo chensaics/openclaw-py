@@ -6,7 +6,6 @@ import logging
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import cast
 
 logger = logging.getLogger(__name__)
 
@@ -141,9 +140,7 @@ def install_skill(
                 message=f"Skill '{name}' already installed",
             )
         )
-        raise FileExistsError(
-            f"Skill '{name}' already installed at {skill_file}. Use --force to overwrite."
-        )
+        raise FileExistsError(f"Skill '{name}' already installed at {skill_file}. Use --force to overwrite.")
 
     skills_dir.mkdir(parents=True, exist_ok=True)
     skill_file.write_text(content, encoding="utf-8")

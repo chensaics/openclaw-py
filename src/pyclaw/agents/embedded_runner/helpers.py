@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
+from datetime import UTC
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -25,9 +26,11 @@ logger = logging.getLogger(__name__)
 # Error Mapping
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MappedError:
     """A user-friendly error derived from a provider error."""
+
     code: str
     message: str
     retryable: bool = False
@@ -38,12 +41,37 @@ class MappedError:
 # Common error patterns across providers
 ERROR_PATTERNS: list[tuple[re.Pattern[str], str, str, bool]] = [
     (re.compile(r"rate.?limit", re.I), "rate_limit", "Rate limit exceeded. Please wait before retrying.", True),
-    (re.compile(r"context.?length|too.?long|maximum.?context", re.I), "context_overflow", "Message too long for this model's context window.", False),
-    (re.compile(r"invalid.?api.?key|auth|unauthorized|401", re.I), "auth_error", "Authentication failed. Please check your API key.", False),
-    (re.compile(r"model.?not.?found|does.?not.?exist", re.I), "model_not_found", "Model not found. Please check the model name.", False),
+    (
+        re.compile(r"context.?length|too.?long|maximum.?context", re.I),
+        "context_overflow",
+        "Message too long for this model's context window.",
+        False,
+    ),
+    (
+        re.compile(r"invalid.?api.?key|auth|unauthorized|401", re.I),
+        "auth_error",
+        "Authentication failed. Please check your API key.",
+        False,
+    ),
+    (
+        re.compile(r"model.?not.?found|does.?not.?exist", re.I),
+        "model_not_found",
+        "Model not found. Please check the model name.",
+        False,
+    ),
     (re.compile(r"timeout|timed.?out|deadline", re.I), "timeout", "Request timed out. Please try again.", True),
-    (re.compile(r"server.?error|500|502|503", re.I), "server_error", "Provider server error. Please try again later.", True),
-    (re.compile(r"content.?filter|safety|blocked|refused", re.I), "content_filtered", "Content was filtered by the provider's safety system.", False),
+    (
+        re.compile(r"server.?error|500|502|503", re.I),
+        "server_error",
+        "Provider server error. Please try again later.",
+        True,
+    ),
+    (
+        re.compile(r"content.?filter|safety|blocked|refused", re.I),
+        "content_filtered",
+        "Content was filtered by the provider's safety system.",
+        False,
+    ),
     (re.compile(r"quota|billing|insufficient", re.I), "quota_exceeded", "API quota or billing limit reached.", False),
     (re.compile(r"overloaded|capacity", re.I), "overloaded", "Provider is overloaded. Please try again later.", True),
 ]
@@ -54,19 +82,26 @@ def map_provider_error(error_text: str, *, provider: str = "") -> MappedError:
     for pattern, code, message, retryable in ERROR_PATTERNS:
         if pattern.search(error_text):
             return MappedError(
-                code=code, message=message, retryable=retryable,
-                provider=provider, original=error_text,
+                code=code,
+                message=message,
+                retryable=retryable,
+                provider=provider,
+                original=error_text,
             )
 
     return MappedError(
-        code="unknown", message=f"An error occurred: {error_text[:200]}",
-        retryable=False, provider=provider, original=error_text,
+        code="unknown",
+        message=f"An error occurred: {error_text[:200]}",
+        retryable=False,
+        provider=provider,
+        original=error_text,
     )
 
 
 # ---------------------------------------------------------------------------
 # Turn Building
 # ---------------------------------------------------------------------------
+
 
 def build_openai_turns(
     messages: list[dict[str, Any]],
@@ -153,6 +188,7 @@ def _convert_image_for_google(block: dict[str, Any]) -> dict[str, Any]:
 # Message Deduplication
 # ---------------------------------------------------------------------------
 
+
 def deduplicate_messages(
     messages: list[dict[str, Any]],
     *,
@@ -187,9 +223,11 @@ def deduplicate_messages(
 # Bootstrap Loading
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BootstrapConfig:
     """Configuration for system prompt bootstrapping."""
+
     include_datetime: bool = True
     include_model_info: bool = True
     include_tool_hints: bool = True
@@ -207,8 +245,9 @@ def build_bootstrap(
     parts = [base_prompt]
 
     if config.include_datetime:
-        from datetime import datetime, timezone
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        from datetime import datetime
+
+        now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         parts.append(f"\nCurrent date: {now}")
 
     if config.include_model_info and model:
@@ -227,6 +266,7 @@ def build_bootstrap(
 # ---------------------------------------------------------------------------
 # Google Schema Cleaning
 # ---------------------------------------------------------------------------
+
 
 def clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
     """Clean a JSON Schema to be compatible with Gemini's requirements.
@@ -248,10 +288,7 @@ def clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, dict):
             cleaned[key] = clean_schema_for_gemini(value)
         elif isinstance(value, list):
-            cleaned[key] = [
-                clean_schema_for_gemini(v) if isinstance(v, dict) else v
-                for v in value
-            ]
+            cleaned[key] = [clean_schema_for_gemini(v) if isinstance(v, dict) else v for v in value]
         else:
             cleaned[key] = value
 

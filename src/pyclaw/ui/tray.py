@@ -8,10 +8,10 @@ Provides quick actions: new chat, toggle theme, mute notifications.
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pyclaw.ui.i18n import t
-
 
 _notifications_muted = False
 
@@ -38,12 +38,17 @@ def create_tray_icon(
         _notifications_muted = not _notifications_muted
 
     def _mute_label(item: Any) -> str:
-        return t("tray.unmute", default="Unmute Notifications") if _notifications_muted else t("tray.mute", default="Mute Notifications")
+        return (
+            t("tray.unmute", default="Unmute Notifications")
+            if _notifications_muted
+            else t("tray.mute", default="Mute Notifications")
+        )
 
     def _mute_checked(item: Any) -> bool:
         return _notifications_muted
 
-    _noop: Callable[..., None] = lambda *a: None
+    def _noop(*a) -> None:
+        return None
 
     menu = pystray.Menu(
         pystray.MenuItem(t("tray.open"), on_open or _noop, default=True),

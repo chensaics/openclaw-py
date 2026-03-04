@@ -6,9 +6,8 @@ Selects launchd (macOS), systemd (Linux), or schtasks (Windows).
 from __future__ import annotations
 
 import platform
-import sys
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Protocol
 
 
 @dataclass
@@ -42,12 +41,15 @@ def resolve_gateway_service() -> GatewayService:
     system = platform.system()
     if system == "Darwin":
         from pyclaw.daemon.launchd import LaunchdService
+
         return LaunchdService()
     elif system == "Linux":
         from pyclaw.daemon.systemd import SystemdService
+
         return SystemdService()
     elif system == "Windows":
         from pyclaw.daemon.schtasks import SchtasksService
+
         return SchtasksService()
     else:
         raise RuntimeError(f"Unsupported platform: {system}")

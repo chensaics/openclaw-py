@@ -68,9 +68,7 @@ async def _fetch_openai_usage(api_key: str) -> ProviderUsageSnapshot:
                 data = resp.json()
                 buckets = data.get("data", [])
                 total_tokens = sum(
-                    r.get("input_tokens", 0) + r.get("output_tokens", 0)
-                    for b in buckets
-                    for r in b.get("results", [])
+                    r.get("input_tokens", 0) + r.get("output_tokens", 0) for b in buckets for r in b.get("results", [])
                 )
                 return ProviderUsageSnapshot(
                     provider_id="openai",
@@ -142,11 +140,7 @@ async def _fetch_anthropic_usage(api_key: str) -> ProviderUsageSnapshot:
                     display_name="Anthropic",
                     windows=[UsageWindow(label="Key status", used="valid")],
                 )
-            body = (
-                resp.json()
-                if resp.headers.get("content-type", "").startswith("application/json")
-                else {}
-            )
+            body = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
             err_msg = body.get("error", {}).get("message", f"HTTP {resp.status_code}")
             return ProviderUsageSnapshot(
                 provider_id="anthropic",

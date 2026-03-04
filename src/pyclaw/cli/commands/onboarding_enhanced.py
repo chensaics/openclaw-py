@@ -42,6 +42,7 @@ class OnboardingStep(str, Enum):
 @dataclass
 class OnboardingState:
     """Persistent state for an onboarding session."""
+
     mode: OnboardingMode = OnboardingMode.INTERACTIVE
     current_step: OnboardingStep = OnboardingStep.RISK_ACK
     completed_steps: list[str] = field(default_factory=list)
@@ -67,6 +68,7 @@ class OnboardingState:
 @dataclass
 class StepResult:
     """Result from executing a single onboarding step."""
+
     step: OnboardingStep
     success: bool
     message: str = ""
@@ -77,6 +79,7 @@ class StepResult:
 # ---------------------------------------------------------------------------
 # Step Handlers
 # ---------------------------------------------------------------------------
+
 
 def handle_risk_ack(state: OnboardingState, *, acknowledged: bool = False) -> StepResult:
     """Handle risk acknowledgment step."""
@@ -123,6 +126,7 @@ def handle_auth_select(
     """Handle provider auth selection step."""
     if not provider:
         from pyclaw.cli.commands.auth_providers import list_available_providers
+
         providers = list_available_providers()
         return StepResult(
             step=OnboardingStep.AUTH_SELECT,
@@ -148,6 +152,7 @@ def handle_provider_auth(
     """Handle provider authentication step."""
     if not api_key:
         from pyclaw.cli.commands.auth_providers import get_provider_auth_info
+
         info = get_provider_auth_info(state.selected_provider)
         return StepResult(
             step=OnboardingStep.PROVIDER_AUTH,
@@ -157,6 +162,7 @@ def handle_provider_auth(
         )
 
     from pyclaw.cli.commands.auth_providers import apply_api_key_auth
+
     result = apply_api_key_auth(state.selected_provider, api_key)
     if not result.success:
         return StepResult(
@@ -221,6 +227,7 @@ def handle_finalize(state: OnboardingState) -> StepResult:
 # ---------------------------------------------------------------------------
 # Non-Interactive Flow
 # ---------------------------------------------------------------------------
+
 
 def run_non_interactive(
     *,

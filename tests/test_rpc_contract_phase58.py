@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DOCS_DIR = PROJECT_ROOT / "docs"
 REF_DIR = DOCS_DIR / "reference"
@@ -29,6 +28,7 @@ def _progress() -> str:
 # 1. All documented RPC methods are registered in Gateway handler return dicts
 #    (source-code-based check to avoid full dependency installation)
 # ---------------------------------------------------------------------------
+
 
 def _collect_registered_method_keys_from_source() -> set[str]:
     """Parse handler factory source files for returned dict keys."""
@@ -48,36 +48,72 @@ class TestRegisteredMethods:
     def registered(self) -> set[str]:
         return _collect_registered_method_keys_from_source()
 
-    @pytest.mark.parametrize("method", [
-        "chat.send", "chat.abort", "chat.history", "chat.edit", "chat.resend",
-    ])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "chat.send",
+            "chat.abort",
+            "chat.history",
+            "chat.edit",
+            "chat.resend",
+        ],
+    )
     def test_chat_methods(self, registered: set[str], method: str) -> None:
         assert method in registered, f"{method} not found in handler sources"
 
-    @pytest.mark.parametrize("method", [
-        "browser.status", "browser.start", "browser.stop", "browser.tabs",
-        "browser.open", "browser.navigate", "browser.click", "browser.type",
-        "browser.screenshot", "browser.snapshot", "browser.evaluate",
-        "browser.profiles", "browser.createProfile", "browser.deleteProfile",
-        "browser.focus", "browser.close",
-    ])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "browser.status",
+            "browser.start",
+            "browser.stop",
+            "browser.tabs",
+            "browser.open",
+            "browser.navigate",
+            "browser.click",
+            "browser.type",
+            "browser.screenshot",
+            "browser.snapshot",
+            "browser.evaluate",
+            "browser.profiles",
+            "browser.createProfile",
+            "browser.deleteProfile",
+            "browser.focus",
+            "browser.close",
+        ],
+    )
     def test_browser_methods(self, registered: set[str], method: str) -> None:
         assert method in registered, f"{method} not found in handler sources"
 
-    @pytest.mark.parametrize("method", [
-        "system.info", "system.logs", "system.event",
-        "system.heartbeat.last", "system.presence",
-    ])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "system.info",
+            "system.logs",
+            "system.event",
+            "system.heartbeat.last",
+            "system.presence",
+        ],
+    )
     def test_system_methods(self, registered: set[str], method: str) -> None:
         assert method in registered, f"{method} not found in handler sources"
 
-    @pytest.mark.parametrize("method", [
-        "usage.get", "doctor.run", "skills.list",
-        "tts.speak", "tts.voices",
-        "wizard.start", "wizard.step",
-        "push.send", "voicewake.status",
-        "update.check", "web.status",
-    ])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "usage.get",
+            "doctor.run",
+            "skills.list",
+            "tts.speak",
+            "tts.voices",
+            "wizard.start",
+            "wizard.step",
+            "push.send",
+            "voicewake.status",
+            "update.check",
+            "web.status",
+        ],
+    )
     def test_extended_methods(self, registered: set[str], method: str) -> None:
         assert method in registered, f"{method} not found in handler sources"
 
@@ -88,6 +124,7 @@ class TestRegisteredMethods:
 # ---------------------------------------------------------------------------
 # 2. Chat advanced integration
 # ---------------------------------------------------------------------------
+
 
 class TestChatAdvancedIntegration:
     """Verify chat.py imports and uses chat_advanced utilities."""
@@ -113,6 +150,7 @@ class TestChatAdvancedIntegration:
 # 3. Browser methods are real (not simulated)
 # ---------------------------------------------------------------------------
 
+
 class TestBrowserRealExecution:
     """Verify browser_methods.py uses Playwright, not in-memory simulation."""
 
@@ -137,6 +175,7 @@ class TestBrowserRealExecution:
 # 4. Extended methods do NOT have fake-success placeholders
 # ---------------------------------------------------------------------------
 
+
 class TestExtendedNoFakePlaceholders:
     """Verify that previously-placeholder methods now return NOT_IMPLEMENTED or real data."""
 
@@ -158,6 +197,7 @@ class TestExtendedNoFakePlaceholders:
 # 5. System RPC methods exist (not just local fallback)
 # ---------------------------------------------------------------------------
 
+
 class TestSystemRPCExist:
     """Verify system.* RPC handlers are in extended.py."""
 
@@ -178,6 +218,7 @@ class TestSystemRPCExist:
 # 6. CLI fallback shows explicit warning
 # ---------------------------------------------------------------------------
 
+
 class TestCLIFallbackWarning:
     """Verify CLI system/logs commands warn on fallback."""
 
@@ -194,13 +235,14 @@ class TestCLIFallbackWarning:
 # 7. Documentation consistency
 # ---------------------------------------------------------------------------
 
-class TestDocumentationConsistency:
 
+class TestDocumentationConsistency:
     def test_progress_marks_phase54_to_58(self) -> None:
         progress = _progress()
         for phase in ("54", "55", "56", "57", "58"):
-            assert re.search(rf"\| Phase {phase}: .+\| \*\*已完成\*\* \|", progress), \
+            assert re.search(rf"\| Phase {phase}: .+\| \*\*已完成\*\* \|", progress), (
                 f"Phase {phase} not marked as completed in PROGRESS.md"
+            )
 
     def test_api_ref_has_chat_edit_resend(self) -> None:
         api = _api_ref()

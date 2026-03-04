@@ -15,9 +15,10 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class MessageFormat(str, Enum):
 @dataclass
 class SenderIdentity:
     """Identity of the message sender (bot/agent)."""
+
     name: str = ""
     avatar_url: str = ""
     agent_id: str = ""
@@ -40,6 +42,7 @@ class SenderIdentity:
 @dataclass
 class MessageEnvelope:
     """Envelope wrapping a message for delivery."""
+
     conversation_id: str
     text: str
     format: MessageFormat = MessageFormat.MARKDOWN
@@ -57,6 +60,7 @@ class MessageEnvelope:
 @dataclass
 class SendResult:
     """Result of sending a message."""
+
     success: bool
     message_id: str = ""
     channel_id: str = ""

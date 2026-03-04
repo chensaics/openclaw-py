@@ -38,9 +38,7 @@ def build_agents_panel(
     detail_column = ft.Column(expand=True, spacing=8)
     name_field = ft.TextField(label=t("agents.name", default="Agent Name"), dense=True)
     model_field = ft.TextField(label=t("agents.model", default="Model"), dense=True, value=DEFAULT_MODEL)
-    provider_field = ft.TextField(
-        label=t("agents.provider", default="Provider"), dense=True, value=DEFAULT_PROVIDER
-    )
+    provider_field = ft.TextField(label=t("agents.provider", default="Provider"), dense=True, value=DEFAULT_PROVIDER)
     system_prompt_field = ft.TextField(
         label=t("agents.system_prompt", default="System Prompt"),
         multiline=True,
@@ -179,9 +177,7 @@ def build_agents_panel(
         on_click=_handle_create,
     )
 
-    refresh_btn = ft.IconButton(
-        icon=ft.Icons.REFRESH, tooltip="Refresh", on_click=lambda e: _refresh_list()
-    )
+    refresh_btn = ft.IconButton(icon=ft.Icons.REFRESH, tooltip="Refresh", on_click=lambda e: _refresh_list())
 
     panel = ft.Column(
         controls=[

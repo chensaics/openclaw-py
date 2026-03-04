@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from pyclaw.pairing.store import PairingRequest, upsert_pairing_request
 
@@ -40,6 +40,7 @@ async def issue_pairing_challenge(
     if send_reply:
         reply_text = build_pairing_reply(request.code)
         import asyncio
+
         result = send_reply(sender_id, reply_text)
         if asyncio.iscoroutine(result):
             await result

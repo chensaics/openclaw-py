@@ -175,10 +175,7 @@ def _build_tooling_section(tool_names: list[str] | None) -> str:
         lines.append(f"- {name}: {summary}")
 
     lines.append("")
-    lines.append(
-        "TOOLS.md does not control tool availability; "
-        "it is user guidance for how to use external tools."
-    )
+    lines.append("TOOLS.md does not control tool availability; it is user guidance for how to use external tools.")
     return "\n".join(lines)
 
 
@@ -208,9 +205,7 @@ def _build_workspace_section(
     if workspace_dir:
         lines.append(f"Working directory: {workspace_dir}")
         if sandbox_enabled:
-            lines.append(
-                "Exec commands run in a sandbox container. Prefer relative paths for consistency."
-            )
+            lines.append("Exec commands run in a sandbox container. Prefer relative paths for consistency.")
         else:
             lines.append(
                 "Treat this directory as the single global workspace "

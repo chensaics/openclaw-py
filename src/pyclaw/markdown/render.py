@@ -5,10 +5,10 @@ Ported from ``src/markdown/render.ts``.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
 
-from pyclaw.markdown.ir import LinkSpan, MarkdownIR, MarkdownStyle, StyleSpan
+from pyclaw.markdown.ir import MarkdownIR, MarkdownStyle
 
 
 @dataclass
@@ -56,7 +56,7 @@ def render_markdown_with_markers(
 
     for l in ir.links:
         if opts.build_link:
-            link_text = ir.text[l.start:l.end]
+            link_text = ir.text[l.start : l.end]
             rendered = opts.build_link(link_text, l.url, l.title)
             events.append((l.start, "link_open", rendered))
             events.append((l.end, "link_close", ""))
@@ -73,9 +73,7 @@ def render_markdown_with_markers(
             if opts.escape_text:
                 segment = opts.escape_text(segment)
             result.append(segment)
-        if kind == "link_open":
-            result.append(text_marker)
-        elif kind != "link_close":
+        if kind == "link_open" or kind != "link_close":
             result.append(text_marker)
         last_pos = pos
 

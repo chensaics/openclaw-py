@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ class AuthMethod(str, Enum):
 @dataclass
 class ProviderAuthSpec:
     """Specification for a provider's authentication."""
+
     provider_id: str
     display_name: str
     auth_method: AuthMethod
@@ -52,6 +53,7 @@ class ProviderAuthSpec:
 @dataclass
 class AuthCredential:
     """Stored credential for a provider."""
+
     provider_id: str
     auth_method: AuthMethod
     api_key: str = ""
@@ -99,6 +101,7 @@ class AuthCredential:
 @dataclass
 class AuthResult:
     """Result of an authentication attempt."""
+
     success: bool
     credential: AuthCredential | None = None
     error: str = ""
@@ -111,139 +114,193 @@ class AuthResult:
 
 PROVIDER_SPECS: dict[str, ProviderAuthSpec] = {
     "openai": ProviderAuthSpec(
-        provider_id="openai", display_name="OpenAI",
-        auth_method=AuthMethod.API_KEY, env_var="OPENAI_API_KEY",
-        api_key_prefix="sk-", api_key_url="https://platform.openai.com/api-keys",
+        provider_id="openai",
+        display_name="OpenAI",
+        auth_method=AuthMethod.API_KEY,
+        env_var="OPENAI_API_KEY",
+        api_key_prefix="sk-",
+        api_key_url="https://platform.openai.com/api-keys",
     ),
     "anthropic": ProviderAuthSpec(
-        provider_id="anthropic", display_name="Anthropic",
-        auth_method=AuthMethod.API_KEY, env_var="ANTHROPIC_API_KEY",
-        api_key_prefix="sk-ant-", api_key_url="https://console.anthropic.com/settings/keys",
+        provider_id="anthropic",
+        display_name="Anthropic",
+        auth_method=AuthMethod.API_KEY,
+        env_var="ANTHROPIC_API_KEY",
+        api_key_prefix="sk-ant-",
+        api_key_url="https://console.anthropic.com/settings/keys",
     ),
     "google": ProviderAuthSpec(
-        provider_id="google", display_name="Google Gemini",
-        auth_method=AuthMethod.API_KEY, env_var="GOOGLE_GENERATIVE_AI_API_KEY",
+        provider_id="google",
+        display_name="Google Gemini",
+        auth_method=AuthMethod.API_KEY,
+        env_var="GOOGLE_GENERATIVE_AI_API_KEY",
         api_key_url="https://aistudio.google.com/app/apikey",
     ),
     "moonshot": ProviderAuthSpec(
-        provider_id="moonshot", display_name="Moonshot / Kimi",
-        auth_method=AuthMethod.API_KEY, env_var="MOONSHOT_API_KEY",
+        provider_id="moonshot",
+        display_name="Moonshot / Kimi",
+        auth_method=AuthMethod.API_KEY,
+        env_var="MOONSHOT_API_KEY",
         api_key_url="https://platform.moonshot.cn/console/api-keys",
     ),
     "volcengine": ProviderAuthSpec(
-        provider_id="volcengine", display_name="Volcengine / Doubao",
-        auth_method=AuthMethod.API_KEY, env_var="VOLCENGINE_API_KEY",
+        provider_id="volcengine",
+        display_name="Volcengine / Doubao",
+        auth_method=AuthMethod.API_KEY,
+        env_var="VOLCENGINE_API_KEY",
         api_key_url="https://console.volcengine.com/ark",
     ),
     "deepseek": ProviderAuthSpec(
-        provider_id="deepseek", display_name="DeepSeek",
-        auth_method=AuthMethod.API_KEY, env_var="DEEPSEEK_API_KEY",
+        provider_id="deepseek",
+        display_name="DeepSeek",
+        auth_method=AuthMethod.API_KEY,
+        env_var="DEEPSEEK_API_KEY",
         api_key_url="https://platform.deepseek.com/api_keys",
     ),
     "qwen": ProviderAuthSpec(
-        provider_id="qwen", display_name="Qwen / Tongyi",
-        auth_method=AuthMethod.API_KEY, env_var="DASHSCOPE_API_KEY",
+        provider_id="qwen",
+        display_name="Qwen / Tongyi",
+        auth_method=AuthMethod.API_KEY,
+        env_var="DASHSCOPE_API_KEY",
         api_key_url="https://dashscope.console.aliyun.com/apiKey",
     ),
     "zhipu": ProviderAuthSpec(
-        provider_id="zhipu", display_name="Zhipu / GLM",
-        auth_method=AuthMethod.API_KEY, env_var="ZHIPU_API_KEY",
+        provider_id="zhipu",
+        display_name="Zhipu / GLM",
+        auth_method=AuthMethod.API_KEY,
+        env_var="ZHIPU_API_KEY",
         api_key_url="https://open.bigmodel.cn/usercenter/apikeys",
     ),
     "minimax": ProviderAuthSpec(
-        provider_id="minimax", display_name="MiniMax",
-        auth_method=AuthMethod.API_KEY, env_var="MINIMAX_API_KEY",
+        provider_id="minimax",
+        display_name="MiniMax",
+        auth_method=AuthMethod.API_KEY,
+        env_var="MINIMAX_API_KEY",
         api_key_url="https://platform.minimaxi.com/user-center/basic-information/interface-key",
     ),
     "xai": ProviderAuthSpec(
-        provider_id="xai", display_name="xAI / Grok",
-        auth_method=AuthMethod.API_KEY, env_var="XAI_API_KEY",
+        provider_id="xai",
+        display_name="xAI / Grok",
+        auth_method=AuthMethod.API_KEY,
+        env_var="XAI_API_KEY",
         api_key_url="https://console.x.ai",
     ),
     "openrouter": ProviderAuthSpec(
-        provider_id="openrouter", display_name="OpenRouter",
-        auth_method=AuthMethod.API_KEY, env_var="OPENROUTER_API_KEY",
-        api_key_prefix="sk-or-", api_key_url="https://openrouter.ai/keys",
+        provider_id="openrouter",
+        display_name="OpenRouter",
+        auth_method=AuthMethod.API_KEY,
+        env_var="OPENROUTER_API_KEY",
+        api_key_prefix="sk-or-",
+        api_key_url="https://openrouter.ai/keys",
     ),
     "together": ProviderAuthSpec(
-        provider_id="together", display_name="Together AI",
-        auth_method=AuthMethod.API_KEY, env_var="TOGETHER_API_KEY",
+        provider_id="together",
+        display_name="Together AI",
+        auth_method=AuthMethod.API_KEY,
+        env_var="TOGETHER_API_KEY",
         api_key_url="https://api.together.ai/settings/api-keys",
     ),
     "groq": ProviderAuthSpec(
-        provider_id="groq", display_name="Groq",
-        auth_method=AuthMethod.API_KEY, env_var="GROQ_API_KEY",
-        api_key_prefix="gsk_", api_key_url="https://console.groq.com/keys",
+        provider_id="groq",
+        display_name="Groq",
+        auth_method=AuthMethod.API_KEY,
+        env_var="GROQ_API_KEY",
+        api_key_prefix="gsk_",
+        api_key_url="https://console.groq.com/keys",
     ),
     "perplexity": ProviderAuthSpec(
-        provider_id="perplexity", display_name="Perplexity",
-        auth_method=AuthMethod.API_KEY, env_var="PERPLEXITY_API_KEY",
-        api_key_prefix="pplx-", api_key_url="https://www.perplexity.ai/settings/api",
+        provider_id="perplexity",
+        display_name="Perplexity",
+        auth_method=AuthMethod.API_KEY,
+        env_var="PERPLEXITY_API_KEY",
+        api_key_prefix="pplx-",
+        api_key_url="https://www.perplexity.ai/settings/api",
     ),
     "fireworks": ProviderAuthSpec(
-        provider_id="fireworks", display_name="Fireworks AI",
-        auth_method=AuthMethod.API_KEY, env_var="FIREWORKS_API_KEY",
+        provider_id="fireworks",
+        display_name="Fireworks AI",
+        auth_method=AuthMethod.API_KEY,
+        env_var="FIREWORKS_API_KEY",
         api_key_url="https://fireworks.ai/api-keys",
     ),
     "huggingface": ProviderAuthSpec(
-        provider_id="huggingface", display_name="HuggingFace",
-        auth_method=AuthMethod.API_KEY, env_var="HF_TOKEN",
-        api_key_prefix="hf_", api_key_url="https://huggingface.co/settings/tokens",
+        provider_id="huggingface",
+        display_name="HuggingFace",
+        auth_method=AuthMethod.API_KEY,
+        env_var="HF_TOKEN",
+        api_key_prefix="hf_",
+        api_key_url="https://huggingface.co/settings/tokens",
     ),
     "bedrock": ProviderAuthSpec(
-        provider_id="bedrock", display_name="Amazon Bedrock",
-        auth_method=AuthMethod.AWS_IAM, env_var="AWS_ACCESS_KEY_ID",
+        provider_id="bedrock",
+        display_name="Amazon Bedrock",
+        auth_method=AuthMethod.AWS_IAM,
+        env_var="AWS_ACCESS_KEY_ID",
         notes="Requires AWS IAM credentials (access key + secret + region)",
     ),
     "ollama": ProviderAuthSpec(
-        provider_id="ollama", display_name="Ollama (Local)",
+        provider_id="ollama",
+        display_name="Ollama (Local)",
         auth_method=AuthMethod.NONE,
         notes="No authentication needed; runs locally",
     ),
     "minimax-portal": ProviderAuthSpec(
-        provider_id="minimax-portal", display_name="MiniMax Portal",
+        provider_id="minimax-portal",
+        display_name="MiniMax Portal",
         auth_method=AuthMethod.OAUTH,
         oauth_authorize_url="https://api.minimax.chat/v1/oauth/authorize",
         oauth_token_url="https://api.minimax.chat/v1/oauth/token",
     ),
     "qwen-portal": ProviderAuthSpec(
-        provider_id="qwen-portal", display_name="Qwen Portal",
+        provider_id="qwen-portal",
+        display_name="Qwen Portal",
         auth_method=AuthMethod.OAUTH,
         oauth_authorize_url="https://account.aliyun.com/authorize",
         oauth_token_url="https://account.aliyun.com/token",
     ),
     "copilot": ProviderAuthSpec(
-        provider_id="copilot", display_name="GitHub Copilot",
+        provider_id="copilot",
+        display_name="GitHub Copilot",
         auth_method=AuthMethod.DEVICE_CODE,
         device_code_url="https://github.com/login/device/code",
     ),
     "nvidia": ProviderAuthSpec(
-        provider_id="nvidia", display_name="Nvidia NIM",
-        auth_method=AuthMethod.API_KEY, env_var="NVIDIA_API_KEY",
+        provider_id="nvidia",
+        display_name="Nvidia NIM",
+        auth_method=AuthMethod.API_KEY,
+        env_var="NVIDIA_API_KEY",
         api_key_url="https://build.nvidia.com",
     ),
     "qianfan": ProviderAuthSpec(
-        provider_id="qianfan", display_name="Baidu Qianfan",
-        auth_method=AuthMethod.API_KEY, env_var="QIANFAN_API_KEY",
+        provider_id="qianfan",
+        display_name="Baidu Qianfan",
+        auth_method=AuthMethod.API_KEY,
+        env_var="QIANFAN_API_KEY",
         api_key_url="https://console.bce.baidu.com/qianfan",
     ),
     "vllm": ProviderAuthSpec(
-        provider_id="vllm", display_name="vLLM",
+        provider_id="vllm",
+        display_name="vLLM",
         auth_method=AuthMethod.API_KEY,
         notes="Self-hosted vLLM instance",
     ),
     "litellm": ProviderAuthSpec(
-        provider_id="litellm", display_name="LiteLLM",
+        provider_id="litellm",
+        display_name="LiteLLM",
         auth_method=AuthMethod.API_KEY,
         notes="LiteLLM proxy",
     ),
     "byteplus": ProviderAuthSpec(
-        provider_id="byteplus", display_name="BytePlus",
-        auth_method=AuthMethod.API_KEY, env_var="BYTEPLUS_API_KEY",
+        provider_id="byteplus",
+        display_name="BytePlus",
+        auth_method=AuthMethod.API_KEY,
+        env_var="BYTEPLUS_API_KEY",
     ),
     "xiaomi": ProviderAuthSpec(
-        provider_id="xiaomi", display_name="Xiaomi AI",
-        auth_method=AuthMethod.API_KEY, env_var="XIAOMI_API_KEY",
+        provider_id="xiaomi",
+        display_name="Xiaomi AI",
+        auth_method=AuthMethod.API_KEY,
+        env_var="XIAOMI_API_KEY",
     ),
 }
 
@@ -251,6 +308,7 @@ PROVIDER_SPECS: dict[str, ProviderAuthSpec] = {
 # ---------------------------------------------------------------------------
 # Credential Storage
 # ---------------------------------------------------------------------------
+
 
 class CredentialStore:
     """Persist and retrieve provider credentials."""
@@ -290,15 +348,14 @@ class CredentialStore:
 # Auth Handlers
 # ---------------------------------------------------------------------------
 
+
 def validate_api_key(key: str, spec: ProviderAuthSpec) -> bool:
     """Basic validation of an API key against its spec."""
     if not key:
         return False
     if spec.api_key_prefix and not key.startswith(spec.api_key_prefix):
         return False
-    if len(key) < 8:
-        return False
-    return True
+    return not len(key) < 8
 
 
 def apply_api_key_auth(provider_id: str, api_key: str) -> AuthResult:

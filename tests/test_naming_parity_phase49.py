@@ -3,11 +3,7 @@
 from __future__ import annotations
 
 import importlib
-import json
-import textwrap
 from pathlib import Path
-from typing import Any
-from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
@@ -58,9 +54,7 @@ class TestAcpFileSecrets:
 
         from pyclaw.acp.server import _parse_cli_args, _read_file_secret
 
-        args = _parse_cli_args(
-            ["--auth-token", "inline-val", "--token-file", str(token_file)]
-        )
+        args = _parse_cli_args(["--auth-token", "inline-val", "--token-file", str(token_file)])
         # main() logic: if token_file is set, read from file
         token = args.auth_token
         if args.token_file:
@@ -90,9 +84,7 @@ class TestPyclawNamingConsistency:
             "pyclaw.cli.commands.secrets_cmd",
         ]
 
-    def test_no_openclaw_cli_references_in_docstrings(
-        self, cli_command_modules: list[str]
-    ) -> None:
+    def test_no_openclaw_cli_references_in_docstrings(self, cli_command_modules: list[str]) -> None:
         for mod_name in cli_command_modules:
             mod = importlib.import_module(mod_name)
             doc = getattr(mod, "__doc__", "") or ""
@@ -100,9 +92,7 @@ class TestPyclawNamingConsistency:
             for line in doc.splitlines():
                 line_lower = line.lower().strip()
                 if "``openclaw " in line_lower or "`openclaw " in line_lower:
-                    pytest.fail(
-                        f"Module {mod_name} docstring references 'openclaw' CLI: {line.strip()}"
-                    )
+                    pytest.fail(f"Module {mod_name} docstring references 'openclaw' CLI: {line.strip()}")
 
 
 # ---------------------------------------------------------------------------
@@ -123,9 +113,17 @@ class TestGatewaySubcommandParity:
         result = runner.invoke(app, ["browser", "--help"])
         assert result.exit_code == 0
         for cmd in (
-            "status", "tabs", "open", "navigate", "screenshot",
-            "evaluate", "profiles", "create-profile",
-            "delete-profile", "focus", "close",
+            "status",
+            "tabs",
+            "open",
+            "navigate",
+            "screenshot",
+            "evaluate",
+            "profiles",
+            "create-profile",
+            "delete-profile",
+            "focus",
+            "close",
         ):
             assert cmd in result.stdout, f"Missing browser subcommand: {cmd}"
 
@@ -137,7 +135,14 @@ class TestRootHelpRegression:
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
         for group in (
-            "gateway", "config", "auth", "message", "sessions",
-            "agents", "system", "browser", "security",
+            "gateway",
+            "config",
+            "auth",
+            "message",
+            "sessions",
+            "agents",
+            "system",
+            "browser",
+            "security",
         ):
             assert group in result.stdout, f"Missing top-level group: {group}"

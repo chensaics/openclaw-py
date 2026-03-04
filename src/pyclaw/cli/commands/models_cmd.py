@@ -13,19 +13,21 @@ Provides:
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-import json
-import os
 
 import typer
 
-from pyclaw.cli.commands.models_deep import format_auth_table
-from pyclaw.cli.commands.models_deep import format_models_table
-from pyclaw.cli.commands.models_deep import get_auth_overview
-from pyclaw.cli.commands.models_deep import probe_model
-from pyclaw.cli.commands.models_deep import scan_providers
+from pyclaw.cli.commands.models_deep import (
+    format_auth_table,
+    format_models_table,
+    get_auth_overview,
+    probe_model,
+    scan_providers,
+)
 from pyclaw.config.io import load_config
 from pyclaw.config.paths import resolve_config_path
 
@@ -42,6 +44,7 @@ class ModelCapability(str, Enum):
 @dataclass
 class ModelInfo:
     """Information about a specific model."""
+
     model_id: str
     display_name: str
     provider: str
@@ -56,6 +59,7 @@ class ModelInfo:
 @dataclass
 class ModelAlias:
     """A model alias mapping."""
+
     alias: str
     model_id: str
     provider: str = ""
@@ -64,6 +68,7 @@ class ModelAlias:
 @dataclass
 class FallbackChain:
     """A model fallback chain."""
+
     primary: str
     fallbacks: list[str] = field(default_factory=list)
 
@@ -71,6 +76,7 @@ class FallbackChain:
 @dataclass
 class ProviderStatus:
     """Auth and availability status for a provider."""
+
     provider_id: str
     display_name: str
     authenticated: bool = False
@@ -81,6 +87,7 @@ class ProviderStatus:
 # ---------------------------------------------------------------------------
 # Built-in Model Registry
 # ---------------------------------------------------------------------------
+
 
 def _build_builtin_models() -> list[ModelInfo]:
     """Generate BUILTIN_MODELS from the canonical ModelCatalog."""
@@ -94,14 +101,16 @@ def _build_builtin_models() -> list[ModelInfo]:
             caps.append(ModelCapability.VISION)
         if m.supports_thinking:
             caps.append(ModelCapability.CODE)
-        result.append(ModelInfo(
-            model_id=m.model_id,
-            display_name=m.display_name,
-            provider=m.provider,
-            capabilities=caps,
-            context_window=m.context_window,
-            max_output=m.max_tokens,
-        ))
+        result.append(
+            ModelInfo(
+                model_id=m.model_id,
+                display_name=m.display_name,
+                provider=m.provider,
+                capabilities=caps,
+                context_window=m.context_window,
+                max_output=m.max_tokens,
+            )
+        )
     return result
 
 

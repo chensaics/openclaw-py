@@ -12,12 +12,11 @@ Provides:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +35,7 @@ class RunState(str, Enum):
 @dataclass
 class RunConfig:
     """Configuration for an embedded run."""
+
     model: str = ""
     provider: str = ""
     max_turns: int = 50
@@ -52,6 +52,7 @@ class RunConfig:
 @dataclass
 class RunAttemptResult:
     """Result of a single run attempt."""
+
     text: str = ""
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     finish_reason: str = ""
@@ -70,6 +71,7 @@ class RunAttemptResult:
 @dataclass
 class RunRecord:
     """Record of an embedded run execution."""
+
     run_id: str
     model: str = ""
     state: RunState = RunState.IDLE
@@ -91,6 +93,7 @@ class RunRecord:
 @dataclass
 class Message:
     """A message in the conversation."""
+
     role: str
     content: str | list[dict[str, Any]] = ""
     tool_call_id: str = ""
@@ -113,6 +116,7 @@ class Message:
 # ---------------------------------------------------------------------------
 # Payload Builder
 # ---------------------------------------------------------------------------
+
 
 def build_request_payload(
     messages: list[Message],
@@ -149,9 +153,11 @@ def build_request_payload(
 # Image Handling
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ImageContent:
     """An image content block in a message."""
+
     url: str = ""
     base64_data: str = ""
     media_type: str = "image/png"
@@ -223,6 +229,7 @@ def prune_images(messages: list[Message], *, keep_last_n: int = 2) -> int:
 # ---------------------------------------------------------------------------
 # Run Tracker
 # ---------------------------------------------------------------------------
+
 
 class RunTracker:
     """Track multiple embedded runs."""

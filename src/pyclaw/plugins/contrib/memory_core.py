@@ -203,10 +203,41 @@ class MemoryCoreExtension:
             return results
 
         # Fall back to individual word search
-        stop_words = {"the", "a", "an", "is", "are", "was", "were", "be", "been",
-                      "to", "of", "in", "for", "on", "with", "at", "by", "from",
-                      "about", "me", "my", "i", "you", "it", "and", "or", "but",
-                      "tell", "what", "how", "do", "does", "can"}
+        stop_words = {
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "about",
+            "me",
+            "my",
+            "i",
+            "you",
+            "it",
+            "and",
+            "or",
+            "but",
+            "tell",
+            "what",
+            "how",
+            "do",
+            "does",
+            "can",
+        }
         words = [w for w in context.lower().split() if w not in stop_words and len(w) > 2]
 
         seen_ids: set[str] = set()
@@ -216,7 +247,7 @@ class MemoryCoreExtension:
                     seen_ids.add(entry.id)
                     results.append(entry)
 
-        return results[:self._config.max_recall_results]
+        return results[: self._config.max_recall_results]
 
     def auto_capture(self, exchange: str, *, turn_count: int = 0) -> MemoryEntry | None:
         """Auto-capture a notable exchange as a memory."""

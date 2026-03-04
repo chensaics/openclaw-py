@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
@@ -17,11 +17,8 @@ def set_cron_scheduler(scheduler: Any) -> None:
     _scheduler = scheduler
 
 
-def create_cron_handlers() -> dict[str, "MethodHandler"]:
-
-    async def handle_cron_list(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+def create_cron_handlers() -> dict[str, MethodHandler]:
+    async def handle_cron_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not _scheduler:
             await conn.send_ok("cron.list", {"jobs": [], "note": "Scheduler not available"})
             return
@@ -35,9 +32,7 @@ def create_cron_handlers() -> dict[str, "MethodHandler"]:
 
         await conn.send_ok("cron.list", {"jobs": jobs, "count": len(jobs)})
 
-    async def handle_cron_add(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_cron_add(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not _scheduler:
             await conn.send_error("cron.add", "unavailable", "Scheduler not available")
             return
@@ -70,9 +65,7 @@ def create_cron_handlers() -> dict[str, "MethodHandler"]:
         _scheduler.add_job(job)
         await conn.send_ok("cron.add", {"jobId": job.id, "ok": True})
 
-    async def handle_cron_remove(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_cron_remove(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not _scheduler:
             await conn.send_error("cron.remove", "unavailable", "Scheduler not available")
             return

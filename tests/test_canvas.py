@@ -5,8 +5,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from pyclaw.canvas.handler import (
     A2UI_PATH,
     CANVAS_HOST_PATH,

@@ -95,7 +95,11 @@ def mmr_rerank(
                 if sim > max_sim:
                     max_sim = sim
             mmr = compute_mmr_score(rel, max_sim, lambda_)
-            if mmr > best_mmr or (mmr == best_mmr and items[idx].get("score", 0) > items[best_idx].get("score", 0) if best_idx >= 0 else True):
+            if mmr > best_mmr or (
+                mmr == best_mmr and items[idx].get("score", 0) > items[best_idx].get("score", 0)
+                if best_idx >= 0
+                else True
+            ):
                 best_mmr = mmr
                 best_idx = idx
 

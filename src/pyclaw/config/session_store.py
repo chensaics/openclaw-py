@@ -19,7 +19,6 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -31,6 +30,7 @@ DEFAULT_DISK_BUDGET_MB = 500
 @dataclass
 class SessionMetadata:
     """Metadata for a stored session."""
+
     session_id: str
     agent_id: str = ""
     model: str = ""
@@ -38,7 +38,7 @@ class SessionMetadata:
     updated_at: float = 0.0
     turn_count: int = 0
     token_count: int = 0
-    status: str = "active"       # "active" | "idle" | "archived"
+    status: str = "active"  # "active" | "idle" | "archived"
     channel_id: str = ""
     sender_id: str = ""
     tags: list[str] = field(default_factory=list)
@@ -54,17 +54,19 @@ class SessionMetadata:
 @dataclass
 class DeliveryInfo:
     """Delivery tracking for a session message."""
+
     message_id: str
     channel_id: str
     chat_id: str
     delivered_at: float = 0.0
-    status: str = "delivered"    # "delivered" | "failed" | "pending"
+    status: str = "delivered"  # "delivered" | "failed" | "pending"
     error: str = ""
 
 
 @dataclass
 class SessionArtifact:
     """An artifact attached to a session (files, images, etc.)."""
+
     artifact_id: str
     session_id: str
     filename: str
@@ -77,6 +79,7 @@ class SessionArtifact:
 @dataclass
 class StoreConfig:
     """Configuration for the session store."""
+
     base_dir: str
     max_sessions: int = DEFAULT_MAX_SESSIONS
     disk_budget_mb: int = DEFAULT_DISK_BUDGET_MB
@@ -155,6 +158,7 @@ class SessionStore:
             return False
 
         import shutil
+
         shutil.rmtree(session_dir, ignore_errors=True)
         self._metadata_cache.pop(session_id, None)
         return True
@@ -162,9 +166,7 @@ class SessionStore:
     def _write_metadata(self, metadata: SessionMetadata) -> None:
         path = self._metadata_path(metadata.session_id)
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        data = {
-            k: v for k, v in metadata.__dict__.items()
-        }
+        data = {k: v for k, v in metadata.__dict__.items()}
         with open(path, "w") as f:
             json.dump(data, f, indent=2)
 

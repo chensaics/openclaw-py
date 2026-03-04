@@ -2,28 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-import pytest
-
 # Phase 36a: Catalog
 from pyclaw.channels.plugins.catalog import (
-    ActionSpec,
-    AccountHelper,
     BUILTIN_CATALOG,
     CatalogEntry,
     ChannelCatalog,
     ChannelCategory,
-    MediaLimits,
 )
 
 # Phase 36b: Onboarding
 from pyclaw.channels.plugins.onboarding import (
     ONBOARDING_FLOWS,
-    OnboardingFlow,
-    OnboardingResult,
     OnboardingStep,
-    StepType,
     build_config_from_answers,
     get_onboarding_flow,
     list_onboarding_channels,
@@ -33,7 +23,6 @@ from pyclaw.channels.plugins.onboarding import (
 # Phase 36c: Outbound Adapters
 from pyclaw.channels.plugins.outbound_adapters import (
     CHANNEL_OUTBOUND_CONFIGS,
-    ChunkedMessage,
     MessageFormat,
     OutboundAdapter,
     OutboundConfig,
@@ -44,18 +33,15 @@ from pyclaw.channels.plugins.outbound_adapters import (
 
 # Phase 36d: Status Issues
 from pyclaw.channels.plugins.status_issues import (
-    CHANNEL_CONFIG_SCHEMAS,
-    ChannelConfigSchema,
-    ConfigField,
     check_all_channels,
     check_channel_issues,
     get_config_schema,
 )
 
-
 # =====================================================================
 # Phase 36a: Channel Catalog
 # =====================================================================
+
 
 class TestChannelCatalog:
     def test_builtin_entries(self) -> None:
@@ -121,6 +107,7 @@ class TestChannelCatalog:
 # Phase 36b: Onboarding
 # =====================================================================
 
+
 class TestOnboarding:
     def test_flows_registered(self) -> None:
         assert len(ONBOARDING_FLOWS) >= 6
@@ -145,7 +132,8 @@ class TestOnboarding:
 
     def test_validate_step_pattern(self) -> None:
         step = OnboardingStep(
-            step_id="t", title="Token",
+            step_id="t",
+            title="Token",
             validation_pattern=r"^\d+:.+$",
         )
         ok, _ = validate_step_answer(step, "123:abc")
@@ -156,9 +144,12 @@ class TestOnboarding:
     def test_build_config(self) -> None:
         flow = get_onboarding_flow("telegram")
         assert flow is not None
-        result = build_config_from_answers(flow, {
-            "token": "123456:ABC-DEF",
-        })
+        result = build_config_from_answers(
+            flow,
+            {
+                "token": "123456:ABC-DEF",
+            },
+        )
         assert result.completed
         assert result.config["type"] == "telegram"
         assert result.config["token"] == "123456:ABC-DEF"
@@ -173,15 +164,19 @@ class TestOnboarding:
     def test_signal_onboarding(self) -> None:
         flow = get_onboarding_flow("signal")
         assert flow is not None
-        result = build_config_from_answers(flow, {
-            "phone": "+1234567890",
-        })
+        result = build_config_from_answers(
+            flow,
+            {
+                "phone": "+1234567890",
+            },
+        )
         assert result.completed
 
 
 # =====================================================================
 # Phase 36c: Outbound Adapters
 # =====================================================================
+
 
 class TestOutboundAdapters:
     def test_chunk_short_message(self) -> None:
@@ -239,6 +234,7 @@ class TestOutboundAdapters:
 # Phase 36d: Status Issues
 # =====================================================================
 
+
 class TestStatusIssues:
     def test_telegram_no_token(self) -> None:
         issues = check_channel_issues("telegram", {})
@@ -274,10 +270,12 @@ class TestStatusIssues:
         assert len(issues) == 0
 
     def test_check_all(self) -> None:
-        result = check_all_channels({
-            "telegram": {},
-            "discord": {"token": "valid"},
-        })
+        result = check_all_channels(
+            {
+                "telegram": {},
+                "discord": {"token": "valid"},
+            }
+        )
         assert "telegram" in result
         assert "discord" not in result
 

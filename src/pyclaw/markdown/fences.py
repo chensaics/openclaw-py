@@ -29,7 +29,6 @@ def parse_fence_spans(text: str) -> list[FenceSpan]:
             fence_char = m.group(1)[0]
             fence_len = len(m.group(1))
             lang = m.group(2)
-            start_line = i
             start_offset = sum(len(lines[j]) + 1 for j in range(i))
             i += 1
             while i < len(lines):

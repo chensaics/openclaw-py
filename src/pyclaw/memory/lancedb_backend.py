@@ -46,10 +46,7 @@ class LanceDBBackend(MemoryBackend):
         try:
             import lancedb as ldb
         except ImportError as exc:
-            raise ImportError(
-                "lancedb is required for LanceDBBackend. "
-                "Install it with: pip install lancedb"
-            ) from exc
+            raise ImportError("lancedb is required for LanceDBBackend. Install it with: pip install lancedb") from exc
 
         self._db = ldb.connect(self._db_path)
 
@@ -58,15 +55,17 @@ class LanceDBBackend(MemoryBackend):
         except Exception:
             import pyarrow as pa
 
-            schema = pa.schema([
-                pa.field("id", pa.string()),
-                pa.field("content", pa.string()),
-                pa.field("source", pa.string()),
-                pa.field("tags", pa.string()),
-                pa.field("metadata", pa.string()),
-                pa.field("created_at", pa.float64()),
-                pa.field("vector", pa.list_(pa.float32(), self._embedding_dim)),
-            ])
+            schema = pa.schema(
+                [
+                    pa.field("id", pa.string()),
+                    pa.field("content", pa.string()),
+                    pa.field("source", pa.string()),
+                    pa.field("tags", pa.string()),
+                    pa.field("metadata", pa.string()),
+                    pa.field("created_at", pa.float64()),
+                    pa.field("vector", pa.list_(pa.float32(), self._embedding_dim)),
+                ]
+            )
             self._table = self._db.create_table(COLLECTION_NAME, schema=schema)
 
         logger.info("LanceDB backend initialized at %s", self._db_path)
@@ -136,19 +135,11 @@ class LanceDBBackend(MemoryBackend):
         opts = options or MemorySearchOptions()
 
         if embedding:
-            results = (
-                self._table.search(embedding)
-                .limit(opts.limit)
-                .to_list()
-            )
+            results = self._table.search(embedding).limit(opts.limit).to_list()
         elif query:
             # Full-text search fallback if available
             try:
-                results = (
-                    self._table.search(query, query_type="fts")
-                    .limit(opts.limit)
-                    .to_list()
-                )
+                results = self._table.search(query, query_type="fts").limit(opts.limit).to_list()
             except Exception:
                 results = self._table.to_pandas().head(opts.limit).to_dict("records")
         else:
@@ -172,15 +163,17 @@ class LanceDBBackend(MemoryBackend):
             except (json.JSONDecodeError, TypeError):
                 metadata = {}
 
-            records.append(MemoryRecord(
-                id=row["id"],
-                content=row["content"],
-                source=row.get("source", ""),
-                tags=tags,
-                score=score,
-                created_at=row.get("created_at", 0.0),
-                metadata=metadata,
-            ))
+            records.append(
+                MemoryRecord(
+                    id=row["id"],
+                    content=row["content"],
+                    source=row.get("source", ""),
+                    tags=tags,
+                    score=score,
+                    created_at=row.get("created_at", 0.0),
+                    metadata=metadata,
+                )
+            )
 
         return records
 
@@ -218,15 +211,17 @@ class LanceDBBackend(MemoryBackend):
             except (json.JSONDecodeError, TypeError):
                 metadata = {}
 
-            records.append(MemoryRecord(
-                id=row["id"],
-                content=row["content"],
-                source=row.get("source", ""),
-                tags=tags,
-                score=1.0,
-                created_at=row.get("created_at", 0.0),
-                metadata=metadata,
-            ))
+            records.append(
+                MemoryRecord(
+                    id=row["id"],
+                    content=row["content"],
+                    source=row.get("source", ""),
+                    tags=tags,
+                    score=1.0,
+                    created_at=row.get("created_at", 0.0),
+                    metadata=metadata,
+                )
+            )
         return records
 
 

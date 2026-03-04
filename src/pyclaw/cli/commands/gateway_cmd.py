@@ -76,11 +76,18 @@ def gateway_probe_command(
     gw_url = url or _default_gateway_url()
     results: list[dict[str, Any]] = []
 
-    results.append({"target": gw_url, **_probe_gateway(gw_url, token=token, password=password, timeout_s=timeout_ms / 1000)})
+    results.append(
+        {"target": gw_url, **_probe_gateway(gw_url, token=token, password=password, timeout_s=timeout_ms / 1000)}
+    )
 
     loopback = "ws://127.0.0.1:18789"
     if gw_url != loopback and loopback not in gw_url:
-        results.append({"target": loopback, **_probe_gateway(loopback, token=token, password=password, timeout_s=timeout_ms / 1000)})
+        results.append(
+            {
+                "target": loopback,
+                **_probe_gateway(loopback, token=token, password=password, timeout_s=timeout_ms / 1000),
+            }
+        )
 
     if output_json:
         typer.echo(json.dumps({"probes": results}, ensure_ascii=False))
@@ -157,13 +164,15 @@ def gateway_discover_command(
                 method=DiscoveryMethod.LOCAL,
             )
             manager.add_discovered(svc)
-            beacons.append({
-                "name": svc.name,
-                "host": svc.host,
-                "port": svc.port,
-                "method": svc.method.value,
-                "wsUrl": f"ws://{svc.host}:{svc.port}",
-            })
+            beacons.append(
+                {
+                    "name": svc.name,
+                    "host": svc.host,
+                    "port": svc.port,
+                    "method": svc.method.value,
+                    "wsUrl": f"ws://{svc.host}:{svc.port}",
+                }
+            )
 
     if output_json:
         typer.echo(json.dumps({"beacons": beacons}, ensure_ascii=False))
@@ -180,6 +189,7 @@ def gateway_discover_command(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _default_gateway_url() -> str:
     """Resolve gateway URL from config or environment."""
@@ -212,6 +222,7 @@ def _service_status(*, deep: bool = False) -> dict[str, Any]:
     }
     if deep:
         import sys
+
         result["platform"] = sys.platform
         result["python"] = sys.version.split()[0]
     return result
@@ -297,12 +308,16 @@ async def _rpc_call(
 
                 # RPC call
                 req_id = f"gw-call-{method}"
-                await ws.send(json.dumps({
-                    "type": "req",
-                    "id": req_id,
-                    "method": method,
-                    "params": params,
-                }))
+                await ws.send(
+                    json.dumps(
+                        {
+                            "type": "req",
+                            "id": req_id,
+                            "method": method,
+                            "params": params,
+                        }
+                    )
+                )
                 while True:
                     raw = await asyncio.wait_for(ws.recv(), timeout=timeout_s)
                     data = json.loads(raw)
@@ -325,15 +340,15 @@ async def _rpc_call(
 def _ws_candidates(url: str) -> list[str]:
     base = (url or "ws://127.0.0.1:18789").strip()
     if base.startswith("http://"):
-        base = "ws://" + base[len("http://"):]
+        base = "ws://" + base[len("http://") :]
     elif base.startswith("https://"):
-        base = "wss://" + base[len("https://"):]
+        base = "wss://" + base[len("https://") :]
     if not base.startswith("ws://") and not base.startswith("wss://"):
         base = f"ws://{base}"
 
     candidates = [base]
     if base.endswith("/ws"):
-        candidates.append(base[:-len("/ws")] or "ws://127.0.0.1:18789")
+        candidates.append(base[: -len("/ws")] or "ws://127.0.0.1:18789")
     else:
         candidates.append(f"{base}/ws")
     return candidates

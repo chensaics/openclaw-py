@@ -53,11 +53,10 @@ class TypingCircuitBreaker:
 
     @property
     def is_open(self) -> bool:
-        if self._open:
-            if time.time() - self._last_failure_at > self._reset_s:
-                self._open = False
-                self._consecutive_failures = 0
-                return False
+        if self._open and time.time() - self._last_failure_at > self._reset_s:
+            self._open = False
+            self._consecutive_failures = 0
+            return False
         return self._open
 
     def record_success(self) -> None:

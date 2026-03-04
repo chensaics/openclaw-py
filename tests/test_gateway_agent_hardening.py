@@ -5,14 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from pyclaw.gateway.ws_guard import (
-    FloodEvent,
-    WsFloodGuard,
-    WsGuardConfig,
-)
 from pyclaw.agents.compaction_policy import (
-    CompactionConfig,
-    CompactionResult,
     content_hash,
     detect_near_duplicates,
     estimate_tokens,
@@ -20,22 +13,25 @@ from pyclaw.agents.compaction_policy import (
     is_identifier_message,
     plan_compaction,
 )
+from pyclaw.channels.command_gating import (
+    CommandGatingConfig,
+    CommandGatingManager,
+    CommandPermission,
+)
 from pyclaw.config.migrations import (
     ConfigMigrationRegistry,
     MigrationStep,
     StateMigrationRegistry,
     create_default_registry,
     detect_config_version,
-    detect_state_version,
 )
-from pyclaw.channels.command_gating import (
-    CommandGatingConfig,
-    CommandGatingManager,
-    CommandPermission,
+from pyclaw.gateway.ws_guard import (
+    WsFloodGuard,
+    WsGuardConfig,
 )
-
 
 # ===== WS Flood Guard =====
+
 
 class TestWsFloodGuard:
     def test_allows_normal_connections(self) -> None:
@@ -111,6 +107,7 @@ class TestWsFloodGuard:
 
 # ===== Compaction Policy =====
 
+
 class TestCompactionHelpers:
     def test_estimate_tokens(self) -> None:
         assert estimate_tokens("hello") >= 1
@@ -158,9 +155,12 @@ class TestNearDuplicates:
 class TestFilterUnavailableTools:
     def test_keeps_available_tools(self) -> None:
         messages = [
-            {"role": "assistant", "content": [
-                {"type": "tool_use", "id": "t1", "name": "file_read"},
-            ]},
+            {
+                "role": "assistant",
+                "content": [
+                    {"type": "tool_use", "id": "t1", "name": "file_read"},
+                ],
+            },
             {"role": "tool", "tool_use_id": "t1", "content": "result"},
         ]
         result = filter_unavailable_tools(messages, {"file_read"})
@@ -168,9 +168,12 @@ class TestFilterUnavailableTools:
 
     def test_prunes_unavailable_tools(self) -> None:
         messages = [
-            {"role": "assistant", "content": [
-                {"type": "tool_use", "id": "t1", "name": "removed_tool"},
-            ]},
+            {
+                "role": "assistant",
+                "content": [
+                    {"type": "tool_use", "id": "t1", "name": "removed_tool"},
+                ],
+            },
             {"role": "tool", "tool_use_id": "t1", "content": "result"},
             {"role": "user", "content": "next message"},
         ]
@@ -181,11 +184,14 @@ class TestFilterUnavailableTools:
 
     def test_mixed_tool_blocks(self) -> None:
         messages = [
-            {"role": "assistant", "content": [
-                {"type": "tool_use", "id": "t1", "name": "file_read"},
-                {"type": "tool_use", "id": "t2", "name": "removed"},
-                {"type": "text", "text": "some text"},
-            ]},
+            {
+                "role": "assistant",
+                "content": [
+                    {"type": "tool_use", "id": "t1", "name": "file_read"},
+                    {"type": "tool_use", "id": "t2", "name": "removed"},
+                    {"type": "text", "text": "some text"},
+                ],
+            },
             {"role": "tool", "tool_use_id": "t1", "content": "ok"},
             {"role": "tool", "tool_use_id": "t2", "content": "gone"},
         ]
@@ -225,6 +231,7 @@ class TestPlanCompaction:
 
 
 # ===== Config Migrations =====
+
 
 class TestDetectVersion:
     def test_schema_version(self) -> None:
@@ -311,13 +318,15 @@ class TestConfigMigrationRegistry:
 
     def test_custom_step(self) -> None:
         registry = ConfigMigrationRegistry()
-        registry.register(MigrationStep(
-            id="custom-1",
-            from_version="v1",
-            to_version="v2",
-            description="Custom migration",
-            migrate=lambda c: {**c, "migrated": True, "version": "v2"},
-        ))
+        registry.register(
+            MigrationStep(
+                id="custom-1",
+                from_version="v1",
+                to_version="v2",
+                description="Custom migration",
+                migrate=lambda c: {**c, "migrated": True, "version": "v2"},
+            )
+        )
         config: dict = {}
         result = registry.migrate(config, target_version="v2")
         assert result.success is True
@@ -327,13 +336,15 @@ class TestConfigMigrationRegistry:
 class TestStateMigrationRegistry:
     def test_basic_migration(self) -> None:
         registry = StateMigrationRegistry()
-        registry.register(MigrationStep(
-            id="state-1-to-2",
-            from_version="1",
-            to_version="2",
-            description="Add schema version",
-            migrate=lambda s: {**s, "version": "2", "schema": "v2"},
-        ))
+        registry.register(
+            MigrationStep(
+                id="state-1-to-2",
+                from_version="1",
+                to_version="2",
+                description="Add schema version",
+                migrate=lambda s: {**s, "version": "2", "schema": "v2"},
+            )
+        )
         state: dict = {"version": "1", "data": "value"}
         result = registry.migrate(state, target_version="2")
         assert result.success is True
@@ -343,15 +354,18 @@ class TestStateMigrationRegistry:
 
 # ===== Command Gating =====
 
+
 class TestCommandGating:
     @pytest.fixture
     def manager(self) -> CommandGatingManager:
         mgr = CommandGatingManager()
-        mgr.register_channel(CommandGatingConfig(
-            channel_id="telegram",
-            owner_ids={"owner1"},
-            overrides={"/custom": CommandPermission.ALLOW},
-        ))
+        mgr.register_channel(
+            CommandGatingConfig(
+                channel_id="telegram",
+                owner_ids={"owner1"},
+                overrides={"/custom": CommandPermission.ALLOW},
+            )
+        )
         return mgr
 
     def test_allowed_command(self, manager: CommandGatingManager) -> None:
@@ -383,10 +397,12 @@ class TestCommandGating:
 
     def test_deny_unlisted(self) -> None:
         mgr = CommandGatingManager()
-        mgr.register_channel(CommandGatingConfig(
-            channel_id="t",
-            deny_unlisted=True,
-        ))
+        mgr.register_channel(
+            CommandGatingConfig(
+                channel_id="t",
+                deny_unlisted=True,
+            )
+        )
         result = mgr.check("t", "/unknown_command", "anyone")
         assert result.allowed is False
 
@@ -399,10 +415,12 @@ class TestCommandGating:
 
     def test_channel_override_beats_global(self) -> None:
         mgr = CommandGatingManager()
-        mgr.register_channel(CommandGatingConfig(
-            channel_id="t",
-            overrides={"/test": CommandPermission.ALLOW},
-        ))
+        mgr.register_channel(
+            CommandGatingConfig(
+                channel_id="t",
+                overrides={"/test": CommandPermission.ALLOW},
+            )
+        )
         mgr.set_global_override("/test", CommandPermission.DENY)
         result = mgr.check("t", "/test", "anyone")
         assert result.allowed is True

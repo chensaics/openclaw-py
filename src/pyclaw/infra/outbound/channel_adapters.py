@@ -31,6 +31,7 @@ class MediaType(str, Enum):
 @dataclass
 class ChannelCapabilities:
     """What a channel supports for outbound messages."""
+
     markdown: bool = True
     html: bool = False
     buttons: bool = False
@@ -46,6 +47,7 @@ class ChannelCapabilities:
 @dataclass
 class OutboundMedia:
     """Media attachment for outbound messages."""
+
     type: MediaType
     url: str = ""
     data: bytes = b""
@@ -57,12 +59,13 @@ class OutboundMedia:
 @dataclass
 class OutboundPayload:
     """Payload for channel adapter sending."""
+
     chat_id: str
     text: str = ""
     media: list[OutboundMedia] = field(default_factory=list)
     reply_to: str = ""
     thread_id: str = ""
-    parse_mode: str = ""       # "markdown" | "html" | ""
+    parse_mode: str = ""  # "markdown" | "html" | ""
     buttons: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -70,6 +73,7 @@ class OutboundPayload:
 @dataclass
 class OutboundResult:
     """Result from a channel adapter send."""
+
     success: bool
     message_id: str = ""
     error: str = ""

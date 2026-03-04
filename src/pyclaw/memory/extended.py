@@ -23,8 +23,10 @@ logger = logging.getLogger(__name__)
 # Embedding Provider Protocol
 # ---------------------------------------------------------------------------
 
+
 class EmbeddingProvider(Protocol):
     """Protocol for embedding providers."""
+
     @property
     def name(self) -> str: ...
     @property
@@ -36,6 +38,7 @@ class EmbeddingProvider(Protocol):
 # ---------------------------------------------------------------------------
 # Voyage Embeddings
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class VoyageConfig:
@@ -82,6 +85,7 @@ class VoyageEmbeddingProvider:
 # Mistral Embeddings
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MistralEmbeddingConfig:
     api_key: str = ""
@@ -126,9 +130,11 @@ class MistralEmbeddingProvider:
 # Batch Upload Pipeline
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BatchItem:
     """A single item in a batch upload."""
+
     item_id: str
     text: str
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -137,6 +143,7 @@ class BatchItem:
 @dataclass
 class BatchResult:
     """Result from a batch upload."""
+
     total: int
     succeeded: int = 0
     failed: int = 0
@@ -147,6 +154,7 @@ class BatchResult:
 @dataclass
 class BatchConfig:
     """Configuration for batch processing."""
+
     batch_size: int = 50
     max_concurrent_batches: int = 3
     retry_count: int = 2
@@ -164,7 +172,7 @@ class BatchRunner:
         """Split items into sized batches."""
         batches: list[list[BatchItem]] = []
         for i in range(0, len(items), self._config.batch_size):
-            batches.append(items[i:i + self._config.batch_size])
+            batches.append(items[i : i + self._config.batch_size])
         return batches
 
     def process_batch_sync(
@@ -211,9 +219,11 @@ class BatchRunner:
 # Remote Embedding HTTP Client
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RemoteEmbeddingConfig:
     """Configuration for a remote embedding HTTP client."""
+
     url: str
     api_key: str = ""
     model: str = ""
@@ -255,5 +265,5 @@ class RemoteEmbeddingClient:
         """Split texts into batches respecting max_batch_size."""
         batches: list[list[str]] = []
         for i in range(0, len(texts), self._config.max_batch_size):
-            batches.append(texts[i:i + self._config.max_batch_size])
+            batches.append(texts[i : i + self._config.max_batch_size])
         return batches

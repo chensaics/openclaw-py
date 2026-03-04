@@ -8,7 +8,7 @@ Compatible with the TypeScript gateway protocol v3:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 PROTOCOL_VERSION = 3
@@ -76,9 +76,7 @@ class ResponseFrame:
         return cls(id=frame_id, ok=True, payload=payload)
 
     @classmethod
-    def error_response(
-        cls, frame_id: str, code: str, message: str, **kwargs: Any
-    ) -> ResponseFrame:
+    def error_response(cls, frame_id: str, code: str, message: str, **kwargs: Any) -> ResponseFrame:
         return cls(
             id=frame_id,
             ok=False,

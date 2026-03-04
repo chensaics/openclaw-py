@@ -48,7 +48,7 @@ def skills_search_command(query: str) -> None:
             typer.echo(f"    {p.muted}{skill.description}{p.reset}")
         if skill.url:
             typer.echo(f"    {p.muted}{skill.url}{p.reset}")
-    typer.echo(f"\n  Install with: pyclaw skills install <name>")
+    typer.echo("\n  Install with: pyclaw skills install <name>")
 
 
 def skills_install_command(name: str, *, force: bool = False) -> None:

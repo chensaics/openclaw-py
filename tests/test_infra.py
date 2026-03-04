@@ -5,8 +5,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from pyclaw.infra.exec_approvals import (
     AgentExecConfig,
     ExecAllowlistEntry,
@@ -18,8 +16,12 @@ from pyclaw.infra.exec_approvals import (
     resolve_exec_config,
     save_exec_approvals,
 )
-from pyclaw.infra.heartbeat import parse_duration_ms, HeartbeatConfig, is_within_active_hours
-from pyclaw.infra.update_check import compare_semver, detect_install_kind, resolve_effective_update_channel
+from pyclaw.infra.heartbeat import HeartbeatConfig, is_within_active_hours, parse_duration_ms
+from pyclaw.infra.update_check import (
+    compare_semver,
+    detect_install_kind,
+    resolve_effective_update_channel,
+)
 
 
 class TestExecApprovals:
@@ -62,14 +64,16 @@ class TestExecApprovals:
 
     def test_requires_approval_allowlist_hit(self):
         config = AgentExecConfig(
-            security="allowlist", ask="on-miss",
+            security="allowlist",
+            ask="on-miss",
             allowlist=[ExecAllowlistEntry(pattern="ls")],
         )
         assert requires_exec_approval("ls", config) is False
 
     def test_requires_approval_allowlist_miss(self):
         config = AgentExecConfig(
-            security="allowlist", ask="on-miss",
+            security="allowlist",
+            ask="on-miss",
             allowlist=[ExecAllowlistEntry(pattern="ls")],
         )
         assert requires_exec_approval("rm", config) is True
@@ -109,6 +113,7 @@ class TestHeartbeat:
 
     def test_is_within_active_hours_range(self):
         import time
+
         now_hour = int(time.strftime("%H"))
         config = HeartbeatConfig(active_hours=f"{now_hour}:00-{now_hour + 1}:00")
         assert is_within_active_hours(config) is True

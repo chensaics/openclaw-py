@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import re
 import time
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 _DIRECTIVE_RE = re.compile(r"@(think|model|verbose|reasoning|elevated|exec)\b\s*\S*", re.IGNORECASE)
 
@@ -22,6 +21,7 @@ _DIRECTIVE_RE = re.compile(r"@(think|model|verbose|reasoning|elevated|exec)\b\s*
 @dataclass
 class StreamingConfig:
     """Per-provider streaming configuration."""
+
     min_chars: int = 20
     max_chars: int = 4000
     paragraph_flush: bool = True
@@ -44,6 +44,7 @@ def get_streaming_config(provider: str) -> StreamingConfig:
 @dataclass
 class StreamBlock:
     """A coalesced block of streamed text ready for delivery."""
+
     text: str
     index: int
     is_final: bool = False
@@ -110,10 +111,7 @@ class BlockCoalescer:
 
         # Coalesce timeout
         elapsed_ms = (now - self._last_emit_time) * 1000 if self._last_emit_time else float("inf")
-        if elapsed_ms >= self._config.coalesce_ms and len(self._buffer) >= self._config.min_chars:
-            return True
-
-        return False
+        return bool(elapsed_ms >= self._config.coalesce_ms and len(self._buffer) >= self._config.min_chars)
 
     def _emit_block(self, now: float) -> StreamBlock | None:
         if not self._buffer:
@@ -124,7 +122,7 @@ class BlockCoalescer:
             para_pos = self._buffer.find("\n\n")
             if para_pos > 0:
                 text = self._buffer[:para_pos].strip()
-                self._buffer = self._buffer[para_pos + 2:]
+                self._buffer = self._buffer[para_pos + 2 :]
                 if text:
                     self._last_emit_time = now
                     block = StreamBlock(text=text, index=self._block_index, flushed_at=now)
@@ -133,15 +131,15 @@ class BlockCoalescer:
 
         # Max-chars hard split
         if len(self._buffer) >= self._config.max_chars:
-            text = self._buffer[:self._config.max_chars]
-            self._buffer = self._buffer[self._config.max_chars:]
+            text = self._buffer[: self._config.max_chars]
+            self._buffer = self._buffer[self._config.max_chars :]
 
             # Try to split at last sentence/line
             for sep in ["\n", ". ", "! ", "? "]:
                 pos = text.rfind(sep)
                 if pos > len(text) // 4:
-                    self._buffer = text[pos + len(sep):] + self._buffer
-                    text = text[:pos + len(sep)]
+                    self._buffer = text[pos + len(sep) :] + self._buffer
+                    text = text[: pos + len(sep)]
                     break
 
             text = text.strip()

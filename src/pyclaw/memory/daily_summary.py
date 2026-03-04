@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +75,7 @@ class DailySummaryService:
         return self._generate_yesterday_summary()
 
     def _generate_yesterday_summary(self) -> DaySummaryData | None:
-        yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
         return self._generate_for_date(yesterday)
 
     def _generate_for_date(self, date_str: str) -> DaySummaryData | None:
@@ -125,7 +124,7 @@ class DailySummaryService:
 
                         ts = entry.get("timestamp", 0)
                         if ts:
-                            entry_date = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+                            entry_date = datetime.fromtimestamp(ts, tz=UTC).strftime("%Y-%m-%d")
                         else:
                             entry_date = _guess_date_from_file(session_file)
 
@@ -214,6 +213,6 @@ def _guess_date_from_file(path: Path) -> str:
     """Guess date from file modification time when entries lack timestamps."""
     try:
         mtime = path.stat().st_mtime
-        return datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+        return datetime.fromtimestamp(mtime, tz=UTC).strftime("%Y-%m-%d")
     except Exception:
         return ""

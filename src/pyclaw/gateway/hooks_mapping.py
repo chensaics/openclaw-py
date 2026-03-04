@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HookPreset:
     """A predefined hook configuration template."""
+
     name: str
     description: str = ""
     hook_type: str = ""
@@ -69,6 +70,7 @@ BUILTIN_PRESETS: dict[str, HookPreset] = {
 @dataclass
 class HookMapping:
     """A resolved hook mapping ready for application."""
+
     hook_id: str
     hook_type: str
     config: dict[str, Any] = field(default_factory=dict)
@@ -79,6 +81,7 @@ class HookMapping:
 @dataclass
 class HookMappingResult:
     """Result of resolving hook mappings."""
+
     mappings: list[HookMapping] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -89,6 +92,7 @@ _TEMPLATE_RE = re.compile(r"\$\{(\w+)(?::-(.*?))?\}")
 
 def substitute_template(value: str, variables: dict[str, str]) -> str:
     """Replace ${VAR} and ${VAR:-default} in a string."""
+
     def replacer(m: re.Match[str]) -> str:
         var_name = m.group(1)
         default = m.group(2)
@@ -110,10 +114,7 @@ def substitute_config(config: dict[str, Any], variables: dict[str, str]) -> dict
         elif isinstance(value, dict):
             result[key] = substitute_config(value, variables)
         elif isinstance(value, list):
-            result[key] = [
-                substitute_template(v, variables) if isinstance(v, str) else v
-                for v in value
-            ]
+            result[key] = [substitute_template(v, variables) if isinstance(v, str) else v for v in value]
         else:
             result[key] = value
     return result
@@ -140,9 +141,7 @@ def resolve_hook_mappings(
 
             missing = [v for v in preset.required_vars if v not in variables]
             if missing:
-                result.warnings.append(
-                    f"Hook '{hook_id}': missing variables {missing} for preset '{preset_name}'"
-                )
+                result.warnings.append(f"Hook '{hook_id}': missing variables {missing} for preset '{preset_name}'")
 
             config = substitute_config(copy.deepcopy(preset.config_template), variables)
             # Allow config overrides
@@ -150,13 +149,15 @@ def resolve_hook_mappings(
                 if k not in ("id", "preset", "enabled"):
                     config[k] = v
 
-            result.mappings.append(HookMapping(
-                hook_id=hook_id,
-                hook_type=preset.hook_type,
-                config=config,
-                enabled=entry.get("enabled", True),
-                from_preset=preset_name,
-            ))
+            result.mappings.append(
+                HookMapping(
+                    hook_id=hook_id,
+                    hook_type=preset.hook_type,
+                    config=config,
+                    enabled=entry.get("enabled", True),
+                    from_preset=preset_name,
+                )
+            )
         else:
             hook_type = entry.get("type", "")
             if not hook_type:
@@ -166,12 +167,14 @@ def resolve_hook_mappings(
             config = {k: v for k, v in entry.items() if k not in ("id", "enabled")}
             config = substitute_config(config, variables)
 
-            result.mappings.append(HookMapping(
-                hook_id=hook_id,
-                hook_type=hook_type,
-                config=config,
-                enabled=entry.get("enabled", True),
-            ))
+            result.mappings.append(
+                HookMapping(
+                    hook_id=hook_id,
+                    hook_type=hook_type,
+                    config=config,
+                    enabled=entry.get("enabled", True),
+                )
+            )
 
     return result
 

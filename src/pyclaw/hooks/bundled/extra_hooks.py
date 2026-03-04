@@ -14,7 +14,6 @@ import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +22,11 @@ logger = logging.getLogger(__name__)
 # Boot-MD Hook
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BootCheckItem:
     """A single check item from BOOT.md."""
+
     description: str
     check_type: str = "file_exists"  # file_exists | env_set | command_available
     target: str = ""
@@ -37,6 +38,7 @@ class BootCheckItem:
 @dataclass
 class BootCheckResult:
     """Result of running boot checks."""
+
     items: list[BootCheckItem] = field(default_factory=list)
     all_passed: bool = False
     total: int = 0
@@ -65,12 +67,14 @@ def parse_boot_md(content: str) -> list[BootCheckItem]:
         check_type = parts[1] if len(parts) > 1 else "file_exists"
         target = parts[2] if len(parts) > 2 else ""
 
-        items.append(BootCheckItem(
-            description=description,
-            check_type=check_type,
-            target=target,
-            passed=checked,
-        ))
+        items.append(
+            BootCheckItem(
+                description=description,
+                check_type=check_type,
+                target=target,
+                passed=checked,
+            )
+        )
 
     return items
 
@@ -124,9 +128,11 @@ def run_boot_checks(
 # Bootstrap Extra Files Hook
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ExtraFileSpec:
     """Specification for a workspace file to load."""
+
     path: str
     label: str = ""
     max_size_bytes: int = 50000
@@ -154,7 +160,7 @@ def load_extra_files(
         try:
             content = path.read_text(encoding="utf-8")
             if len(content) > spec.max_size_bytes:
-                content = content[:spec.max_size_bytes] + "\n...(truncated)"
+                content = content[: spec.max_size_bytes] + "\n...(truncated)"
             label = spec.label or spec.path
             results.append((label, content))
         except Exception:
@@ -189,9 +195,11 @@ DEFAULT_EXTRA_FILES: list[ExtraFileSpec] = [
 # Command Logger Hook
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CommandLogEntry:
     """A logged command execution."""
+
     command: str
     args: list[str] = field(default_factory=list)
     working_dir: str = ""

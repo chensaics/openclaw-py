@@ -16,7 +16,7 @@ import time
 import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -189,11 +189,13 @@ class CronScheduler:
         """Build an APScheduler trigger based on schedule type."""
         if job.schedule_type == ScheduleType.EVERY:
             from apscheduler.triggers.interval import IntervalTrigger
+
             seconds = job.every_seconds or 60.0
             return IntervalTrigger(seconds=seconds)
 
         if job.schedule_type == ScheduleType.ONCE:
             from apscheduler.triggers.date import DateTrigger
+
             run_date = parse_at_time(job.at)
             if run_date is None:
                 logger.warning("Invalid 'at' time for job %s: %s", job.id, job.at)
@@ -202,6 +204,7 @@ class CronScheduler:
 
         # Default: cron expression
         from apscheduler.triggers.cron import CronTrigger
+
         parts = job.schedule.split()
         if len(parts) == 5:
             return CronTrigger(
@@ -221,6 +224,7 @@ class CronScheduler:
         record = None
         if self._history:
             from pyclaw.cron.history import ExecutionRecord, ExecutionStatus
+
             record = ExecutionRecord(
                 id=uuid.uuid4().hex[:12],
                 job_id=job.id,
@@ -242,11 +246,14 @@ class CronScheduler:
 
         if record and self._history:
             from pyclaw.cron.history import ExecutionStatus
+
             record.ended_at = time.time()
             record.status = ExecutionStatus.FAILED if error_text else ExecutionStatus.COMPLETED
             record.output = result_text
             record.error = error_text
-            self._history.update(record.id, ended_at=record.ended_at, status=record.status, output=result_text, error=error_text)
+            self._history.update(
+                record.id, ended_at=record.ended_at, status=record.status, output=result_text, error=error_text
+            )
 
         if job.deliver and self._notify_handler:
             if "HEARTBEAT_OK" in result_text or "HEARTBEAT_OK" in error_text:
@@ -268,6 +275,7 @@ class CronScheduler:
 # Time parsing for "at" / "once" schedules
 # ---------------------------------------------------------------------------
 
+
 def parse_at_time(at: str) -> datetime | None:
     """Parse an 'at' time string into a datetime.
 
@@ -284,16 +292,17 @@ def parse_at_time(at: str) -> datetime | None:
     # ISO 8601
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
         try:
-            return datetime.strptime(at, fmt).replace(tzinfo=timezone.utc)
+            return datetime.strptime(at, fmt).replace(tzinfo=UTC)
         except ValueError:
             continue
 
     # Time-only (HH:MM)
     import re
+
     m = re.match(r"^(\d{1,2}):(\d{2})$", at)
     if m:
         hour, minute = int(m.group(1)), int(m.group(2))
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
         if target <= now:
             target += timedelta(days=1)

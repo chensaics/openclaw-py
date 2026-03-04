@@ -26,15 +26,21 @@ logger = logging.getLogger(__name__)
 # Tool Allowlist
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AllowlistConfig:
     """Configuration for tool allowlist."""
+
     mode: str = "all"  # "all" | "allowlist" | "blocklist"
     allowed_tools: list[str] = field(default_factory=list)
     blocked_tools: list[str] = field(default_factory=list)
-    always_allowed: list[str] = field(default_factory=lambda: [
-        "computer", "bash", "text_editor",
-    ])
+    always_allowed: list[str] = field(
+        default_factory=lambda: [
+            "computer",
+            "bash",
+            "text_editor",
+        ]
+    )
 
 
 def filter_tools(
@@ -47,17 +53,11 @@ def filter_tools(
         return result
 
     if config.mode == "blocklist":
-        return [
-            t for t in tools
-            if t.get("function", {}).get("name") not in config.blocked_tools
-        ]
+        return [t for t in tools if t.get("function", {}).get("name") not in config.blocked_tools]
 
     if config.mode == "allowlist":
         allowed = set(config.allowed_tools) | set(config.always_allowed)
-        return [
-            t for t in tools
-            if t.get("function", {}).get("name") in allowed
-        ]
+        return [t for t in tools if t.get("function", {}).get("name") in allowed]
 
     return tools
 
@@ -66,10 +66,18 @@ def filter_tools(
 # Context Guard
 # ---------------------------------------------------------------------------
 
-SENSITIVE_PATTERNS = frozenset({
-    "api_key", "secret", "password", "token", "credential",
-    "private_key", "access_key", "auth",
-})
+SENSITIVE_PATTERNS = frozenset(
+    {
+        "api_key",
+        "secret",
+        "password",
+        "token",
+        "credential",
+        "private_key",
+        "access_key",
+        "auth",
+    }
+)
 
 
 def guard_tool_context(
@@ -98,9 +106,11 @@ def guard_tool_context(
 # Result Truncation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TruncationConfig:
     """Configuration for tool result truncation."""
+
     max_result_chars: int = 50000
     max_result_lines: int = 500
     truncation_marker: str = "\n...(result truncated)"
@@ -118,7 +128,7 @@ def truncate_tool_result(
         lines = result.split("\n")
         if len(lines) <= config.max_result_lines:
             return result
-        return "\n".join(lines[:config.max_result_lines]) + config.truncation_marker
+        return "\n".join(lines[: config.max_result_lines]) + config.truncation_marker
 
     # Try to preserve JSON structure
     if config.preserve_json_structure and result.strip().startswith("{"):
@@ -130,16 +140,18 @@ def truncate_tool_result(
         except json.JSONDecodeError:
             pass
 
-    return result[:config.max_result_chars] + config.truncation_marker
+    return result[: config.max_result_chars] + config.truncation_marker
 
 
 # ---------------------------------------------------------------------------
 # Schema Splitting
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SchemaSplitConfig:
     """Configuration for schema splitting."""
+
     max_tools_per_request: int = 128
     max_schema_bytes: int = 200000
 
@@ -153,10 +165,7 @@ def should_split_schema(
         return True
 
     total_bytes = sum(len(json.dumps(t)) for t in tools)
-    if total_bytes > config.max_schema_bytes:
-        return True
-
-    return False
+    return total_bytes > config.max_schema_bytes
 
 
 def split_schema(
@@ -173,10 +182,7 @@ def split_schema(
 
     for tool in tools:
         tool_bytes = len(json.dumps(tool))
-        if (
-            len(current) >= config.max_tools_per_request
-            or current_bytes + tool_bytes > config.max_schema_bytes
-        ):
+        if len(current) >= config.max_tools_per_request or current_bytes + tool_bytes > config.max_schema_bytes:
             if current:
                 chunks.append(current)
             current = [tool]
@@ -195,9 +201,11 @@ def split_schema(
 # Cache TTL
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CacheEntry:
     """A cached value with TTL."""
+
     key: str
     value: Any
     created_at: float
@@ -238,7 +246,10 @@ class ToolCacheManager:
 
     def set(self, key: str, value: Any, *, ttl_s: float = 300.0) -> None:
         self._cache[key] = CacheEntry(
-            key=key, value=value, created_at=time.time(), ttl_s=ttl_s,
+            key=key,
+            value=value,
+            created_at=time.time(),
+            ttl_s=ttl_s,
         )
 
     def compute_key(self, tool_name: str, args: dict[str, Any]) -> str:

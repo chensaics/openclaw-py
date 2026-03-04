@@ -89,9 +89,7 @@ class WebFetchTool(BaseTool):
         except httpx.TimeoutException:
             return ToolResult.text(f"Request timed out after {_FETCH_TIMEOUT}s.", is_error=True)
         except httpx.HTTPStatusError as e:
-            return ToolResult.text(
-                f"HTTP {e.response.status_code}: {e.response.reason_phrase}", is_error=True
-            )
+            return ToolResult.text(f"HTTP {e.response.status_code}: {e.response.reason_phrase}", is_error=True)
         except Exception as e:
             return ToolResult.text(f"Fetch error: {e}", is_error=True)
 
@@ -142,8 +140,7 @@ class WebSearchTool(BaseTool):
     @property
     def description(self) -> str:
         return (
-            "Search the web using the Brave Search API. "
-            "Returns a ranked list of results with title, URL, and snippet."
+            "Search the web using the Brave Search API. Returns a ranked list of results with title, URL, and snippet."
         )
 
     @property
@@ -178,13 +175,10 @@ class WebSearchTool(BaseTool):
         freshness = arguments.get("freshness")
 
         if self._provider == "brave" and self._api_key:
-            return await self._search_brave(
-                query, num_results, country=country, freshness=freshness
-            )
+            return await self._search_brave(query, num_results, country=country, freshness=freshness)
 
         return ToolResult.text(
-            f"Web search not configured. Provider: {self._provider}. "
-            "Set a search API key in the configuration.",
+            f"Web search not configured. Provider: {self._provider}. Set a search API key in the configuration.",
             is_error=True,
         )
 

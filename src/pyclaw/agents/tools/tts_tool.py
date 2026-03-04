@@ -121,7 +121,7 @@ class ImageTool(BaseTool):
             return ToolResult.text(f"Not a recognized image type: {mime}", is_error=True)
 
         data = p.read_bytes()
-        b64 = base64.b64encode(data).decode("ascii")
+        base64.b64encode(data).decode("ascii")
 
         return ToolResult.text(
             f"Image loaded: {p.name} ({len(data)} bytes, {mime}). "

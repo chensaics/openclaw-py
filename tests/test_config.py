@@ -4,9 +4,9 @@ import json
 import tempfile
 from pathlib import Path
 
-from pyclaw.config.schema import PyClawConfig, ModelsConfig, ModelProviderConfig
 from pyclaw.config.io import load_config, save_config
-from pyclaw.config.paths import resolve_state_dir, resolve_config_path
+from pyclaw.config.paths import resolve_state_dir
+from pyclaw.config.schema import ModelProviderConfig, ModelsConfig, PyClawConfig
 
 
 def test_empty_config():

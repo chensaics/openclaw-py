@@ -3,31 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import json
-import tempfile
 import time
 from pathlib import Path
-from unittest.mock import AsyncMock
 
 import pytest
-
-# Phase 32a: Cron advanced
-from pyclaw.cron.advanced import (
-    CronTaskConfig,
-    IsolatedAgentRunner,
-    ReaperConfig,
-    SessionEntry,
-    SessionReaper,
-    SkillSnapshot,
-    TaskExecution,
-    TaskHandler,
-    TaskState,
-    TimeoutPolicy,
-    apply_stagger,
-    build_webhook_payload,
-    capture_skill_snapshot,
-    compute_stagger_offsets,
-)
 
 # Phase 32b: TTS extended
 from pyclaw.agents.tts_extended import (
@@ -43,10 +22,35 @@ from pyclaw.agents.tts_extended import (
     should_synthesize,
 )
 
+# Phase 32a: Cron advanced
+from pyclaw.cron.advanced import (
+    CronTaskConfig,
+    IsolatedAgentRunner,
+    ReaperConfig,
+    SessionEntry,
+    SessionReaper,
+    TaskExecution,
+    TaskState,
+    TimeoutPolicy,
+    apply_stagger,
+    build_webhook_payload,
+    capture_skill_snapshot,
+    compute_stagger_offsets,
+)
+
+# Phase 32e: Session cost
+from pyclaw.infra.session_cost import (
+    SessionCost,
+    TokenUsage,
+    UsageAggregator,
+    format_cost,
+    format_session_cost_summary,
+    format_tokens,
+)
+
 # Phase 32c: Logging advanced
 from pyclaw.logging.advanced import (
     DiagnosticSessionState,
-    ParsedLogLine,
     RotationConfig,
     filter_log_lines,
     parse_log_line,
@@ -65,21 +69,10 @@ from pyclaw.security.ssrf import (
     is_private_ip,
 )
 
-# Phase 32e: Session cost
-from pyclaw.infra.session_cost import (
-    ModelPricing,
-    SessionCost,
-    TokenUsage,
-    UsageAggregator,
-    format_cost,
-    format_session_cost_summary,
-    format_tokens,
-)
-
-
 # =====================================================================
 # Phase 32a: Cron Advanced
 # =====================================================================
+
 
 class TestCronStagger:
     def test_compute_offsets(self) -> None:
@@ -156,22 +149,26 @@ class TestIsolatedAgentRunner:
 class TestSessionReaper:
     def test_track_and_reap(self) -> None:
         reaper = SessionReaper(ReaperConfig(max_idle_s=1.0, max_age_s=100.0))
-        reaper.track(SessionEntry(
-            session_id="s1",
-            created_at=time.time(),
-            last_active_at=time.time() - 2.0,
-        ))
+        reaper.track(
+            SessionEntry(
+                session_id="s1",
+                created_at=time.time(),
+                last_active_at=time.time() - 2.0,
+            )
+        )
         assert reaper.tracked_count == 1
         reaped = reaper.reap()
         assert "s1" in reaped
 
     def test_no_reap_active(self) -> None:
         reaper = SessionReaper(ReaperConfig(max_idle_s=300.0))
-        reaper.track(SessionEntry(
-            session_id="s2",
-            created_at=time.time(),
-            last_active_at=time.time(),
-        ))
+        reaper.track(
+            SessionEntry(
+                session_id="s2",
+                created_at=time.time(),
+                last_active_at=time.time(),
+            )
+        )
         reaped = reaper.reap()
         assert len(reaped) == 0
 
@@ -188,6 +185,7 @@ class TestWebhookPayload:
 # =====================================================================
 # Phase 32b: TTS Extended
 # =====================================================================
+
 
 class TestTTSProviders:
     def test_elevenlabs_voices(self) -> None:
@@ -271,6 +269,7 @@ class TestTTSHelpers:
 # Phase 32c: Logging Advanced
 # =====================================================================
 
+
 class TestRedaction:
     def test_redact_email(self) -> None:
         result = redact_identifiers("Contact user@example.com for info")
@@ -350,9 +349,13 @@ class TestLogParsing:
 class TestDiagnosticState:
     def test_to_log_dict(self) -> None:
         state = DiagnosticSessionState(
-            session_id="s1", agent_id="a1", model="gpt-4o",
-            turn_count=5, tool_call_count=3,
-            started_at=1000.0, last_activity_at=1060.0,
+            session_id="s1",
+            agent_id="a1",
+            model="gpt-4o",
+            turn_count=5,
+            tool_call_count=3,
+            started_at=1000.0,
+            last_activity_at=1060.0,
         )
         d = state.to_log_dict()
         assert d["session_id"] == "s1"
@@ -362,6 +365,7 @@ class TestDiagnosticState:
 # =====================================================================
 # Phase 32d: SSRF
 # =====================================================================
+
 
 class TestSSRF:
     def test_private_ip(self) -> None:
@@ -412,6 +416,7 @@ class TestSSRF:
 # =====================================================================
 # Phase 32e: Session Cost
 # =====================================================================
+
 
 class TestSessionCost:
     def test_basic_cost(self) -> None:

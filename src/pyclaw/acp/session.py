@@ -67,9 +67,7 @@ class AcpSessionStore:
 
     def _evict_if_needed(self) -> None:
         now = time.time()
-        expired = [
-            sid for sid, s in self._sessions.items() if (now - s.last_activity) > self._idle_ttl
-        ]
+        expired = [sid for sid, s in self._sessions.items() if (now - s.last_activity) > self._idle_ttl]
         for sid in expired:
             del self._sessions[sid]
 

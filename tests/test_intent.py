@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyclaw.agents.intent import IntentAnalyzer, IntentResult, UserIntent
+from pyclaw.agents.intent import IntentAnalyzer, UserIntent
 
 
 @pytest.fixture

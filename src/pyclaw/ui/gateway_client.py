@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 import uuid
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ class GatewayClient:
         try:
             await self._ws.send(json.dumps(frame))
             result = await asyncio.wait_for(fut, timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._pending.pop(req_id, None)
             raise GatewayError("timeout", f"RPC call '{method}' timed out")
         except Exception:
@@ -248,9 +248,7 @@ class GatewayClient:
         while self._should_reconnect and not self._connected:
             logger.info("Reconnecting in %.1fs ...", self._reconnect_delay)
             await asyncio.sleep(self._reconnect_delay)
-            self._reconnect_delay = min(
-                self._reconnect_delay * 2, _RECONNECT_MAX_DELAY
-            )
+            self._reconnect_delay = min(self._reconnect_delay * 2, _RECONNECT_MAX_DELAY)
             try:
                 await self.connect()
                 if self._connected:
@@ -260,6 +258,7 @@ class GatewayClient:
 
 
 # Convenience helpers for common RPC patterns
+
 
 async def chat_send(
     client: GatewayClient,
@@ -280,8 +279,7 @@ async def chat_send(
 
     Returns the final RPC response payload.
     """
-    done_event = asyncio.Event()
-    final_result: dict[str, Any] = {}
+    asyncio.Event()
 
     async def _on_delta(payload: Any) -> None:
         if on_delta and payload and payload.get("delta"):

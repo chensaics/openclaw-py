@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
@@ -11,13 +11,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def create_cron_history_handlers() -> dict[str, "MethodHandler"]:
-
-    async def handle_cron_history(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
-        from pyclaw.cron.history import HistoryStore
+def create_cron_history_handlers() -> dict[str, MethodHandler]:
+    async def handle_cron_history(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.config.paths import resolve_state_dir
+        from pyclaw.cron.history import HistoryStore
 
         persist_path = resolve_state_dir() / "cron_history.json"
         store = HistoryStore(persist_path=persist_path)
@@ -26,15 +23,15 @@ def create_cron_history_handlers() -> dict[str, "MethodHandler"]:
         job_id = p.get("jobId")
         limit = min(int(p.get("limit", 50)), 200)
 
-        if job_id:
-            records = store.list_for_job(job_id, limit=limit)
-        else:
-            records = store.list_recent(limit=limit)
+        records = store.list_for_job(job_id, limit=limit) if job_id else store.list_recent(limit=limit)
 
-        await conn.send_ok("cron.history", {
-            "records": [r.to_dict() for r in records],
-            "count": len(records),
-        })
+        await conn.send_ok(
+            "cron.history",
+            {
+                "records": [r.to_dict() for r in records],
+                "count": len(records),
+            },
+        )
 
     return {
         "cron.history": handle_cron_history,

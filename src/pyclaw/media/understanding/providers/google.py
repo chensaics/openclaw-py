@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import logging
-from typing import Any
 
 from pyclaw.media.understanding.types import (
     AudioTranscriptionRequest,
@@ -42,10 +41,12 @@ class GoogleMediaProvider:
         model = genai.GenerativeModel(request.model or "gemini-2.0-flash")  # type: ignore[attr-defined]
         b64 = base64.b64encode(request.buffer).decode("ascii")
 
-        response = await model.generate_content_async([
-            request.prompt or "Describe this image in detail.",
-            {"mime_type": request.mime, "data": b64},
-        ])
+        response = await model.generate_content_async(
+            [
+                request.prompt or "Describe this image in detail.",
+                {"mime_type": request.mime, "data": b64},
+            ]
+        )
 
         return ImageDescriptionResult(
             text=response.text or "",
@@ -64,10 +65,12 @@ class GoogleMediaProvider:
         model = genai.GenerativeModel(request.model or "gemini-2.0-flash")  # type: ignore[attr-defined]
         b64 = base64.b64encode(request.buffer).decode("ascii")
 
-        response = await model.generate_content_async([
-            request.prompt or "Transcribe this audio recording accurately.",
-            {"mime_type": request.mime, "data": b64},
-        ])
+        response = await model.generate_content_async(
+            [
+                request.prompt or "Transcribe this audio recording accurately.",
+                {"mime_type": request.mime, "data": b64},
+            ]
+        )
 
         return AudioTranscriptionResult(
             text=response.text or "",
@@ -86,10 +89,12 @@ class GoogleMediaProvider:
         model = genai.GenerativeModel(request.model or "gemini-2.0-flash")  # type: ignore[attr-defined]
         b64 = base64.b64encode(request.buffer).decode("ascii")
 
-        response = await model.generate_content_async([
-            request.prompt or "Describe this video in detail.",
-            {"mime_type": request.mime, "data": b64},
-        ])
+        response = await model.generate_content_async(
+            [
+                request.prompt or "Describe this video in detail.",
+                {"mime_type": request.mime, "data": b64},
+            ]
+        )
 
         return VideoDescriptionResult(
             text=response.text or "",

@@ -8,9 +8,7 @@ if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection
 
 
-async def handle_models_list(
-    params: dict[str, Any] | None, conn: GatewayConnection
-) -> None:
+async def handle_models_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
     """Return the model catalog as a list."""
     from pyclaw.agents.model_catalog import ModelCatalog
 
@@ -41,9 +39,7 @@ async def handle_models_list(
     )
 
 
-async def handle_models_providers(
-    params: dict[str, Any] | None, conn: GatewayConnection
-) -> None:
+async def handle_models_providers(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
     """Return available providers."""
     _ = params
     from pyclaw.agents.model_catalog import ModelCatalog

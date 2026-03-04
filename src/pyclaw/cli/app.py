@@ -20,7 +20,11 @@ def _version_callback(value: bool) -> None:
 @app.callback()
 def main(
     version: bool = typer.Option(
-        False, "--version", "-v", callback=_version_callback, is_eager=True,
+        False,
+        "--version",
+        "-v",
+        callback=_version_callback,
+        is_eager=True,
         help="Show version and exit.",
     ),
 ) -> None:
@@ -30,12 +34,15 @@ def main(
 @app.command()
 def setup(
     wizard: bool = typer.Option(False, "--wizard", help="Interactive setup wizard."),
-    non_interactive: bool = typer.Option(False, "--non-interactive", help="Non-interactive setup (use defaults/env vars)."),
+    non_interactive: bool = typer.Option(
+        False, "--non-interactive", help="Non-interactive setup (use defaults/env vars)."
+    ),
     accept_risk: bool = typer.Option(False, "--accept-risk", help="Accept risk for non-interactive setup."),
     reset: str | None = typer.Option(None, "--reset", help="Reset scope: 'config', 'credentials', or 'full'."),
 ) -> None:
     """Initialize configuration and workspace."""
     from pyclaw.cli.commands.setup import setup_command
+
     setup_command(wizard=wizard, non_interactive=non_interactive, accept_risk=accept_risk, reset=reset)
 
 
@@ -45,6 +52,7 @@ def doctor(
 ) -> None:
     """Run health checks and diagnostics."""
     from pyclaw.cli.commands.doctor import doctor_command
+
     doctor_command(non_interactive=non_interactive)
 
 
@@ -68,6 +76,7 @@ def agent(
 ) -> None:
     """Run a single agent turn with the given message."""
     from pyclaw.cli.commands.agent import agent_command
+
     agent_command(
         message=message,
         provider=provider,
@@ -102,6 +111,7 @@ def gateway_root(
     if ctx.invoked_subcommand:
         return
     from pyclaw.cli.commands.gateway_cmd import gateway_run_command
+
     gateway_run_command(port=port, bind=bind, auth_token=auth_token)
 
 
@@ -113,6 +123,7 @@ def gateway_run_cmd(
 ) -> None:
     """Start the pyclaw gateway server."""
     from pyclaw.cli.commands.gateway_cmd import gateway_run_command
+
     gateway_run_command(port=port, bind=bind, auth_token=auth_token)
 
 
@@ -128,9 +139,15 @@ def gateway_status_cmd(
 ) -> None:
     """Show gateway service + probe status."""
     from pyclaw.cli.commands.gateway_cmd import gateway_status_command
+
     gateway_status_command(
-        url=url, token=token, password=password,
-        timeout_ms=timeout, no_probe=no_probe, deep=deep, output_json=output_json,
+        url=url,
+        token=token,
+        password=password,
+        timeout_ms=timeout,
+        no_probe=no_probe,
+        deep=deep,
+        output_json=output_json,
     )
 
 
@@ -144,6 +161,7 @@ def gateway_probe_cmd(
 ) -> None:
     """Probe gateway connectivity."""
     from pyclaw.cli.commands.gateway_cmd import gateway_probe_command
+
     gateway_probe_command(url=url, token=token, password=password, timeout_ms=timeout, output_json=output_json)
 
 
@@ -159,9 +177,15 @@ def gateway_call_cmd(
 ) -> None:
     """Make a low-level RPC call to the gateway."""
     from pyclaw.cli.commands.gateway_cmd import gateway_call_command
+
     gateway_call_command(
-        method=method, params_json=params, url=url,
-        token=token, password=password, timeout_ms=timeout, output_json=output_json,
+        method=method,
+        params_json=params,
+        url=url,
+        token=token,
+        password=password,
+        timeout_ms=timeout,
+        output_json=output_json,
     )
 
 
@@ -172,6 +196,7 @@ def gateway_discover_cmd(
 ) -> None:
     """Discover gateways on the local network."""
     from pyclaw.cli.commands.gateway_cmd import gateway_discover_command
+
     gateway_discover_command(timeout_ms=timeout, output_json=output_json)
 
 
@@ -182,6 +207,7 @@ def ui(
 ) -> None:
     """Launch the pyclaw graphical interface."""
     from pyclaw.ui.app import run_app, run_web
+
     if web:
         typer.echo(f"Starting pyclaw web UI on port {port}")
         run_web(port=port)
@@ -198,6 +224,7 @@ def status(
 ) -> None:
     """Show channel and gateway status."""
     from pyclaw.cli.commands.status import status_command
+
     status_command(output_json=output_json, deep=deep, all_info=all_info, usage=usage)
 
 
@@ -211,6 +238,7 @@ app.add_typer(config_app)
 def config_get(key: str = typer.Argument(..., help="Dotted config key (e.g. models.default).")) -> None:
     """Get a configuration value."""
     from pyclaw.cli.commands.config_cmd import config_get as _get
+
     _get(key)
 
 
@@ -221,6 +249,7 @@ def config_set(
 ) -> None:
     """Set a configuration value."""
     from pyclaw.cli.commands.config_cmd import config_set as _set
+
     _set(key, value)
 
 
@@ -228,6 +257,7 @@ def config_set(
 def config_list() -> None:
     """List all configuration values."""
     from pyclaw.cli.commands.config_cmd import config_list as _list
+
     _list()
 
 
@@ -235,6 +265,7 @@ def config_list() -> None:
 def config_validate_cmd() -> None:
     """Validate the configuration file."""
     from pyclaw.cli.commands.config_cmd import config_validate
+
     config_validate()
 
 
@@ -248,6 +279,7 @@ app.add_typer(agents_app)
 def agents_list_cmd() -> None:
     """List all agents."""
     from pyclaw.cli.commands.agents_cmd import agents_list
+
     agents_list()
 
 
@@ -258,6 +290,7 @@ def agents_add_cmd(
 ) -> None:
     """Create a new agent."""
     from pyclaw.cli.commands.agents_cmd import agents_add
+
     agents_add(agent_id, model)
 
 
@@ -268,6 +301,7 @@ def agents_remove_cmd(
 ) -> None:
     """Remove an agent."""
     from pyclaw.cli.commands.agents_cmd import agents_remove
+
     agents_remove(agent_id, force)
 
 
@@ -281,6 +315,7 @@ app.add_typer(channels_app)
 def channels_list_cmd() -> None:
     """List configured channels."""
     from pyclaw.cli.commands.channels_cmd import channels_list
+
     channels_list()
 
 
@@ -288,6 +323,7 @@ def channels_list_cmd() -> None:
 def channels_status_cmd() -> None:
     """Show channel status."""
     from pyclaw.cli.commands.channels_cmd import channels_status
+
     channels_status()
 
 
@@ -299,6 +335,7 @@ def channels_add_cmd(
 ) -> None:
     """Add channel configuration (basic)."""
     from pyclaw.cli.commands.channels_cmd import channels_add
+
     channels_add(channel=channel, account=account, name=name)
 
 
@@ -309,6 +346,7 @@ def channels_remove_cmd(
 ) -> None:
     """Remove channel configuration (basic)."""
     from pyclaw.cli.commands.channels_cmd import channels_remove
+
     channels_remove(channel=channel, account=account)
 
 
@@ -327,6 +365,7 @@ def auth_login_cmd(
 ) -> None:
     """Add or update an auth profile (API key, OAuth, or device-code)."""
     from pyclaw.cli.commands.auth_cmd import auth_login
+
     auth_login(provider, api_key, profile_id, method=method)
 
 
@@ -337,6 +376,7 @@ def auth_logout_cmd(
 ) -> None:
     """Remove an auth profile."""
     from pyclaw.cli.commands.auth_cmd import auth_logout
+
     auth_logout(profile_id, provider)
 
 
@@ -344,6 +384,7 @@ def auth_logout_cmd(
 def auth_status_cmd() -> None:
     """Show auth profile status."""
     from pyclaw.cli.commands.auth_cmd import auth_status
+
     auth_status()
 
 
@@ -359,6 +400,7 @@ def models_list_cmd(
 ) -> None:
     """List known models."""
     from pyclaw.cli.commands.models_cmd import models_list_command
+
     models_list_command(output_json=output_json)
 
 
@@ -369,6 +411,7 @@ def models_status_cmd(
 ) -> None:
     """Show model/auth status."""
     from pyclaw.cli.commands.models_cmd import models_status_command
+
     models_status_command(output_json=output_json, probe=probe)
 
 
@@ -378,6 +421,7 @@ def models_scan_cmd(
 ) -> None:
     """Scan configured providers for model availability."""
     from pyclaw.cli.commands.models_cmd import models_scan_command
+
     models_scan_command(output_json=output_json)
 
 
@@ -464,6 +508,7 @@ app.add_typer(devices_app)
 def devices_list_cmd() -> None:
     """List paired devices."""
     from pyclaw.cli.commands.devices_cmd import devices_list
+
     devices_list()
 
 
@@ -474,6 +519,7 @@ def devices_approve_cmd(
 ) -> None:
     """Approve a pairing code."""
     from pyclaw.cli.commands.devices_cmd import devices_approve
+
     devices_approve(channel, code)
 
 
@@ -484,6 +530,7 @@ def devices_remove_cmd(
 ) -> None:
     """Remove a paired device."""
     from pyclaw.cli.commands.devices_cmd import devices_remove
+
     devices_remove(channel, sender_id)
 
 
@@ -503,10 +550,12 @@ def message_send_cmd(
 ) -> None:
     """Send a message through the gateway."""
     from pyclaw.cli.commands.message_cmd import message_send
+
     message_send(text, channel, recipient, gateway_url, auth_token)
 
 
 # ─── Pair shortcut ────────────────────────────────────────────────────────
+
 
 @app.command()
 def pair(
@@ -519,10 +568,12 @@ def pair(
         typer.echo(f"Unknown action: {action}. Use 'approve'.", err=True)
         raise typer.Exit(1)
     from pyclaw.cli.commands.devices_cmd import devices_approve
+
     if not channel:
         typer.echo("Approving code across all channels...")
-        from pyclaw.pairing.store import approve_pairing_code
         from pyclaw.config.paths import resolve_credentials_dir
+        from pyclaw.pairing.store import approve_pairing_code
+
         creds_dir = resolve_credentials_dir()
         if creds_dir.exists():
             for path in creds_dir.glob("*-pairing.json"):
@@ -550,6 +601,7 @@ def service_install_cmd(
 ) -> None:
     """Install gateway as a system service."""
     from pyclaw.cli.commands.service_cmd import service_install
+
     service_install(label, port, bind)
 
 
@@ -559,6 +611,7 @@ def service_uninstall_cmd(
 ) -> None:
     """Uninstall the gateway service."""
     from pyclaw.cli.commands.service_cmd import service_uninstall
+
     service_uninstall(label)
 
 
@@ -568,6 +621,7 @@ def service_status_cmd(
 ) -> None:
     """Show gateway service status."""
     from pyclaw.cli.commands.service_cmd import service_status
+
     service_status(label)
 
 
@@ -577,6 +631,7 @@ def service_restart_cmd(
 ) -> None:
     """Restart the gateway service."""
     from pyclaw.cli.commands.service_cmd import service_restart
+
     service_restart(label)
 
 
@@ -586,10 +641,12 @@ def service_stop_cmd(
 ) -> None:
     """Stop the gateway service."""
     from pyclaw.cli.commands.service_cmd import service_stop
+
     service_stop(label)
 
 
 # ─── Node Host command ───────────────────────────────────────────────────
+
 
 @app.command()
 def node(
@@ -599,6 +656,7 @@ def node(
 ) -> None:
     """Start a headless node host."""
     from pyclaw.cli.commands.node_cmd import node_run
+
     node_run(gateway_url, auth_token, node_id)
 
 
@@ -854,7 +912,9 @@ def browser_root(
     browser_profile: str = typer.Option("pyclaw", "--browser-profile", help="Browser profile name."),
     url: str = typer.Option("ws://127.0.0.1:18789", "--url", help="Gateway WebSocket URL."),
     token: str | None = typer.Option(None, "--token", envvar="PYCLAW_AUTH_TOKEN", help="Gateway auth token."),
-    password: str | None = typer.Option(None, "--password", envvar="PYCLAW_GATEWAY_PASSWORD", help="Gateway auth password."),
+    password: str | None = typer.Option(
+        None, "--password", envvar="PYCLAW_GATEWAY_PASSWORD", help="Gateway auth password."
+    ),
     timeout: int = typer.Option(10000, "--timeout", help="Gateway request timeout in ms."),
     output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
 ) -> None:
@@ -1162,6 +1222,7 @@ def security_audit_cmd(
 ) -> None:
     """Audit configuration for security weaknesses."""
     from pyclaw.cli.commands.security_cmd import security_audit_command
+
     security_audit_command(deep=deep, fix=fix, output_json=output_json)
 
 
@@ -1190,6 +1251,7 @@ def mcp_status_cmd(
 ) -> None:
     """Show status of configured MCP servers."""
     from pyclaw.cli.commands.mcp_cmd import mcp_status_command
+
     mcp_status_command(output_json=output_json)
 
 
@@ -1199,6 +1261,7 @@ def mcp_list_tools_cmd(
 ) -> None:
     """List tools from connected MCP servers."""
     from pyclaw.cli.commands.mcp_cmd import mcp_list_tools_command
+
     mcp_list_tools_command(server=server)
 
 
@@ -1212,6 +1275,7 @@ app.add_typer(skills_app)
 def skills_list_cmd() -> None:
     """List installed skills."""
     from pyclaw.cli.commands.skills_cmd import skills_list_command
+
     skills_list_command()
 
 
@@ -1221,6 +1285,7 @@ def skills_search_cmd(
 ) -> None:
     """Search for skills in the ClawHub marketplace."""
     from pyclaw.cli.commands.skills_cmd import skills_search_command
+
     skills_search_command(query=query)
 
 
@@ -1231,6 +1296,7 @@ def skills_install_cmd(
 ) -> None:
     """Install a skill from ClawHub or a URL."""
     from pyclaw.cli.commands.skills_cmd import skills_install_command
+
     skills_install_command(name=name, force=force)
 
 
@@ -1240,6 +1306,7 @@ def skills_remove_cmd(
 ) -> None:
     """Remove an installed skill."""
     from pyclaw.cli.commands.skills_cmd import skills_remove_command
+
     skills_remove_command(name=name)
 
 
@@ -1255,6 +1322,7 @@ def workspace_sync_cmd(
 ) -> None:
     """Sync workspace templates (create missing files)."""
     from pyclaw.cli.commands.workspace_cmd import workspace_sync_command
+
     workspace_sync_command(force=force)
 
 
@@ -1262,16 +1330,19 @@ def workspace_sync_cmd(
 def workspace_diff_cmd() -> None:
     """Show differences between workspace files and templates."""
     from pyclaw.cli.commands.workspace_cmd import workspace_diff_command
+
     workspace_diff_command()
 
 
 # ─── Backup subcommands ──────────────────────────────────────────────
 
 from pyclaw.cli.commands.backup_cmd import backup_app
+
 app.add_typer(backup_app)
 
 
 # ─── Uninstall command ───────────────────────────────────────────────
+
 
 @app.command()
 def uninstall(

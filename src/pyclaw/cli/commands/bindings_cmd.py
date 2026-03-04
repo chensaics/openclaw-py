@@ -11,7 +11,6 @@ import typer
 
 from pyclaw.routing.bindings import (
     AgentBinding,
-    AgentBindingMatch,
     apply_agent_bindings,
     binding_from_dict,
     binding_to_dict,
@@ -37,6 +36,7 @@ def list_bindings(
 
     if agent_id:
         from pyclaw.routing.session_key import normalize_agent_id
+
         norm = normalize_agent_id(agent_id)
         bindings = [b for b in bindings if normalize_agent_id(b.agent_id) == norm]
 
@@ -72,8 +72,7 @@ def bind(
     if result.conflicts:
         for c in result.conflicts:
             typer.echo(
-                f"Conflict: {describe_binding(c['binding'])} — "
-                f"already bound to {c['existingAgentId']}",
+                f"Conflict: {describe_binding(c['binding'])} — already bound to {c['existingAgentId']}",
                 err=True,
             )
         raise typer.Exit(1)
@@ -110,9 +109,7 @@ def unbind(
     existing = [binding_from_dict(b) for b in raw.get("bindings", []) if isinstance(b, dict)]
 
     specs = [parse_binding_spec(spec)] if spec else []
-    remaining, removed = remove_agent_bindings(
-        existing, specs, agent_id=agent_id, remove_all=all_bindings
-    )
+    remaining, removed = remove_agent_bindings(existing, specs, agent_id=agent_id, remove_all=all_bindings)
 
     if not removed:
         typer.echo("No matching bindings found.")

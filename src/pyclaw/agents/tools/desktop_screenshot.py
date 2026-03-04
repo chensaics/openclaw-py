@@ -51,7 +51,8 @@ class DesktopScreenshotTool(BaseTool):
 
         if not path:
             path = os.path.join(
-                tempfile.gettempdir(), f"desktop_screenshot_{int(time.time())}.png",
+                tempfile.gettempdir(),
+                f"desktop_screenshot_{int(time.time())}.png",
             )
         if not path.lower().endswith(".png"):
             path += ".png"
@@ -84,7 +85,11 @@ class DesktopScreenshotTool(BaseTool):
         cmd = ["screencapture", "-x", "-w", path]
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False,
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
             )
             if result.returncode != 0:
                 stderr = (result.stderr or "").strip() or "Unknown error"

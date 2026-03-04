@@ -6,8 +6,6 @@ import json
 import os
 import platform
 import sys
-from pathlib import Path
-from typing import Any
 
 import typer
 
@@ -85,6 +83,7 @@ def doctor_command(*, non_interactive: bool = False) -> None:
 
 def _check_system_info(info: list[str]) -> None:
     from pyclaw import __version__
+
     info.append(f"pyclaw v{__version__}")
     info.append(f"Python {sys.version.split()[0]}")
     info.append(f"Platform: {platform.system()} {platform.release()} ({platform.machine()})")
@@ -127,9 +126,8 @@ def _check_config(issues: list[str], warnings: list[str], info: list[str]) -> No
             warnings.append(f"Deprecated top-level config key: '{key}' (move to models.providers)")
 
     # Gateway config
-    if cfg.gateway:
-        if cfg.gateway.port and cfg.gateway.port != 18789:
-            info.append(f"Custom gateway port: {cfg.gateway.port}")
+    if cfg.gateway and cfg.gateway.port and cfg.gateway.port != 18789:
+        info.append(f"Custom gateway port: {cfg.gateway.port}")
 
 
 def _check_state_directory(issues: list[str], warnings: list[str], info: list[str]) -> None:
@@ -204,7 +202,9 @@ def _check_sessions(issues: list[str], warnings: list[str], info: list[str]) -> 
 
     info.append(f"Agents: {agent_count}, Sessions: {session_count}")
     if stale_locks > 0:
-        warnings.append(f"Found {stale_locks} stale session lock(s). Consider running 'pyclaw setup --reset credentials'")
+        warnings.append(
+            f"Found {stale_locks} stale session lock(s). Consider running 'pyclaw setup --reset credentials'"
+        )
 
 
 def _check_memory(issues: list[str], warnings: list[str], info: list[str]) -> None:
@@ -229,6 +229,7 @@ def _check_gateway(issues: list[str], warnings: list[str], info: list[str]) -> N
             pass
 
     import urllib.request
+
     try:
         resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
         if resp.status == 200:

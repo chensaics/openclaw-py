@@ -4,57 +4,48 @@ from __future__ import annotations
 
 import pytest
 
-from pyclaw.agents.providers.openai_compat import (
-    ChatMessage,
-    CompletionChunk,
-    ModelMapping,
-    OpenAICompatConfig,
-    OpenAICompatProvider,
-    StreamFormat,
-    fireworks_config,
-    groq_config,
-    openrouter_config,
-    perplexity_config,
-    together_config,
-    PRECONFIGURED_PROVIDERS,
+from pyclaw.agents.providers.bedrock import (
+    BEDROCK_MODELS,
+    BedrockConfig,
+    BedrockProvider,
+    ConverseMessage,
 )
 from pyclaw.agents.providers.cn_providers import (
     ALL_CN_PROVIDERS,
-    DEEPSEEK_SPEC,
     MOONSHOT_SPEC,
-    QWEN_SPEC,
-    ZHIPU_SPEC,
     build_cn_config,
     get_cn_provider_models,
     list_cn_providers,
 )
 from pyclaw.agents.providers.oauth_providers import (
     CopilotDeviceFlow,
-    DeviceCodeResponse,
     MiniMaxOAuthConfig,
     MiniMaxOAuthFlow,
-    OAuthTokens,
     QwenOAuthConfig,
     QwenOAuthFlow,
     generate_code_challenge,
     generate_code_verifier,
 )
+from pyclaw.agents.providers.openai_compat import (
+    PRECONFIGURED_PROVIDERS,
+    ChatMessage,
+    ModelMapping,
+    OpenAICompatConfig,
+    OpenAICompatProvider,
+    fireworks_config,
+    groq_config,
+    openrouter_config,
+    perplexity_config,
+    together_config,
+)
 from pyclaw.agents.providers.registry import (
-    ProviderInfo,
     ProviderRegistry,
     activate_provider,
     create_default_registry,
 )
-from pyclaw.agents.providers.bedrock import (
-    BEDROCK_MODELS,
-    BedrockConfig,
-    BedrockProvider,
-    ConverseMessage,
-    ConverseStreamChunk,
-)
-
 
 # ===== OpenAI-Compat Provider =====
+
 
 class TestOpenAICompatProvider:
     def test_create_provider(self) -> None:
@@ -197,6 +188,7 @@ class TestPreconfiguredProviders:
 
 # ===== Chinese Providers =====
 
+
 class TestCNProviders:
     def test_all_specs_exist(self) -> None:
         assert len(ALL_CN_PROVIDERS) >= 9
@@ -240,6 +232,7 @@ class TestCNProviders:
 
 # ===== OAuth Providers =====
 
+
 class TestPKCE:
     def test_verifier_length(self) -> None:
         v = generate_code_verifier(64)
@@ -274,11 +267,13 @@ class TestMiniMaxOAuth:
     def test_parse_token(self) -> None:
         config = MiniMaxOAuthConfig(client_id="test")
         flow = MiniMaxOAuthFlow(config)
-        tokens = flow.parse_token_response({
-            "access_token": "at-123",
-            "refresh_token": "rt-456",
-            "expires_in": 3600,
-        })
+        tokens = flow.parse_token_response(
+            {
+                "access_token": "at-123",
+                "refresh_token": "rt-456",
+                "expires_in": 3600,
+            }
+        )
         assert tokens.access_token == "at-123"
         assert tokens.refresh_token == "rt-456"
         assert not tokens.is_expired
@@ -314,23 +309,27 @@ class TestCopilotDeviceFlow:
 
     def test_parse_device_code(self) -> None:
         flow = CopilotDeviceFlow()
-        resp = flow.parse_device_code_response({
-            "device_code": "dc-123",
-            "user_code": "ABCD-1234",
-            "verification_uri": "https://github.com/login/device",
-            "expires_in": 900,
-            "interval": 5,
-        })
+        resp = flow.parse_device_code_response(
+            {
+                "device_code": "dc-123",
+                "user_code": "ABCD-1234",
+                "verification_uri": "https://github.com/login/device",
+                "expires_in": 900,
+                "interval": 5,
+            }
+        )
         assert resp.user_code == "ABCD-1234"
         assert resp.device_code == "dc-123"
 
     def test_poll_request(self) -> None:
         flow = CopilotDeviceFlow()
-        flow.parse_device_code_response({
-            "device_code": "dc-123",
-            "user_code": "ABCD",
-            "verification_uri": "https://github.com/login/device",
-        })
+        flow.parse_device_code_response(
+            {
+                "device_code": "dc-123",
+                "user_code": "ABCD",
+                "verification_uri": "https://github.com/login/device",
+            }
+        )
         req = flow.build_token_poll_request()
         assert req["device_code"] == "dc-123"
         assert req["grant_type"] == "urn:ietf:params:oauth:grant-type:device_code"
@@ -359,6 +358,7 @@ class TestCopilotDeviceFlow:
 
 
 # ===== Provider Registry =====
+
 
 class TestProviderRegistry:
     def test_register_and_get(self) -> None:
@@ -416,6 +416,7 @@ class TestProviderRegistry:
 
 # ===== Bedrock Provider =====
 
+
 class TestBedrockProvider:
     def test_models_exist(self) -> None:
         assert len(BEDROCK_MODELS) >= 7
@@ -434,7 +435,8 @@ class TestBedrockProvider:
         provider = BedrockProvider()
         messages = [ConverseMessage(role="user", content=[{"text": "Hello"}])]
         body = provider.build_converse_request(
-            messages, "claude-3.5-sonnet",
+            messages,
+            "claude-3.5-sonnet",
             system_prompt="Be helpful",
             max_tokens=1024,
             temperature=0.5,
@@ -491,11 +493,13 @@ class TestBedrockProvider:
         assert all("claude" in m or "opus" in m for m in anthropic)
 
     def test_boto3_config(self) -> None:
-        provider = BedrockProvider(BedrockConfig(
-            region="us-west-2",
-            access_key_id="AKIA...",
-            secret_access_key="secret",
-        ))
+        provider = BedrockProvider(
+            BedrockConfig(
+                region="us-west-2",
+                access_key_id="AKIA...",
+                secret_access_key="secret",
+            )
+        )
         cfg = provider.get_boto3_config()
         assert cfg["region_name"] == "us-west-2"
         assert cfg["aws_access_key_id"] == "AKIA..."

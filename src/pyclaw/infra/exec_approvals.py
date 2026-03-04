@@ -5,10 +5,8 @@ Ported from ``src/infra/exec-approvals.ts``.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -83,12 +81,14 @@ def _parse_agent_config(data: dict[str, Any]) -> AgentExecConfig:
     )
     for entry in data.get("allowlist", []):
         if isinstance(entry, dict):
-            cfg.allowlist.append(ExecAllowlistEntry(
-                pattern=entry.get("pattern", ""),
-                last_used_at=entry.get("lastUsedAt"),
-                last_used_command=entry.get("lastUsedCommand"),
-                last_resolved_path=entry.get("lastResolvedPath"),
-            ))
+            cfg.allowlist.append(
+                ExecAllowlistEntry(
+                    pattern=entry.get("pattern", ""),
+                    last_used_at=entry.get("lastUsedAt"),
+                    last_used_command=entry.get("lastUsedCommand"),
+                    last_resolved_path=entry.get("lastResolvedPath"),
+                )
+            )
         elif isinstance(entry, str):
             cfg.allowlist.append(ExecAllowlistEntry(pattern=entry))
     return cfg
@@ -176,11 +176,13 @@ def add_allowlist_entry(
     if cfg is None:
         cfg = AgentExecConfig()
         approvals.agents[agent_id] = cfg
-    cfg.allowlist.append(ExecAllowlistEntry(
-        pattern=pattern,
-        last_used_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        last_used_command=command,
-    ))
+    cfg.allowlist.append(
+        ExecAllowlistEntry(
+            pattern=pattern,
+            last_used_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            last_used_command=command,
+        )
+    )
     save_exec_approvals(approvals, state_dir)
 
 

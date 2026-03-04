@@ -41,6 +41,7 @@ class PluginLoader:
         loaded: list[PluginInfo] = []
         try:
             from importlib.metadata import entry_points
+
             eps = entry_points(group="pyclaw.plugins")
         except Exception:
             return loaded

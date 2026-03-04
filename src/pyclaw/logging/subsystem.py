@@ -7,18 +7,17 @@ named logger with a deterministic color for easy visual identification.
 from __future__ import annotations
 
 import logging
-import sys
 from typing import Any
 
 # ANSI 256-color palette for subsystem labels
 _SUBSYSTEM_COLORS = [
-    "\033[38;5;33m",   # blue
-    "\033[38;5;35m",   # green
+    "\033[38;5;33m",  # blue
+    "\033[38;5;35m",  # green
     "\033[38;5;136m",  # yellow
     "\033[38;5;166m",  # orange
     "\033[38;5;125m",  # magenta
-    "\033[38;5;37m",   # cyan
-    "\033[38;5;61m",   # slate
+    "\033[38;5;37m",  # cyan
+    "\033[38;5;61m",  # slate
     "\033[38;5;172m",  # amber
 ]
 _RESET = "\033[0m"
@@ -29,10 +28,17 @@ def _color_for_subsystem(subsystem: str) -> str:
     return _SUBSYSTEM_COLORS[h]
 
 
-CHANNEL_SUBSYSTEM_PREFIXES = frozenset({
-    "channels/", "telegram/", "discord/", "slack/",
-    "whatsapp/", "signal/", "imessage/",
-})
+CHANNEL_SUBSYSTEM_PREFIXES = frozenset(
+    {
+        "channels/",
+        "telegram/",
+        "discord/",
+        "slack/",
+        "whatsapp/",
+        "signal/",
+        "imessage/",
+    }
+)
 
 
 class SubsystemLogger:

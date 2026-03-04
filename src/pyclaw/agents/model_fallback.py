@@ -93,8 +93,14 @@ def classify_error(error: Any) -> ErrorCategory:
 
     # Rate limit patterns
     rate_limit_patterns = [
-        "rate_limit", "rate limit", "too many requests",
-        "429", "quota", "throttl", "cooling down", "model_cooldown",
+        "rate_limit",
+        "rate limit",
+        "too many requests",
+        "429",
+        "quota",
+        "throttl",
+        "cooling down",
+        "model_cooldown",
     ]
     if any(p in err_str for p in rate_limit_patterns):
         return ErrorCategory.RATE_LIMIT
@@ -199,7 +205,9 @@ class ModelFallbackManager:
             health.cooldown_until = time.time() + cooldown
             logger.info(
                 "Model %s in cooldown for %.0fs (category=%s)",
-                model_id, cooldown, category.value,
+                model_id,
+                cooldown,
+                category.value,
             )
 
         # Permanent auth → disable

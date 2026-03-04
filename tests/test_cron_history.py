@@ -1,6 +1,5 @@
 """Tests for pyclaw.cron.history — execution history store."""
 
-import time
 from pathlib import Path
 
 import pytest

@@ -19,17 +19,17 @@ import signal
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ProcessScope(str, Enum):
     """Lifecycle scope for managed processes."""
-    SESSION = "session"     # Killed when session ends
-    AGENT = "agent"         # Killed when agent stops
-    GATEWAY = "gateway"     # Killed when gateway shuts down
-    MANUAL = "manual"       # Only killed explicitly
+
+    SESSION = "session"  # Killed when session ends
+    AGENT = "agent"  # Killed when agent stops
+    GATEWAY = "gateway"  # Killed when gateway shuts down
+    MANUAL = "manual"  # Only killed explicitly
 
 
 class ProcessState(str, Enum):
@@ -44,6 +44,7 @@ class ProcessState(str, Enum):
 @dataclass
 class ProcessConfig:
     """Configuration for a managed process."""
+
     command: list[str]
     scope: ProcessScope = ProcessScope.SESSION
     cwd: str = ""
@@ -58,6 +59,7 @@ class ProcessConfig:
 @dataclass
 class ProcessInfo:
     """Runtime information about a managed process."""
+
     process_id: str
     pid: int = 0
     state: ProcessState = ProcessState.PENDING
@@ -136,7 +138,7 @@ class ManagedProcess:
                     self._proc.wait(),
                     timeout=self._config.kill_timeout_s,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._proc.kill()
                 await self._proc.wait()
 
@@ -159,9 +161,7 @@ class ManagedProcess:
         self._info.state = ProcessState.RESTARTING
         self._info.restart_count += 1
 
-        delay = self._config.restart_delay_s * (
-            self._config.restart_backoff ** (self._info.restart_count - 1)
-        )
+        delay = self._config.restart_delay_s * (self._config.restart_backoff ** (self._info.restart_count - 1))
         await asyncio.sleep(min(delay, 30.0))
 
         await self.stop(force=True)
@@ -206,10 +206,7 @@ class ProcessSupervisor:
 
     async def cancel_by_scope(self, scope: ProcessScope) -> int:
         """Cancel all processes in a given scope."""
-        to_cancel = [
-            pid for pid, proc in self._processes.items()
-            if proc.info.scope == scope
-        ]
+        to_cancel = [pid for pid, proc in self._processes.items() if proc.info.scope == scope]
         count = 0
         for pid in to_cancel:
             if await self.cancel(pid, force=True):

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import time
 
 import pytest
@@ -64,9 +63,7 @@ class TestResolveConfig:
         assert cfg.max_age_hours == 0.0
 
     def test_session_level(self) -> None:
-        cfg = resolve_thread_binding_config(
-            session_config={"threadBindings": {"idleHours": 12, "maxAgeHours": 48}}
-        )
+        cfg = resolve_thread_binding_config(session_config={"threadBindings": {"idleHours": 12, "maxAgeHours": 48}})
         assert cfg.idle_hours == 12.0
         assert cfg.max_age_hours == 48.0
 
@@ -136,6 +133,7 @@ class TestThreadBindingStore:
         old_activity = record.last_activity_at
 
         import time as _time
+
         _time.sleep(0.01)
         store.touch("t1")
         assert record.last_activity_at > old_activity

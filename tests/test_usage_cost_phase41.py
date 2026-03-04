@@ -8,13 +8,10 @@ import pytest
 from typer.testing import CliRunner
 
 from pyclaw.auto_reply.commands_core import handle_usage
-from pyclaw.auto_reply.commands_registry import CommandContext
-from pyclaw.auto_reply.commands_registry import ParsedCommand
+from pyclaw.auto_reply.commands_registry import CommandContext, ParsedCommand
 from pyclaw.cli.app import app
 from pyclaw.gateway.server import create_gateway_app
-from pyclaw.infra.session_cost import aggregate_usage
-from pyclaw.infra.session_cost import record_usage
-
+from pyclaw.infra.session_cost import aggregate_usage, record_usage
 
 runner = CliRunner()
 
@@ -71,9 +68,7 @@ def test_gateway_registration_includes_extended_and_exec_methods() -> None:
 
 
 @pytest.mark.asyncio
-async def test_usage_get_handler_returns_aggregated_payload(
-    tmp_path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+async def test_usage_get_handler_returns_aggregated_payload(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PYCLAW_STATE_DIR", str(tmp_path))
     record_usage(
         session_id="s-gw",

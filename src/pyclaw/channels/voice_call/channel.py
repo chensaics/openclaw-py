@@ -63,10 +63,14 @@ class VoiceCallChannel(ChannelPlugin):
             candidates = [url]
             if parsed.port:
                 netloc_no_port = parsed.hostname or parsed.netloc.split(":")[0]
-                candidates.append(f"{parsed.scheme}://{netloc_no_port}{parsed.path or ''}{parsed.query and '?' + parsed.query or ''}")
+                candidates.append(
+                    f"{parsed.scheme}://{netloc_no_port}{parsed.path or ''}{parsed.query and '?' + parsed.query or ''}"
+                )
             else:
                 port = 443 if parsed.scheme == "https" else 80
-                candidates.append(f"{parsed.scheme}://{parsed.netloc}:{port}{parsed.path or ''}{parsed.query and '?' + parsed.query or ''}")
+                candidates.append(
+                    f"{parsed.scheme}://{parsed.netloc}:{port}{parsed.path or ''}{parsed.query and '?' + parsed.query or ''}"
+                )
             for uri in candidates:
                 s = uri
                 if params:

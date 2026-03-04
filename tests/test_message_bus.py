@@ -1,9 +1,5 @@
 """Tests for pyclaw.gateway.message_bus — async message routing."""
 
-import asyncio
-
-import pytest
-
 from pyclaw.gateway.message_bus import InboundMessage, MessageBus, OutboundMessage
 
 

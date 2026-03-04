@@ -10,20 +10,19 @@ Validates:
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock
 
 import pytest
 
 from pyclaw.channels.base import ChannelPlugin, ChannelReply
 from pyclaw.channels.manager import ChannelManager
 from pyclaw.gateway.methods.channels import (
+    _channel_metrics,
     create_channels_handlers,
     handle_channels_list,
     handle_channels_status,
     record_channel_metric,
     set_channel_manager,
     set_config_path,
-    _channel_metrics,
 )
 
 

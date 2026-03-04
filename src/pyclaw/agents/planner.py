@@ -130,18 +130,20 @@ class Plan:
         steps = []
         for s in data.get("steps", []):
             prog = s.get("progress", {})
-            steps.append(Step(
-                id=s["id"],
-                description=s["description"],
-                status=StepStatus(s.get("status", "pending")),
-                result=s.get("result", ""),
-                progress=StepProgress(
-                    current=prog.get("current", 0),
-                    total=prog.get("total", 0),
-                ),
-                started_at=s.get("startedAt", 0.0),
-                completed_at=s.get("completedAt", 0.0),
-            ))
+            steps.append(
+                Step(
+                    id=s["id"],
+                    description=s["description"],
+                    status=StepStatus(s.get("status", "pending")),
+                    result=s.get("result", ""),
+                    progress=StepProgress(
+                        current=prog.get("current", 0),
+                        total=prog.get("total", 0),
+                    ),
+                    started_at=s.get("startedAt", 0.0),
+                    completed_at=s.get("completedAt", 0.0),
+                )
+            )
         return cls(
             id=data["id"],
             goal=data["goal"],
@@ -201,9 +203,7 @@ class StepDetector:
             return True
         if _TRANSITION_WORDS.search(text):
             return True
-        if iteration_count >= self.max_iterations_per_step:
-            return True
-        return False
+        return iteration_count >= self.max_iterations_per_step
 
 
 _STEP_DECL = re.compile(
@@ -231,6 +231,7 @@ def is_continue_intent(message: str) -> bool:
 # ---------------------------------------------------------------------------
 # Plan Manager
 # ---------------------------------------------------------------------------
+
 
 class PlanManager:
     """Manage plans with in-memory cache and file persistence."""
@@ -261,10 +262,7 @@ class PlanManager:
         goal: str,
         step_descriptions: list[str],
     ) -> Plan:
-        steps = [
-            Step(id=i + 1, description=desc)
-            for i, desc in enumerate(step_descriptions)
-        ]
+        steps = [Step(id=i + 1, description=desc) for i, desc in enumerate(step_descriptions)]
         plan = Plan(id=plan_id, goal=goal, steps=steps)
         self.save(plan)
         return plan

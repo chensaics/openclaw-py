@@ -99,9 +99,7 @@ class FakeStdioProcess:
                 return _make_jsonrpc_response(
                     req_id,
                     {
-                        "content": [
-                            {"type": "text", "text": f"Contents of {args.get('path', '?')}"}
-                        ],
+                        "content": [{"type": "text", "text": f"Contents of {args.get('path', '?')}"}],
                     },
                 )
             elif tool_name == "list_dir":
@@ -111,9 +109,7 @@ class FakeStdioProcess:
                         "content": [{"type": "text", "text": "file1.txt\nfile2.py\ndir/"}],
                     },
                 )
-            return _make_jsonrpc_response(
-                req_id, {"content": [{"type": "text", "text": "unknown tool"}]}
-            )
+            return _make_jsonrpc_response(req_id, {"content": [{"type": "text", "text": "unknown tool"}]})
         return ""
 
     async def readline(self) -> bytes:

@@ -29,11 +29,7 @@ def convert_markdown_tables(text: str, mode: TableMode = TableMode.OFF) -> str:
 
     while i < len(lines):
         header_match = _TABLE_LINE_RE.match(lines[i].strip())
-        if (
-            header_match
-            and i + 1 < len(lines)
-            and _SEPARATOR_RE.match(lines[i + 1].strip())
-        ):
+        if header_match and i + 1 < len(lines) and _SEPARATOR_RE.match(lines[i + 1].strip()):
             headers = [c.strip() for c in header_match.group(1).split("|")]
             i += 2  # skip header + separator
 
@@ -62,10 +58,10 @@ def convert_markdown_tables(text: str, mode: TableMode = TableMode.OFF) -> str:
 
                 fmt = "  ".join(f"{{:<{w}}}" for w in col_widths)
                 result.append("```")
-                result.append(fmt.format(*headers[:len(col_widths)]))
+                result.append(fmt.format(*headers[: len(col_widths)]))
                 result.append("-" * sum(col_widths + [2 * (len(col_widths) - 1)]))
                 for row in rows:
-                    padded = row[:len(col_widths)]
+                    padded = row[: len(col_widths)]
                     while len(padded) < len(col_widths):
                         padded.append("")
                     result.append(fmt.format(*padded))

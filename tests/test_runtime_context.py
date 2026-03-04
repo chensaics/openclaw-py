@@ -1,7 +1,5 @@
 """Tests for pyclaw.agents.tools.runtime_context."""
 
-import pytest
-
 from pyclaw.agents.tools.runtime_context import (
     RuntimeContext,
     get_runtime_context,

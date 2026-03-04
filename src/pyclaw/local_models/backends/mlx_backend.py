@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator, cast
+from collections.abc import AsyncIterator
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,7 @@ class MLXBackend:
         try:
             from mlx_lm import load
         except ImportError as exc:
-            raise ImportError(
-                "mlx-lm is required for MLX backend. "
-                "Install with: pip install 'pyclaw[mlx]'"
-            ) from exc
+            raise ImportError("mlx-lm is required for MLX backend. Install with: pip install 'pyclaw[mlx]'") from exc
 
         self._model_path = model_path
         self._max_tokens = max_tokens
@@ -31,9 +29,14 @@ class MLXBackend:
 
     def _format_messages(self, messages: list[dict[str, str]]) -> str:
         if hasattr(self._tokenizer, "apply_chat_template"):
-            return cast(str, self._tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True,
-            ))
+            return cast(
+                str,
+                self._tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=True,
+                ),
+            )
         parts = []
         for msg in messages:
             role = msg.get("role", "user")
@@ -81,8 +84,11 @@ class MLXBackend:
 
         prompt = self._format_messages(messages)
         for token_text in stream_generate(
-            self._model, self._tokenizer, prompt=prompt,
-            max_tokens=max_tokens, temp=temperature,
+            self._model,
+            self._tokenizer,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temp=temperature,
         ):
             if token_text:
                 yield token_text

@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ class LinkMetadata:
     title: str = ""
     description: str = ""
     site_name: str = ""
-    content_type: str = ""       # "article" | "video" | "image" | "document" | "unknown"
+    content_type: str = ""  # "article" | "video" | "image" | "document" | "unknown"
     og_image: str = ""
     og_type: str = ""
     author: str = ""
@@ -48,10 +47,27 @@ _URL_PATTERN = re.compile(
 )
 
 _IGNORED_EXTENSIONS = {
-    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico",
-    ".mp3", ".mp4", ".wav", ".ogg", ".webm",
-    ".zip", ".tar", ".gz", ".rar",
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".ico",
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".ogg",
+    ".webm",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".rar",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
 }
 
 
@@ -93,7 +109,7 @@ def classify_url_content_type(url: str) -> str:
 
     # Video platforms
     video_domains = {"youtube.com", "youtu.be", "vimeo.com", "twitch.tv"}
-    domain = parsed.netloc.lower().lstrip("www.")
+    domain = parsed.netloc.lower().removeprefix("www.")
     if domain in video_domains:
         return "video"
 
@@ -113,6 +129,7 @@ def is_fetchable_url(url: str) -> bool:
 # HTML metadata parsing
 # ---------------------------------------------------------------------------
 
+
 def parse_og_metadata(html: str, *, url: str = "") -> LinkMetadata:
     """Parse Open Graph and meta tags from HTML content.
 
@@ -124,7 +141,7 @@ def parse_og_metadata(html: str, *, url: str = "") -> LinkMetadata:
 
     if url:
         parsed = urlparse(url)
-        metadata.domain = parsed.netloc.lstrip("www.")
+        metadata.domain = parsed.netloc.removeprefix("www.")
 
     # OG tags
     og_patterns: list[tuple[str, str]] = [
@@ -154,7 +171,8 @@ def parse_og_metadata(html: str, *, url: str = "") -> LinkMetadata:
     if not metadata.description:
         match = re.search(
             r'<meta\s+name="description"\s+content="([^"]*)"',
-            html, re.IGNORECASE,
+            html,
+            re.IGNORECASE,
         )
         if match:
             metadata.description = match.group(1).strip()
@@ -162,7 +180,8 @@ def parse_og_metadata(html: str, *, url: str = "") -> LinkMetadata:
     # Author
     match = re.search(
         r'<meta\s+name="author"\s+content="([^"]*)"',
-        html, re.IGNORECASE,
+        html,
+        re.IGNORECASE,
     )
     if match:
         metadata.author = match.group(1).strip()
@@ -171,7 +190,8 @@ def parse_og_metadata(html: str, *, url: str = "") -> LinkMetadata:
     for date_prop in ["article:published_time", "datePublished", "date"]:
         match = re.search(
             rf'<meta\s+(?:property|name)="{re.escape(date_prop)}"\s+content="([^"]*)"',
-            html, re.IGNORECASE,
+            html,
+            re.IGNORECASE,
         )
         if match:
             metadata.published_date = match.group(1).strip()
@@ -195,6 +215,7 @@ def parse_og_metadata(html: str, *, url: str = "") -> LinkMetadata:
 # ---------------------------------------------------------------------------
 # Formatting for agent context
 # ---------------------------------------------------------------------------
+
 
 def format_link_context(metadata: LinkMetadata) -> str:
     """Format link metadata as a context block for agent injection."""

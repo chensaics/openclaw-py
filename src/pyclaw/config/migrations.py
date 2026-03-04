@@ -14,8 +14,9 @@ from __future__ import annotations
 import copy
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +176,7 @@ class ConfigMigrationRegistry:
 # Built-in migrations
 # ---------------------------------------------------------------------------
 
+
 def _migrate_v1_to_v2(config: dict[str, Any]) -> dict[str, Any]:
     """Migrate config from v1 to v2 format.
 
@@ -236,21 +238,25 @@ def create_default_registry() -> ConfigMigrationRegistry:
     """Create a registry with built-in migrations."""
     registry = ConfigMigrationRegistry()
 
-    registry.register(MigrationStep(
-        id="config-v1-to-v2",
-        from_version="v1",
-        to_version="v2",
-        description="Restructure to nested agents/channels format",
-        migrate=_migrate_v1_to_v2,
-    ))
+    registry.register(
+        MigrationStep(
+            id="config-v1-to-v2",
+            from_version="v1",
+            to_version="v2",
+            description="Restructure to nested agents/channels format",
+            migrate=_migrate_v1_to_v2,
+        )
+    )
 
-    registry.register(MigrationStep(
-        id="config-v2-to-v3",
-        from_version="v2",
-        to_version="v3",
-        description="Rename gateway.authToken and exec.security",
-        migrate=_migrate_v2_to_v3,
-    ))
+    registry.register(
+        MigrationStep(
+            id="config-v2-to-v3",
+            from_version="v2",
+            to_version="v3",
+            description="Rename gateway.authToken and exec.security",
+            migrate=_migrate_v2_to_v3,
+        )
+    )
 
     return registry
 
@@ -258,6 +264,7 @@ def create_default_registry() -> ConfigMigrationRegistry:
 # ---------------------------------------------------------------------------
 # State migrations
 # ---------------------------------------------------------------------------
+
 
 class StateMigrationRegistry:
     """Registry for state file migrations (sessions, pairing, etc.)."""

@@ -7,20 +7,22 @@ from __future__ import annotations
 
 import re
 import time
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 from pyclaw.channels.base import ChannelMessage, ChannelReply
 from pyclaw.routing.session_key import build_peer_session_key, normalize_agent_id
-
 
 # ---------------------------------------------------------------------------
 # Slash command parsing
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ParsedCommand:
     """A parsed slash command from user input."""
+
     name: str
     args: list[str]
     raw: str
@@ -28,11 +30,23 @@ class ParsedCommand:
 
 _COMMAND_RE = re.compile(r"^/(\w+)(?:\s+(.*))?$", re.DOTALL)
 
-KNOWN_COMMANDS = frozenset({
-    "compact", "reset", "model", "status", "help",
-    "new", "history", "export", "memory", "remind",
-    "verbose", "quiet", "thinking",
-})
+KNOWN_COMMANDS = frozenset(
+    {
+        "compact",
+        "reset",
+        "model",
+        "status",
+        "help",
+        "new",
+        "history",
+        "export",
+        "memory",
+        "remind",
+        "verbose",
+        "quiet",
+        "thinking",
+    }
+)
 
 
 def parse_command(text: str) -> ParsedCommand | None:
@@ -56,9 +70,11 @@ def parse_command(text: str) -> ParsedCommand | None:
 # Message context builder
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MessageContext:
     """Enriched inbound message context for dispatch."""
+
     message: ChannelMessage
     agent_id: str = "main"
     session_key: str = ""
@@ -188,6 +204,7 @@ class MessageDispatcher:
 # Built-in command handlers
 # ---------------------------------------------------------------------------
 
+
 async def handle_help(ctx: MessageContext, cmd: ParsedCommand) -> str:
     """Handle /help command."""
     lines = ["Available commands:"]
@@ -198,12 +215,7 @@ async def handle_help(ctx: MessageContext, cmd: ParsedCommand) -> str:
 
 async def handle_status(ctx: MessageContext, cmd: ParsedCommand) -> str:
     """Handle /status command."""
-    return (
-        f"Agent: {ctx.agent_id}\n"
-        f"Session: {ctx.session_key}\n"
-        f"Channel: {ctx.message.channel}\n"
-        f"Owner: {ctx.is_owner}"
-    )
+    return f"Agent: {ctx.agent_id}\nSession: {ctx.session_key}\nChannel: {ctx.message.channel}\nOwner: {ctx.is_owner}"
 
 
 def create_default_command_handlers() -> dict[str, CommandHandler]:

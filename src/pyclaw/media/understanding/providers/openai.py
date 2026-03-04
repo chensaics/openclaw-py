@@ -46,13 +46,15 @@ class OpenAIMediaProvider:
 
         response = await client.chat.completions.create(
             model=request.model or "gpt-4o",
-            messages=[{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": (request.prompt or "Describe this image in detail.")},
-                    {"type": "image_url", "image_url": {"url": data_url}},
-                ],
-            }],
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": (request.prompt or "Describe this image in detail.")},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                }
+            ],
             max_tokens=request.max_tokens,
         )
 
@@ -71,6 +73,7 @@ class OpenAIMediaProvider:
         )
 
         import io
+
         file_obj = io.BytesIO(request.buffer)
         file_obj.name = request.file_name or "audio.wav"
 

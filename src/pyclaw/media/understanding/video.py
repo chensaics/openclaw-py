@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, cast
@@ -32,6 +31,7 @@ class VideoProcessingState(str, Enum):
 @dataclass
 class VideoConfig:
     """Configuration for video understanding."""
+
     max_frames: int = 10
     max_duration_s: int = 300
     max_file_size_mb: int = 100
@@ -43,6 +43,7 @@ class VideoConfig:
 @dataclass
 class VideoFrame:
     """An extracted video frame."""
+
     index: int
     timestamp_s: float
     data: bytes = b""
@@ -53,6 +54,7 @@ class VideoFrame:
 @dataclass
 class VideoInfo:
     """Metadata about a video file."""
+
     duration_s: float = 0.0
     width: int = 0
     height: int = 0
@@ -66,6 +68,7 @@ class VideoInfo:
 @dataclass
 class VideoUnderstandingRequest:
     """Request for video understanding."""
+
     video_url: str = ""
     video_data: bytes = b""
     prompt: str = ""
@@ -76,6 +79,7 @@ class VideoUnderstandingRequest:
 @dataclass
 class VideoUnderstandingResult:
     """Result from video understanding."""
+
     description: str
     provider: str
     frames_analyzed: int = 0
@@ -87,6 +91,7 @@ class VideoUnderstandingResult:
 # ---------------------------------------------------------------------------
 # Video Provider Adapters
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MoonshotVideoConfig:
@@ -176,6 +181,7 @@ class MiniMaxVideoProvider:
 # ---------------------------------------------------------------------------
 # Video Pipeline
 # ---------------------------------------------------------------------------
+
 
 def compute_frame_timestamps(
     duration_s: float,

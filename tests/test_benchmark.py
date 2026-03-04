@@ -60,7 +60,7 @@ class TestAgentLoopLatency:
             first_event_time = None
             event_count = 0
 
-            async for event in run_agent(prompt="Hello", session=session, model=model):
+            async for _event in run_agent(prompt="Hello", session=session, model=model):
                 if first_event_time is None:
                     first_event_time = time.perf_counter()
                 event_count += 1
@@ -187,9 +187,7 @@ class TestAbortLatency:
             start = time.perf_counter()
 
             async def run():
-                async for event in run_agent(
-                    prompt="Long", session=session, model=model, abort_event=abort
-                ):
+                async for event in run_agent(prompt="Long", session=session, model=model, abort_event=abort):
                     events.append(event)
 
             task = asyncio.create_task(run())

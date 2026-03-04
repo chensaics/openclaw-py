@@ -7,7 +7,7 @@ Patterns cover API keys, tokens, PEM blocks, and common credential formats.
 from __future__ import annotations
 
 import re
-from typing import Any, Literal
+from typing import Literal
 
 RedactMode = Literal["off", "tools"]
 

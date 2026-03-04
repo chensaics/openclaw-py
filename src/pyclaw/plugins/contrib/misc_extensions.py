@@ -288,9 +288,7 @@ class LLMTaskExtension:
     def parse_response(self, task_id: str, response_text: str) -> LLMTaskResult:
         try:
             parsed = json.loads(response_text)
-            result = LLMTaskResult(
-                task_id=task_id, success=True, json_output=parsed, raw_output=response_text
-            )
+            result = LLMTaskResult(task_id=task_id, success=True, json_output=parsed, raw_output=response_text)
         except json.JSONDecodeError:
             result = LLMTaskResult(
                 task_id=task_id,
@@ -342,9 +340,7 @@ class CopilotProxyExtension:
     def set_token(self, token: str) -> None:
         self._token = token
 
-    def build_completion_request(
-        self, messages: list[dict[str, str]], model: str = ""
-    ) -> dict[str, Any]:
+    def build_completion_request(self, messages: list[dict[str, str]], model: str = "") -> dict[str, Any]:
         return {
             "url": f"{self._config.api_base}/chat/completions",
             "headers": {

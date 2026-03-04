@@ -10,7 +10,6 @@ from typing import Any
 
 import flet as ft
 
-from pyclaw.ui.i18n import t
 from pyclaw.ui.theme import get_theme
 
 
@@ -127,7 +126,7 @@ def streaming_indicator() -> ft.Row:
     """
     theme = get_theme()
     dots: list[ft.Control] = []
-    for i in range(3):
+    for _i in range(3):
         dots.append(
             ft.Container(
                 width=7,

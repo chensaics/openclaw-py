@@ -118,11 +118,7 @@ class AgentMessage:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AgentMessage:
         timeline_raw = data.get("timeline")
-        timeline = (
-            [TimelineEntry.from_dict(e) for e in timeline_raw]
-            if timeline_raw
-            else None
-        )
+        timeline = [TimelineEntry.from_dict(e) for e in timeline_raw] if timeline_raw else None
         return cls(
             role=data["role"],
             content=data["content"],
@@ -200,7 +196,7 @@ class SessionManager:
                 elif entry_type == "compaction":
                     # Compaction replaces earlier messages with a summary
                     summary = entry.get("summary", "")
-                    first_kept = entry.get("firstKeptEntryId")
+                    entry.get("firstKeptEntryId")
                     self.compaction_count += 1
                     # Keep the summary as a system message in the active window
                     if summary:

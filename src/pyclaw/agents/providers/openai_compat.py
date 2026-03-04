@@ -13,20 +13,22 @@ import json
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class StreamFormat(str, Enum):
     """Streaming response format."""
-    SSE = "sse"           # Standard SSE (data: {...})
-    NDJSON = "ndjson"     # Newline-delimited JSON
+
+    SSE = "sse"  # Standard SSE (data: {...})
+    NDJSON = "ndjson"  # Newline-delimited JSON
 
 
 @dataclass
 class ModelMapping:
     """Map a local alias to the provider's actual model ID."""
+
     alias: str
     model_id: str
     context_window: int = 0
@@ -39,6 +41,7 @@ class ModelMapping:
 @dataclass
 class OpenAICompatConfig:
     """Configuration for an OpenAI-compatible provider."""
+
     name: str
     base_url: str
     api_key: str = ""
@@ -65,6 +68,7 @@ class ChatMessage:
 @dataclass
 class CompletionChunk:
     """A single streamed chunk."""
+
     delta_content: str = ""
     finish_reason: str = ""
     model: str = ""
@@ -74,6 +78,7 @@ class CompletionChunk:
 @dataclass
 class CompletionResult:
     """Full (non-streaming) completion result."""
+
     content: str
     model: str = ""
     finish_reason: str = ""
@@ -212,6 +217,7 @@ class OpenAICompatProvider:
 # ---------------------------------------------------------------------------
 # Pre-built provider configurations
 # ---------------------------------------------------------------------------
+
 
 def together_config(api_key: str) -> OpenAICompatConfig:
     return OpenAICompatConfig(

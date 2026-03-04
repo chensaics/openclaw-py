@@ -8,13 +8,12 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pyclaw.infra.system_events import (
     EventBus,
     EventType,
     PresenceManager,
-    PresenceState,
     SystemEvent,
 )
 
@@ -30,41 +29,38 @@ _last_heartbeat_at = 0.0
 _started_at = time.time()
 
 
-def create_extended_handlers() -> dict[str, "MethodHandler"]:
+def create_extended_handlers() -> dict[str, MethodHandler]:
     """Create handlers for extended RPC methods."""
 
     # ------------------------------------------------------------------
     # TTS
     # ------------------------------------------------------------------
 
-    async def handle_tts_speak(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_tts_speak(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         text = (params or {}).get("text", "")
         if not text:
             await conn.send_error("tts.speak", "invalid_params", "Missing 'text'")
             return
         await conn.send_error(
-            "tts.speak", "not_implemented",
-            "TTS synthesis is not yet implemented. "
-            "Configure an external TTS provider to use this feature.",
+            "tts.speak",
+            "not_implemented",
+            "TTS synthesis is not yet implemented. Configure an external TTS provider to use this feature.",
         )
 
-    async def handle_tts_voices(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
-        await conn.send_ok("tts.voices", {
-            "voices": ["default", "alloy", "echo", "fable", "onyx", "nova", "shimmer"],
-            "note": "Static list — no TTS provider configured yet.",
-        })
+    async def handle_tts_voices(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        await conn.send_ok(
+            "tts.voices",
+            {
+                "voices": ["default", "alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+                "note": "Static list — no TTS provider configured yet.",
+            },
+        )
 
     # ------------------------------------------------------------------
     # Usage
     # ------------------------------------------------------------------
 
-    async def handle_usage_get(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_usage_get(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.infra.session_cost import aggregate_usage
 
         days = int((params or {}).get("days", 7) or 7)
@@ -89,21 +85,21 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
     # System (Phase 56 — real RPC implementations)
     # ------------------------------------------------------------------
 
-    async def handle_system_info(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_system_info(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         import platform
         import sys
-        await conn.send_ok("system.info", {
-            "platform": platform.system(),
-            "python": sys.version,
-            "uptime": time.time() - _started_at,
-            "startedAt": _started_at,
-        })
 
-    async def handle_system_logs(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+        await conn.send_ok(
+            "system.info",
+            {
+                "platform": platform.system(),
+                "python": sys.version,
+                "uptime": time.time() - _started_at,
+                "startedAt": _started_at,
+            },
+        )
+
+    async def handle_system_logs(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.config.paths import resolve_state_dir
 
         p = params or {}
@@ -123,16 +119,17 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
             except Exception as exc:
                 logger.warning("system.logs read error: %s", exc)
 
-        await conn.send_ok("system.logs", {
-            "logs": entries,
-            "count": len(entries),
-            "level": level_filter or "all",
-            "maxLines": max_lines,
-        })
+        await conn.send_ok(
+            "system.logs",
+            {
+                "logs": entries,
+                "count": len(entries),
+                "level": level_filter or "all",
+                "maxLines": max_lines,
+            },
+        )
 
-    async def handle_system_event(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_system_event(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         global _last_heartbeat_at
         p = params or {}
         text = str(p.get("text", ""))
@@ -148,25 +145,27 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
         if mode == "now" and _heartbeat_enabled:
             _last_heartbeat_at = time.time()
 
-        await conn.send_ok("system.event", {
-            "ok": True,
-            "eventType": event.event_type.value,
-            "mode": mode,
-            "heartbeatTriggered": bool(mode == "now" and _heartbeat_enabled),
-            "source": "gateway",
-        })
+        await conn.send_ok(
+            "system.event",
+            {
+                "ok": True,
+                "eventType": event.event_type.value,
+                "mode": mode,
+                "heartbeatTriggered": bool(mode == "now" and _heartbeat_enabled),
+                "source": "gateway",
+            },
+        )
 
-    async def handle_system_heartbeat_last(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
-        await conn.send_ok("system.heartbeat.last", {
-            "enabled": _heartbeat_enabled,
-            "lastHeartbeatAt": _last_heartbeat_at or None,
-        })
+    async def handle_system_heartbeat_last(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        await conn.send_ok(
+            "system.heartbeat.last",
+            {
+                "enabled": _heartbeat_enabled,
+                "lastHeartbeatAt": _last_heartbeat_at or None,
+            },
+        )
 
-    async def handle_system_presence(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_system_presence(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         _presence.check_idle()
         entries = [
             {
@@ -182,9 +181,7 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
     # Doctor
     # ------------------------------------------------------------------
 
-    async def handle_doctor_run(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_doctor_run(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.cli.commands.doctor_flows import run_doctor
 
         report = run_doctor()
@@ -210,23 +207,25 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
             elif r.severity.value == "warning":
                 warns += 1
 
-        await conn.send_ok("doctor.run", {
-            "checks": checks,
-            "summary": {"passed": passed, "failed": failed, "warnings": warns},
-            "platform": report.platform,
-            "pythonVersion": report.python_version,
-        })
+        await conn.send_ok(
+            "doctor.run",
+            {
+                "checks": checks,
+                "summary": {"passed": passed, "failed": failed, "warnings": warns},
+                "platform": report.platform,
+                "pythonVersion": report.python_version,
+            },
+        )
 
     # ------------------------------------------------------------------
     # Skills
     # ------------------------------------------------------------------
 
-    async def handle_skills_list(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_skills_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         skills: list[dict[str, Any]] = []
         try:
             from pathlib import Path
+
             from pyclaw.agents.skills import load_skill_entries
             from pyclaw.config.paths import resolve_state_dir
 
@@ -236,12 +235,14 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
             ]:
                 if source_dir.is_dir():
                     for sk in load_skill_entries(source_dir, source=source_label):
-                        skills.append({
-                            "name": getattr(sk, "name", ""),
-                            "source": source_label,
-                            "description": getattr(sk, "description", ""),
-                            "enabled": True,
-                        })
+                        skills.append(
+                            {
+                                "name": getattr(sk, "name", ""),
+                                "source": source_label,
+                                "description": getattr(sk, "description", ""),
+                                "enabled": True,
+                            }
+                        )
         except ImportError:
             pass
         except Exception as exc:
@@ -253,19 +254,17 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
     # Wizard — NOT_IMPLEMENTED (Phase 57)
     # ------------------------------------------------------------------
 
-    async def handle_wizard_start(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_wizard_start(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         await conn.send_error(
-            "wizard.start", "not_implemented",
+            "wizard.start",
+            "not_implemented",
             "Setup wizard is not yet implemented. Use `pyclaw setup` CLI instead.",
         )
 
-    async def handle_wizard_step(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_wizard_step(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         await conn.send_error(
-            "wizard.step", "not_implemented",
+            "wizard.step",
+            "not_implemented",
             "Setup wizard is not yet implemented. Use `pyclaw setup` CLI instead.",
         )
 
@@ -273,24 +272,21 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
     # Push — NOT_IMPLEMENTED (Phase 57)
     # ------------------------------------------------------------------
 
-    async def handle_push_send(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_push_send(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         await conn.send_error(
-            "push.send", "not_implemented",
-            "Push notification delivery is not yet implemented. "
-            "Configure a push provider (FCM/APNs) to enable this.",
+            "push.send",
+            "not_implemented",
+            "Push notification delivery is not yet implemented. Configure a push provider (FCM/APNs) to enable this.",
         )
 
     # ------------------------------------------------------------------
     # Voice Wake — NOT_IMPLEMENTED (Phase 57)
     # ------------------------------------------------------------------
 
-    async def handle_voicewake_status(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_voicewake_status(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         await conn.send_error(
-            "voicewake.status", "not_implemented",
+            "voicewake.status",
+            "not_implemented",
             "Voice wake-word detection is not yet available in the Python runtime.",
         )
 
@@ -298,30 +294,32 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
     # Update Check — real version read (Phase 57)
     # ------------------------------------------------------------------
 
-    async def handle_update_check(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_update_check(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         current_version = _get_current_version()
-        await conn.send_ok("update.check", {
-            "currentVersion": current_version,
-            "latestVersion": current_version,
-            "updateAvailable": False,
-            "note": "Automatic update checking from PyPI is not yet implemented.",
-        })
+        await conn.send_ok(
+            "update.check",
+            {
+                "currentVersion": current_version,
+                "latestVersion": current_version,
+                "updateAvailable": False,
+                "note": "Automatic update checking from PyPI is not yet implemented.",
+            },
+        )
 
     # ------------------------------------------------------------------
     # Web Status — real Gateway state (Phase 57)
     # ------------------------------------------------------------------
 
-    async def handle_web_status(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
-        await conn.send_ok("web.status", {
-            "connected": True,
-            "provider": "gateway-websocket",
-            "uptime": time.time() - _started_at,
-            "note": "Web UI tunnel is not yet implemented; Gateway WebSocket is active.",
-        })
+    async def handle_web_status(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        await conn.send_ok(
+            "web.status",
+            {
+                "connected": True,
+                "provider": "gateway-websocket",
+                "uptime": time.time() - _started_at,
+                "note": "Web UI tunnel is not yet implemented; Gateway WebSocket is active.",
+            },
+        )
 
     return {
         "tts.speak": handle_tts_speak,
@@ -346,6 +344,7 @@ def create_extended_handlers() -> dict[str, "MethodHandler"]:
 def _get_current_version() -> str:
     try:
         from importlib.metadata import version
+
         return version("pyclaw")
     except Exception:
         return "0.0.0-dev"

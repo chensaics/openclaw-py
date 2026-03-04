@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import fnmatch
 import logging
-import re
 import shlex
 from dataclasses import dataclass, field
 from enum import Enum
@@ -106,11 +105,13 @@ class SystemRunApprovalBindingV1:
     def from_dict(cls, data: dict[str, Any]) -> SystemRunApprovalBindingV1:
         rules = []
         for rd in data.get("rules", []):
-            rules.append(CommandArgvRule(
-                pattern=rd.get("pattern", []),
-                decision=ApprovalDecision(rd.get("decision", "allow")),
-                description=rd.get("description", ""),
-            ))
+            rules.append(
+                CommandArgvRule(
+                    pattern=rd.get("pattern", []),
+                    decision=ApprovalDecision(rd.get("decision", "allow")),
+                    description=rd.get("description", ""),
+                )
+            )
 
         return cls(
             version=data.get("version", 1),
@@ -146,6 +147,7 @@ class SystemRunApprovalBindingV1:
 # ---------------------------------------------------------------------------
 # ExecApprovalPolicy — runtime gating
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ExecRequest:
@@ -187,12 +189,15 @@ class ExecApprovalPolicy:
         global_denied_commands: list[str] | None = None,
     ) -> None:
         self._bindings = bindings or []
-        self._global_denied = set(global_denied_commands or [
-            "rm -rf /",
-            "mkfs",
-            "dd if=/dev/zero",
-            ":(){ :|:& };:",
-        ])
+        self._global_denied = set(
+            global_denied_commands
+            or [
+                "rm -rf /",
+                "mkfs",
+                "dd if=/dev/zero",
+                ":(){ :|:& };:",
+            ]
+        )
 
     def evaluate(self, request: ExecRequest) -> ExecApprovalResult:
         """Evaluate an exec request against all bindings."""
@@ -218,10 +223,7 @@ class ExecApprovalPolicy:
             decision = binding.evaluate(request.argv, cwd=request.cwd)
             if decision != ApprovalDecision.PROMPT:
                 # Filter env
-                sanitized = {
-                    k: v for k, v in request.env.items()
-                    if binding.is_env_key_allowed(k)
-                }
+                sanitized = {k: v for k, v in request.env.items() if binding.is_env_key_allowed(k)}
                 return ExecApprovalResult(
                     decision=decision,
                     sanitized_env=sanitized,

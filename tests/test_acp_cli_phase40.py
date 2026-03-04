@@ -14,8 +14,7 @@ from pyclaw.acp.client import _build_server_command
 from pyclaw.acp.server import AcpGatewayAgent
 from pyclaw.acp.session_mapper import parse_session_meta
 from pyclaw.cli.app import app
-from pyclaw.cli.commands.acp_cmd import acp_client_command
-from pyclaw.cli.commands.acp_cmd import acp_run_command
+from pyclaw.cli.commands.acp_cmd import acp_client_command, acp_run_command
 
 runner = CliRunner()
 

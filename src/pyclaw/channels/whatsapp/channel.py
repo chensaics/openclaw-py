@@ -160,9 +160,7 @@ class WhatsAppChannel(ChannelPlugin):
 
     async def _start_bridge(self) -> None:
         """Fallback: use a subprocess bridge (whatsapp-web.js via Node)."""
-        logger.warning(
-            "WhatsApp subprocess bridge not yet implemented. Install neonize: pip install neonize"
-        )
+        logger.warning("WhatsApp subprocess bridge not yet implemented. Install neonize: pip install neonize")
         self._running = False
 
     async def _heartbeat_loop(self) -> None:

@@ -12,7 +12,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from pyclaw.gateway.server import GatewayConnection
+    pass
 
 logger = logging.getLogger("pyclaw.gateway.channels")
 
@@ -61,6 +61,7 @@ def _get_catalog_entry(channel_type: str) -> dict[str, Any]:
     """Return catalog metadata for a channel type."""
     try:
         from pyclaw.channels.plugins.catalog import BUILTIN_CATALOG
+
         entry = BUILTIN_CATALOG.get(channel_type)
         if entry:
             spec = entry.action_spec
@@ -96,8 +97,10 @@ def _channels_from_config() -> list[dict[str, Any]]:
     if not _config_path:
         return []
     try:
-        from pyclaw.config.io import load_config
         from pathlib import Path
+
+        from pyclaw.config.io import load_config
+
         config = load_config(Path(_config_path))
         ch_cfg = config.channels
         if not ch_cfg:
@@ -131,11 +134,7 @@ async def handle_channels_list(params: dict[str, Any] | None, conn: Any) -> None
     channels: list[dict[str, Any]] = []
 
     if _channel_manager:
-        ch_list = (
-            _channel_manager.list_channels()
-            if hasattr(_channel_manager, "list_channels")
-            else []
-        )
+        ch_list = _channel_manager.list_channels() if hasattr(_channel_manager, "list_channels") else []
         seen: set[str] = set()
         for ch_info in ch_list:
             cid = ch_info.get("id", "")
@@ -150,14 +149,11 @@ async def handle_channels_list(params: dict[str, Any] | None, conn: Any) -> None
             }
             merged.update(entry_meta)
             # Overlay runtime-detected capabilities on top of catalog
-            ch_plugin = (
-                _channel_manager.get(cid)
-                if hasattr(_channel_manager, "get")
-                else None
-            )
+            ch_plugin = _channel_manager.get(cid) if hasattr(_channel_manager, "get") else None
             if ch_plugin:
                 try:
                     from pyclaw.channels.base import detect_capabilities
+
                     runtime_caps = detect_capabilities(ch_plugin).to_dict()
                     catalog_caps = merged.get("capabilities", {})
                     for k, v in runtime_caps.items():
@@ -191,11 +187,7 @@ async def handle_channels_status(params: dict[str, Any] | None, conn: Any) -> No
     metrics = _channel_metrics.get(channel_id)
 
     if _channel_manager:
-        ch = (
-            _channel_manager.get(channel_id)
-            if hasattr(_channel_manager, "get")
-            else None
-        )
+        ch = _channel_manager.get(channel_id) if hasattr(_channel_manager, "get") else None
         if ch:
             result: dict[str, Any] = {
                 "channel_id": ch.id,

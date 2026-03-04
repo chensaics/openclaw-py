@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import pytest
 from fastapi.testclient import TestClient
 
 from pyclaw.gateway.protocol.frames import (
@@ -14,8 +13,7 @@ from pyclaw.gateway.protocol.frames import (
     RequestFrame,
     ResponseFrame,
 )
-from pyclaw.gateway.server import GatewayServer, create_gateway_app
-
+from pyclaw.gateway.server import create_gateway_app
 
 # ---------- Protocol frames ----------
 
@@ -110,10 +108,14 @@ def test_ws_connect_with_auth():
     client = TestClient(server.app)
 
     with client.websocket_connect("/") as ws:
-        resp = _ws_send(ws, "connect", {
-            "clientName": "test",
-            "auth": {"token": "secret123"},
-        })
+        resp = _ws_send(
+            ws,
+            "connect",
+            {
+                "clientName": "test",
+                "auth": {"token": "secret123"},
+            },
+        )
         assert resp["ok"] is True
 
 
@@ -123,10 +125,14 @@ def test_ws_connect_bad_auth():
     client = TestClient(server.app)
 
     with client.websocket_connect("/") as ws:
-        resp = _ws_send(ws, "connect", {
-            "clientName": "test",
-            "auth": {"token": "wrong"},
-        })
+        resp = _ws_send(
+            ws,
+            "connect",
+            {
+                "clientName": "test",
+                "auth": {"token": "wrong"},
+            },
+        )
         assert resp["ok"] is False
         assert resp["error"]["code"] == "auth_failed"
 
@@ -169,7 +175,7 @@ def test_ws_unknown_method():
 
 def test_ws_config_get(tmp_path: Path):
     config_file = tmp_path / "pyclaw.json"
-    config_file.write_text('{}')
+    config_file.write_text("{}")
 
     server = create_gateway_app(config_path=str(config_file))
     client = TestClient(server.app)

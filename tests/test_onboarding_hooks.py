@@ -38,9 +38,7 @@ class InteractiveAdapter:
     async def configure(self, ctx: OnboardingConfigureContext) -> OnboardingResult:
         return OnboardingResult(config={})
 
-    async def configure_interactive(
-        self, ctx: OnboardingInteractiveContext
-    ) -> OnboardingResult:
+    async def configure_interactive(self, ctx: OnboardingInteractiveContext) -> OnboardingResult:
         return OnboardingResult(
             config={"interactive": True, "was_configured": ctx.configured},
             account_id="interactive-1",
@@ -58,9 +56,7 @@ class WhenConfiguredAdapter:
     async def configure(self, ctx: OnboardingConfigureContext) -> OnboardingResult:
         return OnboardingResult(config={"basic": True})
 
-    async def configure_when_configured(
-        self, ctx: OnboardingInteractiveContext
-    ) -> OnboardingResult:
+    async def configure_when_configured(self, ctx: OnboardingInteractiveContext) -> OnboardingResult:
         return OnboardingResult(config={"reconfigured": True})
 
 

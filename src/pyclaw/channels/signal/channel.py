@@ -96,9 +96,7 @@ class SignalChannel(ChannelPlugin):
         try:
             async with (
                 aiohttp.ClientSession() as session,
-                session.get(
-                    f"{self._base_url}/api/v1/check", timeout=aiohttp.ClientTimeout(total=5)
-                ) as resp,
+                session.get(f"{self._base_url}/api/v1/check", timeout=aiohttp.ClientTimeout(total=5)) as resp,
             ):
                 return bool(resp.status == 200)
         except Exception:

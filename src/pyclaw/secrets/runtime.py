@@ -9,7 +9,7 @@ import logging
 import time
 from typing import Any
 
-from pyclaw.config.secrets import SecretRef, SecretProviderConfig, coerce_secret_ref
+from pyclaw.config.secrets import SecretProviderConfig, SecretRef, coerce_secret_ref
 from pyclaw.secrets.resolve import SecretRefResolveCache, resolve_secret_ref_value
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,6 @@ class SecretsRuntime:
         """
         if providers is not None:
             self._providers = providers
-        old_cache = self._cache
         self._cache = SecretRefResolveCache()
         self._last_reload = time.time()
         logger.info("Secrets runtime reloaded")

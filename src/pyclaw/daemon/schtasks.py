@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from pathlib import Path
 
 from pyclaw.daemon.service import GatewayServiceInstallArgs, GatewayServiceRuntime
 
@@ -18,11 +17,7 @@ class SchtasksService:
         program = args.program
         full_args = " ".join(args.arguments)
         task_name = f"\\PyClaw\\{args.label}"
-        cmd = (
-            f'schtasks /Create /TN "{task_name}" '
-            f'/TR "{program} {full_args}" '
-            f'/SC ONLOGON /RL HIGHEST /F'
-        )
+        cmd = f'schtasks /Create /TN "{task_name}" /TR "{program} {full_args}" /SC ONLOGON /RL HIGHEST /F'
         await _run(cmd)
         # Start immediately
         await _run(f'schtasks /Run /TN "{task_name}"')
@@ -78,6 +73,8 @@ class SchtasksService:
 
 async def _run(cmd: str) -> None:
     proc = await asyncio.create_subprocess_shell(
-        cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     await proc.communicate()

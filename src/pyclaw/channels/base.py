@@ -274,6 +274,7 @@ class ChannelPlugin(ABC):
         catalog_entry = None
         try:
             from pyclaw.channels.plugins.catalog import BUILTIN_CATALOG
+
             catalog_entry = BUILTIN_CATALOG.get(self.id)
         except ImportError:
             pass

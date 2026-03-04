@@ -230,9 +230,7 @@ def markdown_to_telegram_html(text: str) -> str:
     # Code blocks first
     result = re.sub(
         r"```(\w*)\n(.*?)```",
-        lambda m: (
-            f'<pre><code class="language-{m.group(1)}">{_html_escape(m.group(2))}</code></pre>'
-        ),
+        lambda m: f'<pre><code class="language-{m.group(1)}">{_html_escape(m.group(2))}</code></pre>',
         result,
         flags=re.DOTALL,
     )

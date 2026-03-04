@@ -108,10 +108,7 @@ class ModelOverrideResolver:
         if config.blocked_models and model in config.blocked_models:
             return False
 
-        if config.allowed_models and model not in config.allowed_models:
-            return False
-
-        return True
+        return not (config.allowed_models and model not in config.allowed_models)
 
     def list_allowed_models(self, channel_id: str) -> list[str] | None:
         """List explicitly allowed models for a channel, or None if unrestricted."""

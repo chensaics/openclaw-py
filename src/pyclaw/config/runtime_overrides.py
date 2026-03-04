@@ -30,6 +30,7 @@ _REDACTED = "***REDACTED***"
 @dataclass
 class GroupPolicy:
     """Policy overrides for a specific group/chat."""
+
     group_id: str
     model: str = ""
     think_level: str = ""
@@ -42,6 +43,7 @@ class GroupPolicy:
 @dataclass
 class ChannelCapabilityOverride:
     """Override channel capabilities at runtime."""
+
     channel_id: str
     streaming_enabled: bool | None = None
     reactions_enabled: bool | None = None
@@ -52,8 +54,9 @@ class ChannelCapabilityOverride:
 @dataclass
 class PluginAutoEnable:
     """Rule for auto-enabling a plugin."""
+
     plugin_name: str
-    condition: str = "always"     # "always" | "if_configured" | "if_channel"
+    condition: str = "always"  # "always" | "if_configured" | "if_channel"
     channel_types: list[str] = field(default_factory=list)
 
 
@@ -97,11 +100,13 @@ class RuntimeOverrides:
         """Get list of plugins that should be auto-enabled."""
         plugins: list[str] = []
         for rule in self._plugin_rules:
-            if rule.condition == "always":
+            if (
+                rule.condition == "always"
+                or rule.condition == "if_channel"
+                and channel_type
+                and channel_type in rule.channel_types
+            ):
                 plugins.append(rule.plugin_name)
-            elif rule.condition == "if_channel" and channel_type:
-                if channel_type in rule.channel_types:
-                    plugins.append(rule.plugin_name)
         return plugins
 
     # -- Generic overrides --

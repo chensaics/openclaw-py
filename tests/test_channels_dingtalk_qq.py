@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -79,9 +78,7 @@ class TestDingTalkChannel:
 
     @pytest.mark.asyncio
     async def test_handle_callback_filtered(self) -> None:
-        ch = DingTalkChannel(
-            client_id="app123", client_secret="secret", allow_from=["allowed"]
-        )
+        ch = DingTalkChannel(client_id="app123", client_secret="secret", allow_from=["allowed"])
         handler = AsyncMock()
         ch.on_message(handler)
 

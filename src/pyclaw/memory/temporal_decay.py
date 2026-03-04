@@ -11,7 +11,7 @@ from __future__ import annotations
 import math
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -53,9 +53,9 @@ def _parse_date_from_path(file_path: str) -> float | None:
     if not m:
         return None
     import datetime
+
     try:
-        dt = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
-                               tzinfo=datetime.timezone.utc)
+        dt = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), tzinfo=datetime.UTC)
         return dt.timestamp()
     except ValueError:
         return None

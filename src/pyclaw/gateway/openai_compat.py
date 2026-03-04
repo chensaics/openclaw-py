@@ -6,7 +6,6 @@ API (e.g. Cursor, Continue, aider).
 
 from __future__ import annotations
 
-import asyncio
 import json
 import time
 import uuid
@@ -43,16 +42,12 @@ def register_openai_routes(
         messages = body.get("messages", [])
         model = body.get("model", "")
         stream = body.get("stream", False)
-        user = body.get("user", "")
+        body.get("user", "")
 
         if not messages:
             raise HTTPException(status_code=400, detail="messages is required")
 
-        message_channel = (
-            request.headers.get("message-channel")
-            or request.headers.get("x-message-channel")
-            or ""
-        )
+        message_channel = request.headers.get("message-channel") or request.headers.get("x-message-channel") or ""
 
         # Build prompt from messages
         prompt = _build_prompt(messages)
@@ -108,7 +103,7 @@ def _build_prompt(messages: list[dict[str, Any]]) -> str:
     """Extract text from OpenAI-format messages."""
     parts: list[str] = []
     for msg in messages:
-        role = msg.get("role", "user")
+        msg.get("role", "user")
         content = msg.get("content", "")
 
         if isinstance(content, str):
@@ -155,24 +150,26 @@ async def _non_stream_response(
 
     content = "".join(output_parts)
 
-    return JSONResponse({
-        "id": completion_id,
-        "object": "chat.completion",
-        "created": created,
-        "model": model or "pyclaw",
-        "choices": [
-            {
-                "index": 0,
-                "message": {"role": "assistant", "content": content},
-                "finish_reason": "stop",
-            }
-        ],
-        "usage": {
-            "prompt_tokens": len(prompt) // 4,
-            "completion_tokens": len(content) // 4,
-            "total_tokens": (len(prompt) + len(content)) // 4,
-        },
-    })
+    return JSONResponse(
+        {
+            "id": completion_id,
+            "object": "chat.completion",
+            "created": created,
+            "model": model or "pyclaw",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": len(prompt) // 4,
+                "completion_tokens": len(content) // 4,
+                "total_tokens": (len(prompt) + len(content)) // 4,
+            },
+        }
+    )
 
 
 async def _stream_response(

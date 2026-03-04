@@ -8,7 +8,6 @@ pulse/shimmer effects for loading placeholders.
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
 
 try:
     import flet as ft
@@ -20,10 +19,10 @@ from pyclaw.ui.theme import get_theme
 
 def _skeleton_rect(
     *,
-    width: Optional[int] = None,
+    width: int | None = None,
     height: int = 14,
     border_radius: int = 6,
-) -> "ft.Container":
+) -> ft.Container:
     """Single rounded rectangle placeholder block."""
     theme = get_theme()
     return ft.Container(
@@ -34,7 +33,7 @@ def _skeleton_rect(
     )
 
 
-def _skeleton_circle(radius: int = 18) -> "ft.Container":
+def _skeleton_circle(radius: int = 18) -> ft.Container:
     """Circular avatar placeholder."""
     theme = get_theme()
     return ft.Container(
@@ -45,7 +44,7 @@ def _skeleton_circle(radius: int = 18) -> "ft.Container":
     )
 
 
-def shimmer_chat_skeleton(item_count: int = 4) -> "ft.Column":
+def shimmer_chat_skeleton(item_count: int = 4) -> ft.Column:
     """Chat-style shimmer skeleton (alternating left/right message bubbles).
 
     Mimics the Flutter ShimmerLoading widget layout.
@@ -83,7 +82,7 @@ def shimmer_chat_skeleton(item_count: int = 4) -> "ft.Column":
     return ft.Column(rows, spacing=0)
 
 
-def shimmer_list_tile(count: int = 5) -> "ft.Column":
+def shimmer_list_tile(count: int = 5) -> ft.Column:
     """List-tile style shimmer skeleton (icon + two text lines).
 
     Mimics the Flutter ShimmerListTile widget.
@@ -127,7 +126,7 @@ class ShimmerContainer(ft.Container if ft else object):
 
     def __init__(
         self,
-        content: Optional["ft.Control"] = None,
+        content: ft.Control | None = None,
         pulse_duration_ms: int = 1200,
         **kwargs: object,
     ):
@@ -171,10 +170,11 @@ class ShimmerContainer(ft.Container if ft else object):
 # Stagger animation helper
 # ---------------------------------------------------------------------------
 
+
 async def stagger_fade_in(
-    controls: list["ft.Control"],
+    controls: list[ft.Control],
     *,
-    page: Optional["ft.Page"] = None,
+    page: ft.Page | None = None,
     delay_ms: int = 50,
     duration_ms: int = 300,
 ) -> None:

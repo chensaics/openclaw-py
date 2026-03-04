@@ -85,7 +85,7 @@ class GoogleChatChannel(ChannelPlugin):
         if self._allow_from and sender_id not in self._allow_from:
             return web.Response(status=200)
 
-        thread_name = message.get("thread", {}).get("name", "")
+        message.get("thread", {}).get("name", "")
 
         msg = ChannelMessage(
             channel_id="googlechat",

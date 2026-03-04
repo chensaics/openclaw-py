@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-import re
 import socket
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
@@ -32,19 +31,22 @@ PRIVATE_RANGES = [
     ipaddress.ip_network("fe80::/10"),
 ]
 
-BLOCKED_HOSTNAMES = frozenset({
-    "localhost",
-    "localhost.localdomain",
-    "0.0.0.0",
-    "[::1]",
-    "metadata.google.internal",         # GCP metadata
-    "169.254.169.254",                   # Cloud metadata (AWS/GCP/Azure)
-})
+BLOCKED_HOSTNAMES = frozenset(
+    {
+        "localhost",
+        "localhost.localdomain",
+        "0.0.0.0",
+        "[::1]",
+        "metadata.google.internal",  # GCP metadata
+        "169.254.169.254",  # Cloud metadata (AWS/GCP/Azure)
+    }
+)
 
 
 @dataclass
 class SSRFConfig:
     """Configuration for SSRF protection."""
+
     enabled: bool = True
     allow_private: bool = False
     allowed_domains: list[str] = field(default_factory=list)
@@ -56,6 +58,7 @@ class SSRFConfig:
 @dataclass
 class SSRFCheckResult:
     """Result of an SSRF check."""
+
     allowed: bool
     reason: str = ""
     resolved_ip: str = ""
@@ -116,10 +119,7 @@ def check_url(url: str, config: SSRFConfig | None = None) -> SSRFCheckResult:
 
     # Check allowed domains (if configured, acts as allowlist)
     if config.allowed_domains:
-        matched = any(
-            hostname == d or hostname.endswith(f".{d}")
-            for d in config.allowed_domains
-        )
+        matched = any(hostname == d or hostname.endswith(f".{d}") for d in config.allowed_domains)
         if not matched:
             return SSRFCheckResult(allowed=False, reason="Not in allowed domains", hostname=hostname)
 

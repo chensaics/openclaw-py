@@ -5,13 +5,12 @@ Ported from ``src/infra/update-check.ts`` and ``src/infra/update-channels.ts``.
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +70,7 @@ def detect_install_kind(project_dir: str | None = None) -> str:
         return "git"
     try:
         import pyclaw
+
         pkg_path = Path(pyclaw.__file__).parent
         if (pkg_path.parent.parent / ".git").exists():
             return "git"
@@ -110,9 +110,8 @@ def resolve_effective_update_channel(
     config_channel: str | None = None,
 ) -> UpdateChannel:
     """Resolve the effective update channel from git state and config."""
-    if config_channel:
-        if config_channel in ("stable", "beta", "dev"):
-            return config_channel  # type: ignore[return-value]
+    if config_channel and config_channel in ("stable", "beta", "dev"):
+        return config_channel  # type: ignore[return-value]
 
     if git_status:
         if git_status.tag:
@@ -131,6 +130,7 @@ def channel_to_npm_tag(channel: UpdateChannel) -> str:
 
 def compare_semver(a: str, b: str) -> int:
     """Compare two version strings. Returns -1, 0, or 1."""
+
     def _parts(v: str) -> tuple[int, ...]:
         clean = re.sub(r"^v", "", v).split("-")[0]
         return tuple(int(x) for x in clean.split(".") if x.isdigit())

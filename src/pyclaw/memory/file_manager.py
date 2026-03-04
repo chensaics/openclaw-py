@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -19,6 +18,7 @@ _CHARS_PER_TOKEN = 4
 @dataclass
 class MemoryFileEntry:
     """A tracked memory file."""
+
     path: str
     abs_path: str
     mtime_ms: float
@@ -29,6 +29,7 @@ class MemoryFileEntry:
 @dataclass
 class MemoryChunk:
     """A chunk of a memory file."""
+
     start_line: int
     end_line: int
     text: str
@@ -142,12 +143,14 @@ def chunk_markdown(
 
         if current_chars >= max_chars:
             text = "".join(current_lines)
-            chunks.append(MemoryChunk(
-                start_line=start_line,
-                end_line=i,
-                text=text,
-                content_hash=hash_text(text),
-            ))
+            chunks.append(
+                MemoryChunk(
+                    start_line=start_line,
+                    end_line=i,
+                    text=text,
+                    content_hash=hash_text(text),
+                )
+            )
 
             # Compute overlap: keep trailing lines that fit within overlap_chars
             overlap_text_len = 0
@@ -165,12 +168,14 @@ def chunk_markdown(
     # Final chunk
     if current_lines:
         text = "".join(current_lines)
-        chunks.append(MemoryChunk(
-            start_line=start_line,
-            end_line=len(lines) - 1,
-            text=text,
-            content_hash=hash_text(text),
-        ))
+        chunks.append(
+            MemoryChunk(
+                start_line=start_line,
+                end_line=len(lines) - 1,
+                text=text,
+                content_hash=hash_text(text),
+            )
+        )
 
     return chunks
 
@@ -180,9 +185,7 @@ def is_memory_path(rel_path: str) -> bool:
     normalized = rel_path.replace("\\", "/").strip("/").lower()
     if normalized in ("memory.md", "MEMORY.md".lower()):
         return True
-    if normalized.startswith("memory/"):
-        return True
-    return False
+    return bool(normalized.startswith("memory/"))
 
 
 def normalize_rel_path(value: str) -> str:

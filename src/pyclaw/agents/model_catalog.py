@@ -32,29 +32,139 @@ _PROVIDER_ALIASES: dict[str, str] = {
 # Known providers — single source of truth for name, env key, default model, base URL.
 # ``config/defaults.py`` delegates to this via ``get_provider_defaults()``.
 _KNOWN_PROVIDERS: dict[str, dict[str, Any]] = {
-    "anthropic": {"name": "Anthropic", "env_key": "ANTHROPIC_API_KEY", "default_model": "claude-sonnet-4-6", "base_url": "https://api.anthropic.com"},
-    "openai": {"name": "OpenAI", "env_key": "OPENAI_API_KEY", "default_model": "gpt-4o", "base_url": "https://api.openai.com/v1"},
-    "google": {"name": "Google Gemini", "env_key": "GOOGLE_API_KEY", "default_model": "gemini-2.5-flash", "base_url": "https://generativelanguage.googleapis.com"},
-    "deepseek": {"name": "DeepSeek", "env_key": "DEEPSEEK_API_KEY", "default_model": "deepseek-chat", "base_url": "https://api.deepseek.com/v1"},
-    "mistral": {"name": "Mistral", "env_key": "MISTRAL_API_KEY", "default_model": "mistral-large-latest", "base_url": "https://api.mistral.ai/v1"},
-    "xai": {"name": "xAI (Grok)", "env_key": "XAI_API_KEY", "default_model": "grok-3", "base_url": "https://api.x.ai/v1"},
-    "qwen": {"name": "Qwen (通义千问)", "env_key": "DASHSCOPE_API_KEY", "default_model": "qwen-max", "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"},
-    "moonshot": {"name": "Moonshot (Kimi)", "env_key": "MOONSHOT_API_KEY", "default_model": "kimi-k2.5", "base_url": "https://api.moonshot.cn/v1"},
-    "zhipu": {"name": "Zhipu GLM (智谱)", "env_key": "ZHIPU_API_KEY", "default_model": "glm-4-plus", "base_url": "https://open.bigmodel.cn/api/paas/v4"},
-    "volcengine": {"name": "Doubao (豆包)", "env_key": "VOLCENGINE_API_KEY", "default_model": "doubao-pro-256k", "base_url": "https://ark.cn-beijing.volces.com/api/v3"},
-    "yi": {"name": "Yi (零一万物)", "env_key": "YI_API_KEY", "default_model": "yi-lightning", "base_url": "https://api.lingyiwanwu.com/v1"},
-    "qianfan": {"name": "ERNIE (百度千帆)", "env_key": "QIANFAN_API_KEY", "default_model": "ernie-4.5-turbo-128k", "base_url": "https://aip.baidubce.com/rpc/2.0/ai_custom/v1"},
-    "minimax": {"name": "MiniMax", "env_key": "MINIMAX_API_KEY", "default_model": "MiniMax-M2.5", "base_url": "https://api.minimax.chat/v1"},
-    "siliconflow": {"name": "SiliconFlow", "env_key": "SILICONFLOW_API_KEY", "default_model": "deepseek-ai/DeepSeek-V3", "base_url": "https://api.siliconflow.cn/v1"},
-    "groq": {"name": "Groq", "env_key": "GROQ_API_KEY", "default_model": "llama-3.3-70b-versatile", "base_url": "https://api.groq.com/openai/v1"},
-    "ollama": {"name": "Ollama (Local)", "env_key": "", "default_model": "llama3", "base_url": "http://localhost:11434/v1"},
-    "openrouter": {"name": "OpenRouter", "env_key": "OPENROUTER_API_KEY", "default_model": "anthropic/claude-sonnet-4-6", "base_url": "https://openrouter.ai/api/v1"},
-    "together": {"name": "Together AI", "env_key": "TOGETHER_API_KEY", "default_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo", "base_url": "https://api.together.xyz/v1"},
-    "fireworks": {"name": "Fireworks AI", "env_key": "FIREWORKS_API_KEY", "default_model": "accounts/fireworks/models/llama-v3p3-70b-instruct", "base_url": "https://api.fireworks.ai/inference/v1"},
-    "amazon-bedrock": {"name": "Amazon Bedrock", "env_key": "AWS_BEARER_TOKEN_BEDROCK", "default_model": "anthropic.claude-sonnet-4-6", "base_url": ""},
-    "perplexity": {"name": "Perplexity", "env_key": "PERPLEXITY_API_KEY", "default_model": "sonar-pro", "base_url": "https://api.perplexity.ai"},
+    "anthropic": {
+        "name": "Anthropic",
+        "env_key": "ANTHROPIC_API_KEY",
+        "default_model": "claude-sonnet-4-6",
+        "base_url": "https://api.anthropic.com",
+    },
+    "openai": {
+        "name": "OpenAI",
+        "env_key": "OPENAI_API_KEY",
+        "default_model": "gpt-4o",
+        "base_url": "https://api.openai.com/v1",
+    },
+    "google": {
+        "name": "Google Gemini",
+        "env_key": "GOOGLE_API_KEY",
+        "default_model": "gemini-2.5-flash",
+        "base_url": "https://generativelanguage.googleapis.com",
+    },
+    "deepseek": {
+        "name": "DeepSeek",
+        "env_key": "DEEPSEEK_API_KEY",
+        "default_model": "deepseek-chat",
+        "base_url": "https://api.deepseek.com/v1",
+    },
+    "mistral": {
+        "name": "Mistral",
+        "env_key": "MISTRAL_API_KEY",
+        "default_model": "mistral-large-latest",
+        "base_url": "https://api.mistral.ai/v1",
+    },
+    "xai": {
+        "name": "xAI (Grok)",
+        "env_key": "XAI_API_KEY",
+        "default_model": "grok-3",
+        "base_url": "https://api.x.ai/v1",
+    },
+    "qwen": {
+        "name": "Qwen (通义千问)",
+        "env_key": "DASHSCOPE_API_KEY",
+        "default_model": "qwen-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    },
+    "moonshot": {
+        "name": "Moonshot (Kimi)",
+        "env_key": "MOONSHOT_API_KEY",
+        "default_model": "kimi-k2.5",
+        "base_url": "https://api.moonshot.cn/v1",
+    },
+    "zhipu": {
+        "name": "Zhipu GLM (智谱)",
+        "env_key": "ZHIPU_API_KEY",
+        "default_model": "glm-4-plus",
+        "base_url": "https://open.bigmodel.cn/api/paas/v4",
+    },
+    "volcengine": {
+        "name": "Doubao (豆包)",
+        "env_key": "VOLCENGINE_API_KEY",
+        "default_model": "doubao-pro-256k",
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+    },
+    "yi": {
+        "name": "Yi (零一万物)",
+        "env_key": "YI_API_KEY",
+        "default_model": "yi-lightning",
+        "base_url": "https://api.lingyiwanwu.com/v1",
+    },
+    "qianfan": {
+        "name": "ERNIE (百度千帆)",
+        "env_key": "QIANFAN_API_KEY",
+        "default_model": "ernie-4.5-turbo-128k",
+        "base_url": "https://aip.baidubce.com/rpc/2.0/ai_custom/v1",
+    },
+    "minimax": {
+        "name": "MiniMax",
+        "env_key": "MINIMAX_API_KEY",
+        "default_model": "MiniMax-M2.5",
+        "base_url": "https://api.minimax.chat/v1",
+    },
+    "siliconflow": {
+        "name": "SiliconFlow",
+        "env_key": "SILICONFLOW_API_KEY",
+        "default_model": "deepseek-ai/DeepSeek-V3",
+        "base_url": "https://api.siliconflow.cn/v1",
+    },
+    "groq": {
+        "name": "Groq",
+        "env_key": "GROQ_API_KEY",
+        "default_model": "llama-3.3-70b-versatile",
+        "base_url": "https://api.groq.com/openai/v1",
+    },
+    "ollama": {
+        "name": "Ollama (Local)",
+        "env_key": "",
+        "default_model": "llama3",
+        "base_url": "http://localhost:11434/v1",
+    },
+    "openrouter": {
+        "name": "OpenRouter",
+        "env_key": "OPENROUTER_API_KEY",
+        "default_model": "anthropic/claude-sonnet-4-6",
+        "base_url": "https://openrouter.ai/api/v1",
+    },
+    "together": {
+        "name": "Together AI",
+        "env_key": "TOGETHER_API_KEY",
+        "default_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        "base_url": "https://api.together.xyz/v1",
+    },
+    "fireworks": {
+        "name": "Fireworks AI",
+        "env_key": "FIREWORKS_API_KEY",
+        "default_model": "accounts/fireworks/models/llama-v3p3-70b-instruct",
+        "base_url": "https://api.fireworks.ai/inference/v1",
+    },
+    "amazon-bedrock": {
+        "name": "Amazon Bedrock",
+        "env_key": "AWS_BEARER_TOKEN_BEDROCK",
+        "default_model": "anthropic.claude-sonnet-4-6",
+        "base_url": "",
+    },
+    "perplexity": {
+        "name": "Perplexity",
+        "env_key": "PERPLEXITY_API_KEY",
+        "default_model": "sonar-pro",
+        "base_url": "https://api.perplexity.ai",
+    },
     "vllm": {"name": "vLLM (Local)", "env_key": "", "default_model": "default", "base_url": "http://localhost:8000/v1"},
-    "litellm": {"name": "LiteLLM (Proxy)", "env_key": "", "default_model": "default", "base_url": "http://localhost:4000/v1"},
+    "litellm": {
+        "name": "LiteLLM (Proxy)",
+        "env_key": "",
+        "default_model": "default",
+        "base_url": "http://localhost:4000/v1",
+    },
 }
 
 
@@ -119,7 +229,6 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("anthropic", "claude-sonnet-4-20250514", "Claude Sonnet 4", 8192, 200_000, True, True, True, 3.0, 15.0),
     ModelInfo("anthropic", "claude-haiku-4-5", "Claude Haiku 4.5", 8192, 200_000, True, True, False, 0.8, 4.0),
     ModelInfo("anthropic", "claude-3-7-sonnet-latest", "Claude 3.7 Sonnet", 8192, 200_000, True, True, True, 3.0, 15.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # OpenAI — https://platform.openai.com/docs/models
     # ═══════════════════════════════════════════════════════════════════
@@ -134,7 +243,6 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("openai", "o3-pro", "o3-pro", 100_000, 200_000, True, True, True, 20.0, 80.0),
     ModelInfo("openai", "o3-mini", "o3-mini", 65_536, 200_000, True, True, True, 1.1, 4.4),
     ModelInfo("openai", "o4-mini", "o4-mini", 65_536, 200_000, True, True, True, 1.1, 4.4),
-
     # ═══════════════════════════════════════════════════════════════════
     # Google Gemini — https://ai.google.dev/gemini-api/docs/models
     # ═══════════════════════════════════════════════════════════════════
@@ -143,13 +251,11 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("google", "gemini-2.5-pro", "Gemini 2.5 Pro", 65_536, 1_048_576, True, True, True, 1.25, 5.0),
     ModelInfo("google", "gemini-2.5-flash", "Gemini 2.5 Flash", 8192, 1_048_576, True, True, True, 0.15, 0.6),
     ModelInfo("google", "gemini-2.0-flash", "Gemini 2.0 Flash", 8192, 1_048_576, True, True, False, 0.1, 0.4),
-
     # ═══════════════════════════════════════════════════════════════════
     # DeepSeek — https://api-docs.deepseek.com/
     # ═══════════════════════════════════════════════════════════════════
     ModelInfo("deepseek", "deepseek-chat", "DeepSeek V3", 8192, 128_000, True, False, False, 0.27, 1.1),
     ModelInfo("deepseek", "deepseek-reasoner", "DeepSeek R1", 8192, 128_000, True, False, True, 0.55, 2.19),
-
     # ═══════════════════════════════════════════════════════════════════
     # Mistral — https://docs.mistral.ai/getting-started/models/
     # ═══════════════════════════════════════════════════════════════════
@@ -159,13 +265,11 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("mistral", "codestral-latest", "Codestral", 8192, 32_768, True, False, False, 0.3, 0.9),
     ModelInfo("mistral", "magistral-medium-1.2", "Magistral Medium", 8192, 128_000, True, False, False, 2.0, 6.0),
     ModelInfo("mistral", "magistral-small-1.2", "Magistral Small", 8192, 128_000, True, False, False, 0.5, 1.5),
-
     # ═══════════════════════════════════════════════════════════════════
     # xAI (Grok) — https://docs.x.ai/docs/models
     # ═══════════════════════════════════════════════════════════════════
     ModelInfo("xai", "grok-3", "Grok 3", 8192, 131_072, True, True, True, 3.0, 15.0),
     ModelInfo("xai", "grok-3-mini", "Grok 3 Mini", 8192, 131_072, True, True, True, 0.3, 0.5),
-
     # ═══════════════════════════════════════════════════════════════════
     # 通义千问 (Qwen / Aliyun) — https://help.aliyun.com/zh/model-studio/
     # ═══════════════════════════════════════════════════════════════════
@@ -178,7 +282,6 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("qwen", "qwen-coder-turbo", "Qwen Coder Turbo", 8192, 131_072, True, False, False, 0.0, 0.0),
     ModelInfo("qwen", "qwen3-coder-plus", "Qwen3 Coder Plus", 8192, 1_000_000, True, False, False, 0.0, 0.0),
     ModelInfo("qwen", "qwq-plus", "QwQ Plus (推理)", 8192, 32_768, True, False, True, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # Moonshot / Kimi — https://platform.moonshot.cn/docs/
     # ═══════════════════════════════════════════════════════════════════
@@ -187,7 +290,6 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("moonshot", "kimi-k2-thinking", "Kimi K2 Thinking", 8192, 256_000, True, False, True, 0.0, 0.0),
     ModelInfo("moonshot", "moonshot-v1-128k", "Moonshot v1 128K", 8192, 128_000, True, False, False, 0.0, 0.0),
     ModelInfo("moonshot", "moonshot-v1-32k", "Moonshot v1 32K", 8192, 32_000, True, False, False, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # 智谱 AI (ZhipuAI / GLM) — https://open.bigmodel.cn/dev/api
     # ═══════════════════════════════════════════════════════════════════
@@ -199,13 +301,11 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("zhipu", "glm-4-long", "GLM-4 Long", 4096, 1_048_576, True, False, False, 0.0, 0.0),
     ModelInfo("zhipu", "glm-4-5-flash", "GLM-4.5 Flash", 4096, 200_000, True, False, False, 0.0, 0.0),
     ModelInfo("zhipu", "glm-zero-preview", "GLM Zero Preview", 4096, 128_000, True, False, True, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # 火山引擎 / 豆包 (Volcengine / Doubao)
     # ═══════════════════════════════════════════════════════════════════
     ModelInfo("volcengine", "doubao-pro-256k", "豆包 Pro 256K", 4096, 256_000, True, False, False, 0.0, 0.0),
     ModelInfo("volcengine", "doubao-lite-128k", "豆包 Lite 128K", 4096, 128_000, True, False, False, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # 零一万物 (Yi / 01.AI) — https://platform.lingyiwanwu.com/
     # ═══════════════════════════════════════════════════════════════════
@@ -214,7 +314,6 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("yi", "yi-large-turbo", "Yi Large Turbo", 8192, 16_384, True, False, False, 0.0, 0.0),
     ModelInfo("yi", "yi-medium", "Yi Medium", 8192, 16_384, True, False, False, 0.0, 0.0),
     ModelInfo("yi", "yi-vision", "Yi Vision", 4096, 16_384, True, True, False, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # 百度千帆 (Qianfan / ERNIE) — https://cloud.baidu.com/doc/WENXINWORKSHOP/
     # ═══════════════════════════════════════════════════════════════════
@@ -222,28 +321,26 @@ _CATALOG: list[ModelInfo] = [
     ModelInfo("qianfan", "ernie-4.5-turbo-32k", "ERNIE 4.5 Turbo 32K", 4096, 32_000, True, False, False, 0.0, 0.0),
     ModelInfo("qianfan", "ernie-x1-32k", "ERNIE X1 32K", 4096, 32_000, True, False, True, 0.0, 0.0),
     ModelInfo("qianfan", "ernie-5.0-thinking-latest", "ERNIE 5.0 Thinking", 4096, 32_000, True, False, True, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # MiniMax — https://www.minimax.chat/
     # ═══════════════════════════════════════════════════════════════════
     ModelInfo("minimax", "MiniMax-M2.5", "MiniMax M2.5", 8192, 204_800, True, False, False, 0.0, 0.0),
     ModelInfo("minimax", "MiniMax-M2.1", "MiniMax M2.1", 8192, 204_800, True, False, False, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # SiliconFlow — https://siliconflow.cn/
     # ═══════════════════════════════════════════════════════════════════
     ModelInfo("siliconflow", "deepseek-ai/DeepSeek-V3", "DeepSeek V3 (SF)", 8192, 64_000, True, False, False, 0.0, 0.0),
     ModelInfo("siliconflow", "deepseek-ai/DeepSeek-R1", "DeepSeek R1 (SF)", 8192, 64_000, True, False, True, 0.0, 0.0),
     ModelInfo("siliconflow", "Qwen/QwQ-32B", "QwQ 32B (SF)", 8192, 32_768, True, False, True, 0.0, 0.0),
-    ModelInfo("siliconflow", "Qwen/Qwen2.5-72B-Instruct", "Qwen2.5 72B (SF)", 8192, 32_768, True, False, False, 0.0, 0.0),
+    ModelInfo(
+        "siliconflow", "Qwen/Qwen2.5-72B-Instruct", "Qwen2.5 72B (SF)", 8192, 32_768, True, False, False, 0.0, 0.0
+    ),
     ModelInfo("siliconflow", "THUDM/GLM-4-32B-0414", "GLM-4 32B (SF)", 8192, 128_000, True, False, False, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # Groq — https://groq.com/
     # ═══════════════════════════════════════════════════════════════════
     ModelInfo("groq", "llama-3.3-70b-versatile", "Llama 3.3 70B", 8192, 131_072, True, False, False, 0.0, 0.0),
     ModelInfo("groq", "llama-3.1-8b-instant", "Llama 3.1 8B", 8192, 131_072, True, False, False, 0.0, 0.0),
-
     # ═══════════════════════════════════════════════════════════════════
     # Perplexity — https://docs.perplexity.ai/
     # ═══════════════════════════════════════════════════════════════════
@@ -274,9 +371,7 @@ class ModelCatalog:
         """Return providers that have at least one model in the catalog."""
         providers_with_models = {m.provider for m in self._models.values()}
         return [
-            {"id": pid, "name": meta["name"]}
-            for pid, meta in _KNOWN_PROVIDERS.items()
-            if pid in providers_with_models
+            {"id": pid, "name": meta["name"]} for pid, meta in _KNOWN_PROVIDERS.items() if pid in providers_with_models
         ]
 
     def default_model_for_provider(self, provider: str) -> str:

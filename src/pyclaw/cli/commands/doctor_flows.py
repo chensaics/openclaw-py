@@ -14,10 +14,11 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 class Severity(str, Enum):
@@ -31,6 +32,7 @@ class Severity(str, Enum):
 @dataclass
 class DiagnosticResult:
     """Result of a single diagnostic check."""
+
     check_name: str
     category: str
     severity: Severity = Severity.OK
@@ -42,6 +44,7 @@ class DiagnosticResult:
 @dataclass
 class DiagnosticReport:
     """Full diagnostic report."""
+
     results: list[DiagnosticResult] = field(default_factory=list)
     platform: str = ""
     python_version: str = ""
@@ -76,7 +79,9 @@ class DiagnosticReport:
         for cat, results in self.by_category().items():
             lines.append(f"\n  [{cat}]")
             for r in results:
-                icon = {"ok": "✓", "info": "ℹ", "warning": "⚠", "error": "✗", "critical": "✗✗"}.get(r.severity.value, "?")
+                icon = {"ok": "✓", "info": "ℹ", "warning": "⚠", "error": "✗", "critical": "✗✗"}.get(
+                    r.severity.value, "?"
+                )
                 lines.append(f"    {icon} {r.check_name}: {r.message}")
                 if r.fix_hint:
                     lines.append(f"      Fix: {r.fix_hint}")
@@ -105,18 +110,21 @@ class DiagnosticRegistry:
                 result = check()
                 report.results.append(result)
             except Exception as e:
-                report.results.append(DiagnosticResult(
-                    check_name=getattr(check, "__name__", "unknown"),
-                    category="internal",
-                    severity=Severity.ERROR,
-                    message=f"Check failed: {e}",
-                ))
+                report.results.append(
+                    DiagnosticResult(
+                        check_name=getattr(check, "__name__", "unknown"),
+                        category="internal",
+                        severity=Severity.ERROR,
+                        message=f"Check failed: {e}",
+                    )
+                )
         return report
 
 
 # ---------------------------------------------------------------------------
 # Built-in Checks
 # ---------------------------------------------------------------------------
+
 
 def check_config() -> DiagnosticResult:
     """Check config file exists and is valid JSON."""
@@ -131,15 +139,20 @@ def check_config() -> DiagnosticResult:
         )
     try:
         import json
+
         json.loads(config_path.read_text(encoding="utf-8"))
         return DiagnosticResult(
-            check_name="config_file", category="config",
-            severity=Severity.OK, message="Config file is valid JSON",
+            check_name="config_file",
+            category="config",
+            severity=Severity.OK,
+            message="Config file is valid JSON",
         )
     except json.JSONDecodeError as e:
         return DiagnosticResult(
-            check_name="config_file", category="config",
-            severity=Severity.ERROR, message=f"Config file has invalid JSON: {e}",
+            check_name="config_file",
+            category="config",
+            severity=Severity.ERROR,
+            message=f"Config file has invalid JSON: {e}",
             fix_hint="Fix the JSON syntax in ~/.pyclaw/config.json",
         )
 
@@ -149,7 +162,8 @@ def check_auth() -> DiagnosticResult:
     creds_dir = Path.home() / ".pyclaw" / "credentials"
     if not creds_dir.exists():
         return DiagnosticResult(
-            check_name="auth_credentials", category="auth",
+            check_name="auth_credentials",
+            category="auth",
             severity=Severity.WARNING,
             message="No credentials directory found",
             fix_hint="Run 'pyclaw auth login' to configure a provider",
@@ -157,13 +171,15 @@ def check_auth() -> DiagnosticResult:
     cred_files = list(creds_dir.iterdir())
     if not cred_files:
         return DiagnosticResult(
-            check_name="auth_credentials", category="auth",
+            check_name="auth_credentials",
+            category="auth",
             severity=Severity.WARNING,
             message="No provider credentials found",
             fix_hint="Run 'pyclaw auth login' to configure a provider",
         )
     return DiagnosticResult(
-        check_name="auth_credentials", category="auth",
+        check_name="auth_credentials",
+        category="auth",
         severity=Severity.OK,
         message=f"{len(cred_files)} credential file(s) found",
     )
@@ -174,27 +190,32 @@ def check_sandbox() -> DiagnosticResult:
     home = Path.home() / ".pyclaw"
     if not home.exists():
         return DiagnosticResult(
-            check_name="sandbox_dir", category="sandbox",
+            check_name="sandbox_dir",
+            category="sandbox",
             severity=Severity.WARNING,
             message="pyclaw home directory not found",
             fix_hint="Run 'pyclaw setup' to initialize",
         )
     if not os.access(str(home), os.W_OK):
         return DiagnosticResult(
-            check_name="sandbox_dir", category="sandbox",
+            check_name="sandbox_dir",
+            category="sandbox",
             severity=Severity.ERROR,
             message="pyclaw home directory is not writable",
             fix_hint=f"Check permissions on {home}",
         )
     return DiagnosticResult(
-        check_name="sandbox_dir", category="sandbox",
-        severity=Severity.OK, message="Sandbox directory is accessible",
+        check_name="sandbox_dir",
+        category="sandbox",
+        severity=Severity.OK,
+        message="Sandbox directory is accessible",
     )
 
 
 def check_gateway_connectivity() -> DiagnosticResult:
     """Check if gateway port is reachable on localhost."""
     import socket as sock
+
     port = 18789
     try:
         s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
@@ -203,18 +224,24 @@ def check_gateway_connectivity() -> DiagnosticResult:
         s.close()
         if result == 0:
             return DiagnosticResult(
-                check_name="gateway_port", category="gateway",
-                severity=Severity.OK, message=f"Gateway is listening on port {port}",
+                check_name="gateway_port",
+                category="gateway",
+                severity=Severity.OK,
+                message=f"Gateway is listening on port {port}",
             )
         return DiagnosticResult(
-            check_name="gateway_port", category="gateway",
-            severity=Severity.INFO, message=f"Gateway not running on port {port}",
+            check_name="gateway_port",
+            category="gateway",
+            severity=Severity.INFO,
+            message=f"Gateway not running on port {port}",
             fix_hint="Start the gateway with 'pyclaw gateway run'",
         )
     except Exception as e:
         return DiagnosticResult(
-            check_name="gateway_port", category="gateway",
-            severity=Severity.WARNING, message=f"Gateway check failed: {e}",
+            check_name="gateway_port",
+            category="gateway",
+            severity=Severity.WARNING,
+            message=f"Gateway check failed: {e}",
         )
 
 
@@ -224,12 +251,16 @@ def check_workspace() -> DiagnosticResult:
     local_dir = cwd / ".pyclaw"
     if local_dir.exists():
         return DiagnosticResult(
-            check_name="workspace", category="workspace",
-            severity=Severity.OK, message=f"Workspace config at {local_dir}",
+            check_name="workspace",
+            category="workspace",
+            severity=Severity.OK,
+            message=f"Workspace config at {local_dir}",
         )
     return DiagnosticResult(
-        check_name="workspace", category="workspace",
-        severity=Severity.INFO, message="No local .pyclaw/ directory in workspace",
+        check_name="workspace",
+        category="workspace",
+        severity=Severity.INFO,
+        message="No local .pyclaw/ directory in workspace",
     )
 
 
@@ -238,13 +269,17 @@ def check_memory() -> DiagnosticResult:
     mem_dir = Path.home() / ".pyclaw" / "memory"
     if not mem_dir.exists():
         return DiagnosticResult(
-            check_name="memory_store", category="memory",
-            severity=Severity.INFO, message="No memory store found (will be created on first use)",
+            check_name="memory_store",
+            category="memory",
+            severity=Severity.INFO,
+            message="No memory store found (will be created on first use)",
         )
     db_files = list(mem_dir.glob("*.db")) + list(mem_dir.glob("*.sqlite"))
     return DiagnosticResult(
-        check_name="memory_store", category="memory",
-        severity=Severity.OK, message=f"Memory store with {len(db_files)} database(s)",
+        check_name="memory_store",
+        category="memory",
+        severity=Severity.OK,
+        message=f"Memory store with {len(db_files)} database(s)",
     )
 
 
@@ -253,13 +288,17 @@ def check_state() -> DiagnosticResult:
     sessions_dir = Path.home() / ".pyclaw" / "sessions"
     if not sessions_dir.exists():
         return DiagnosticResult(
-            check_name="session_state", category="state",
-            severity=Severity.INFO, message="No sessions directory (will be created on first use)",
+            check_name="session_state",
+            category="state",
+            severity=Severity.INFO,
+            message="No sessions directory (will be created on first use)",
         )
     count = sum(1 for _ in sessions_dir.iterdir() if _.is_dir())
     return DiagnosticResult(
-        check_name="session_state", category="state",
-        severity=Severity.OK, message=f"{count} session(s) found",
+        check_name="session_state",
+        category="state",
+        severity=Severity.OK,
+        message=f"{count} session(s) found",
     )
 
 
@@ -278,7 +317,8 @@ def check_platform() -> DiagnosticResult:
         notes.append("Tailscale CLI available")
 
     return DiagnosticResult(
-        check_name="platform_notes", category="platform",
+        check_name="platform_notes",
+        category="platform",
         severity=Severity.OK,
         message="; ".join(notes) if notes else f"Platform: {sys.platform}",
     )
@@ -289,11 +329,14 @@ def check_security() -> DiagnosticResult:
     config_path = Path.home() / ".pyclaw" / "config.json"
     if not config_path.exists():
         return DiagnosticResult(
-            check_name="security_audit", category="security",
-            severity=Severity.INFO, message="No config to audit",
+            check_name="security_audit",
+            category="security",
+            severity=Severity.INFO,
+            message="No config to audit",
         )
     try:
         import json
+
         config = json.loads(config_path.read_text(encoding="utf-8"))
         issues: list[str] = []
 
@@ -308,19 +351,24 @@ def check_security() -> DiagnosticResult:
 
         if issues:
             return DiagnosticResult(
-                check_name="security_audit", category="security",
+                check_name="security_audit",
+                category="security",
                 severity=Severity.WARNING,
                 message=f"{len(issues)} issue(s): {'; '.join(issues)}",
             )
 
         return DiagnosticResult(
-            check_name="security_audit", category="security",
-            severity=Severity.OK, message="No security issues detected",
+            check_name="security_audit",
+            category="security",
+            severity=Severity.OK,
+            message="No security issues detected",
         )
     except Exception:
         return DiagnosticResult(
-            check_name="security_audit", category="security",
-            severity=Severity.INFO, message="Could not parse config for audit",
+            check_name="security_audit",
+            category="security",
+            severity=Severity.INFO,
+            message="Could not parse config for audit",
         )
 
 

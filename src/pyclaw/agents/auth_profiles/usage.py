@@ -97,7 +97,7 @@ def clear_expired_cooldowns(store: AuthProfileStore) -> int:
     """Clear all expired cooldowns, return count cleared."""
     now = datetime.now(UTC)
     cleared = 0
-    for pid, stats in store.usage_stats.items():
+    for _pid, stats in store.usage_stats.items():
         if stats.cooldown_until and stats.cooldown_until != "permanent":
             try:
                 end = datetime.fromisoformat(stats.cooldown_until)
@@ -137,8 +137,7 @@ def resolve_profiles_unavailable_reason(
         return "all_in_cooldown"
 
     all_disabled = all(
-        store.usage_stats.get(pid, ProfileUsageStats()).disabled_until == "permanent"
-        for pid, _ in profiles
+        store.usage_stats.get(pid, ProfileUsageStats()).disabled_until == "permanent" for pid, _ in profiles
     )
     if all_disabled:
         return "all_disabled"

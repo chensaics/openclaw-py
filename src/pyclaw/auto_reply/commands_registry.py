@@ -13,15 +13,17 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class CommandScope(str, Enum):
     """Where a command can be invoked."""
+
     ALL = "all"
     DM = "dm"
     GROUP = "group"
@@ -31,6 +33,7 @@ class CommandScope(str, Enum):
 @dataclass
 class CommandArg:
     """A single argument for a command."""
+
     name: str
     required: bool = False
     description: str = ""
@@ -40,6 +43,7 @@ class CommandArg:
 @dataclass
 class CommandDef:
     """A slash command definition."""
+
     name: str
     aliases: list[str] = field(default_factory=list)
     description: str = ""
@@ -56,6 +60,7 @@ class CommandDef:
 @dataclass
 class ParsedCommand:
     """Result of parsing a slash command from text."""
+
     name: str
     args: list[str]
     raw_args: str
@@ -68,6 +73,7 @@ CommandHandler = Callable[["CommandContext"], Coroutine[Any, Any, "CommandResult
 @dataclass
 class CommandContext:
     """Context passed to a command handler."""
+
     command: ParsedCommand
     sender_id: str = ""
     channel_id: str = ""
@@ -80,9 +86,10 @@ class CommandContext:
 @dataclass
 class CommandResult:
     """Result from a command handler."""
+
     text: str = ""
     success: bool = True
-    silent: bool = False        # Don't send reply
+    silent: bool = False  # Don't send reply
     stop_processing: bool = True  # Don't continue to agent
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -114,7 +121,9 @@ class CommandRegistry:
             if trigger_lower in self._trigger_map:
                 logger.warning(
                     "Command trigger '%s' already registered for '%s', overwriting with '%s'",
-                    trigger, self._trigger_map[trigger_lower], name,
+                    trigger,
+                    self._trigger_map[trigger_lower],
+                    name,
                 )
             self._trigger_map[trigger_lower] = name
 
@@ -156,10 +165,7 @@ class CommandRegistry:
             )
 
         # Prefix match
-        candidates = [
-            t for t in self._trigger_map
-            if t.startswith(trigger) and len(trigger) >= 1
-        ]
+        candidates = [t for t in self._trigger_map if t.startswith(trigger) and len(trigger) >= 1]
         if len(candidates) == 1:
             canonical = self._trigger_map[candidates[0]]
             args = raw_args.split() if raw_args else []
@@ -259,7 +265,9 @@ BUILTIN_COMMANDS: list[CommandDef] = [
     CommandDef(name="debug", description="Show debug configuration", category="model", hidden=True),
     CommandDef(name="tts", description="Text-to-speech", category="tools"),
     CommandDef(name="approve", description="Approve pending execution", category="tools"),
-    CommandDef(name="allowlist", aliases=["allow"], description="Manage allowlist", category="admin", scope=CommandScope.OWNER),
+    CommandDef(
+        name="allowlist", aliases=["allow"], description="Manage allowlist", category="admin", scope=CommandScope.OWNER
+    ),
     CommandDef(name="send", description="Send message to channel", category="messaging"),
     CommandDef(name="bash", description="Execute shell command", category="tools", hidden=True),
     CommandDef(name="plugin", description="Plugin management", category="admin", scope=CommandScope.OWNER),
@@ -270,7 +278,9 @@ def create_default_registry() -> CommandRegistry:
     """Create a registry with all built-in command definitions (no handlers)."""
     registry = CommandRegistry()
     for cmd in BUILTIN_COMMANDS:
+
         async def _placeholder(ctx: CommandContext) -> CommandResult:
             return CommandResult(text=f"/{ctx.command.name}: not yet implemented")
+
         registry.register(cmd, _placeholder)
     return registry

@@ -6,7 +6,7 @@ Ported from ``src/security/dm-policy-shared.ts``.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
 
 class DmGroupAccessDecision(str, Enum):

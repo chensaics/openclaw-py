@@ -3,6 +3,6 @@
 Ported from ``src/daemon/``.
 """
 
-from pyclaw.daemon.service import resolve_gateway_service, GatewayService
+from pyclaw.daemon.service import GatewayService, resolve_gateway_service
 
 __all__ = ["GatewayService", "resolve_gateway_service"]

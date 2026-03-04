@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -130,6 +129,7 @@ def _collect_from_agent_dir(agent_dir: Path, *, agent_id: str) -> list[SessionEn
 # sessions cleanup
 # ---------------------------------------------------------------------------
 
+
 def sessions_cleanup_command(
     *,
     dry_run: bool = False,
@@ -195,7 +195,9 @@ def sessions_cleanup_command(
         typer.echo("No stale sessions to clean up.")
         return
 
-    typer.echo(f"Found: {len(stale_locks)} lock(s), {len(empty_files)} empty file(s), {len(old_sessions)} old session(s).")
+    typer.echo(
+        f"Found: {len(stale_locks)} lock(s), {len(empty_files)} empty file(s), {len(old_sessions)} old session(s)."
+    )
 
     if dry_run:
         for p in candidates:
@@ -215,4 +217,3 @@ def _remove_files(files: list[Path]) -> int:
         except Exception:
             pass
     return count
-

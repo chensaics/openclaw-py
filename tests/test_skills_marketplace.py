@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from pyclaw.agents.skills.marketplace import (
+    MarketplaceSkill,
     install_skill,
     list_installed_skills,
     remove_skill,
-    MarketplaceSkill,
 )
 
 

@@ -11,8 +11,6 @@ Provides:
 
 from __future__ import annotations
 
-import base64
-import os
 import re
 import shutil
 from dataclasses import dataclass, field
@@ -22,6 +20,7 @@ from pathlib import Path
 @dataclass
 class ObfuscationResult:
     """Result of obfuscation detection."""
+
     is_obfuscated: bool
     signals: list[str] = field(default_factory=list)
     risk_score: float = 0.0  # 0.0 - 1.0
@@ -29,7 +28,9 @@ class ObfuscationResult:
 
 
 # Patterns commonly used for obfuscation
-_BASE64_CMD_RE = re.compile(r"(?:echo|printf)\s+['\"]?[A-Za-z0-9+/=]{10,}['\"]?\s*\|\s*(?:base64\s+-d|openssl\s+base64)")
+_BASE64_CMD_RE = re.compile(
+    r"(?:echo|printf)\s+['\"]?[A-Za-z0-9+/=]{10,}['\"]?\s*\|\s*(?:base64\s+-d|openssl\s+base64)"
+)
 _HEX_CMD_RE = re.compile(r"\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){4,}")
 _EVAL_RE = re.compile(r"\beval\s+(?:\$\(|`)")
 _PYTHON_EXEC_RE = re.compile(r"python[23]?\s+-c\s+['\"].*(?:exec|eval|compile)\s*\(")
@@ -69,11 +70,23 @@ def detect_obfuscation(command: str) -> ObfuscationResult:
 # Shell Wrapper Resolution
 # ---------------------------------------------------------------------------
 
-WRAPPER_COMMANDS = frozenset({
-    "env", "nohup", "timeout", "nice", "ionice",
-    "strace", "ltrace", "time", "sudo", "doas",
-    "unbuffer", "script", "setsid",
-})
+WRAPPER_COMMANDS = frozenset(
+    {
+        "env",
+        "nohup",
+        "timeout",
+        "nice",
+        "ionice",
+        "strace",
+        "ltrace",
+        "time",
+        "sudo",
+        "doas",
+        "unbuffer",
+        "script",
+        "setsid",
+    }
+)
 
 
 def resolve_wrappers(argv: list[str]) -> list[str]:
@@ -106,16 +119,32 @@ def extract_base_command(command_line: str) -> str:
 # Safe Binary Policy
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BinaryPolicy:
     """Policy for safe/allowed binaries."""
-    allowed_paths: list[str] = field(default_factory=lambda: [
-        "/usr/bin", "/usr/local/bin", "/bin", "/usr/sbin",
-    ])
-    blocked_binaries: list[str] = field(default_factory=lambda: [
-        "rm", "mkfs", "dd", "fdisk", "shutdown", "reboot", "halt",
-        "init", "poweroff",
-    ])
+
+    allowed_paths: list[str] = field(
+        default_factory=lambda: [
+            "/usr/bin",
+            "/usr/local/bin",
+            "/bin",
+            "/usr/sbin",
+        ]
+    )
+    blocked_binaries: list[str] = field(
+        default_factory=lambda: [
+            "rm",
+            "mkfs",
+            "dd",
+            "fdisk",
+            "shutdown",
+            "reboot",
+            "halt",
+            "init",
+            "poweroff",
+        ]
+    )
     require_absolute: bool = False
 
 
@@ -142,9 +171,11 @@ def validate_binary(binary: str, policy: BinaryPolicy) -> tuple[bool, str]:
 # Approval Forwarding
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ApprovalRequest:
     """A command approval request."""
+
     request_id: str
     command: str
     argv: list[str] = field(default_factory=list)

@@ -100,9 +100,7 @@ class TypingBackoff:
     errors, applying exponential backoff before resuming.
     """
 
-    def __init__(
-        self, *, max_consecutive: int = 3, base_delay_s: float = 10.0, max_delay_s: float = 120.0
-    ) -> None:
+    def __init__(self, *, max_consecutive: int = 3, base_delay_s: float = 10.0, max_delay_s: float = 120.0) -> None:
         self._max_consecutive = max_consecutive
         self._base_delay = base_delay_s
         self._max_delay = max_delay_s
@@ -219,11 +217,7 @@ class WebhookRateLimiter:
             return
 
         stale_cutoff = now - self._window_s * 2
-        stale_keys = [
-            k
-            for k, v in self._buckets.items()
-            if not v.timestamps or v.timestamps[-1] < stale_cutoff
-        ]
+        stale_keys = [k for k, v in self._buckets.items() if not v.timestamps or v.timestamps[-1] < stale_cutoff]
         for k in stale_keys:
             del self._buckets[k]
 

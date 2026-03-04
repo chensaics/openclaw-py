@@ -47,8 +47,9 @@ def logs_command(
 def _try_rpc_tail(*, limit: int, output_json: bool, local_time: bool) -> list[str] | None:
     """Attempt to fetch logs via Gateway RPC; returns None if unreachable."""
     try:
-        from pyclaw.cli.commands.gateway_cmd import _default_gateway_url, _rpc_call
         import asyncio
+
+        from pyclaw.cli.commands.gateway_cmd import _default_gateway_url, _rpc_call
 
         gw_url = _default_gateway_url()
         result = asyncio.run(

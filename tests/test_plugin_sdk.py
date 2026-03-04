@@ -5,21 +5,6 @@ from __future__ import annotations
 
 import pytest
 
-from pyclaw.channels.plugin_sdk.adapters import (
-    ALL_ADAPTER_PROTOCOLS,
-    ChannelIdentity,
-    InboundTurn,
-    OutboundPayload,
-    SendResult,
-    detect_capabilities,
-    has_capability,
-)
-from pyclaw.channels.plugin_sdk.draft_stream import (
-    DraftConfig,
-    DraftState,
-    DraftStream,
-    DraftStreamManager,
-)
 from pyclaw.channels.plugin_sdk.ack_reactions import (
     AckReactionManager,
     ReactionConfig,
@@ -29,16 +14,27 @@ from pyclaw.channels.plugin_sdk.ack_reactions import (
     should_clear_reaction,
     should_react,
 )
+from pyclaw.channels.plugin_sdk.adapters import (
+    ALL_ADAPTER_PROTOCOLS,
+    InboundTurn,
+    OutboundPayload,
+    detect_capabilities,
+    has_capability,
+)
+from pyclaw.channels.plugin_sdk.draft_stream import (
+    DraftState,
+    DraftStream,
+    DraftStreamManager,
+)
+from pyclaw.channels.plugin_sdk.mention_gating import (
+    MentionConfig,
+    MentionDetector,
+)
 from pyclaw.channels.plugin_sdk.model_overrides import (
     CapabilitySchema,
     ChannelModelConfig,
     ModelOverride,
     ModelOverrideResolver,
-)
-from pyclaw.channels.plugin_sdk.mention_gating import (
-    MentionConfig,
-    MentionDetector,
-    MentionResult,
 )
 from pyclaw.channels.plugin_sdk.status_issues import (
     ChannelConfigSchema,
@@ -52,8 +48,8 @@ from pyclaw.channels.plugin_sdk.status_issues import (
     check_webhook_url,
 )
 
-
 # ===== Adapter Protocols =====
+
 
 class TestAdapterProtocols:
     def test_protocol_count(self) -> None:
@@ -62,6 +58,7 @@ class TestAdapterProtocols:
     def test_detect_no_capabilities(self) -> None:
         class Bare:
             pass
+
         caps = detect_capabilities(Bare())
         assert caps == []
 
@@ -69,8 +66,10 @@ class TestAdapterProtocols:
         class WithConfig:
             def get_config_schema(self) -> dict:
                 return {}
+
             def validate_config(self, config: dict) -> list[str]:
                 return []
+
         caps = detect_capabilities(WithConfig())
         assert "config" in caps
 
@@ -78,10 +77,13 @@ class TestAdapterProtocols:
         class WithStatus:
             async def get_status(self) -> dict:
                 return {}
+
             async def probe(self) -> bool:
                 return True
+
             def get_issues(self) -> list[str]:
                 return []
+
         assert has_capability(WithStatus(), "status")
         assert not has_capability(WithStatus(), "streaming")
 
@@ -96,6 +98,7 @@ class TestAdapterProtocols:
 
 
 # ===== Draft Streaming =====
+
 
 class TestDraftStream:
     @pytest.mark.asyncio
@@ -184,6 +187,7 @@ class TestDraftStreamManager:
 
 # ===== Ack Reactions =====
 
+
 class TestAckReactions:
     def test_should_react_all(self) -> None:
         config = ReactionConfig(scope=ReactionScope.ALL)
@@ -246,6 +250,7 @@ class TestAckReactions:
 
 # ===== Model Overrides =====
 
+
 class TestModelOverrides:
     def test_no_config(self) -> None:
         resolver = ModelOverrideResolver()
@@ -261,10 +266,13 @@ class TestModelOverrides:
 
     def test_group_override(self) -> None:
         resolver = ModelOverrideResolver()
-        resolver.set_channel_config("ch1", ChannelModelConfig(
-            default_model="gpt-4o",
-            group_overrides={"g1": ModelOverride(model="claude-3", think_level="high")},
-        ))
+        resolver.set_channel_config(
+            "ch1",
+            ChannelModelConfig(
+                default_model="gpt-4o",
+                group_overrides={"g1": ModelOverride(model="claude-3", think_level="high")},
+            ),
+        )
         result = resolver.resolve("ch1", group_id="g1")
         assert result is not None
         assert result.model == "claude-3"
@@ -272,35 +280,47 @@ class TestModelOverrides:
 
     def test_group_priority(self) -> None:
         resolver = ModelOverrideResolver()
-        resolver.set_channel_config("ch1", ChannelModelConfig(
-            default_model="default",
-            group_overrides={"g1": ModelOverride(model="override")},
-        ))
+        resolver.set_channel_config(
+            "ch1",
+            ChannelModelConfig(
+                default_model="default",
+                group_overrides={"g1": ModelOverride(model="override")},
+            ),
+        )
         result = resolver.resolve("ch1", group_id="g1")
         assert result is not None
         assert result.model == "override"
 
     def test_allowed_models(self) -> None:
         resolver = ModelOverrideResolver()
-        resolver.set_channel_config("ch1", ChannelModelConfig(
-            allowed_models=["gpt-4o", "claude-3"],
-        ))
+        resolver.set_channel_config(
+            "ch1",
+            ChannelModelConfig(
+                allowed_models=["gpt-4o", "claude-3"],
+            ),
+        )
         assert resolver.is_model_allowed("ch1", "gpt-4o")
         assert not resolver.is_model_allowed("ch1", "llama-3")
 
     def test_blocked_models(self) -> None:
         resolver = ModelOverrideResolver()
-        resolver.set_channel_config("ch1", ChannelModelConfig(
-            blocked_models=["dangerous-model"],
-        ))
+        resolver.set_channel_config(
+            "ch1",
+            ChannelModelConfig(
+                blocked_models=["dangerous-model"],
+            ),
+        )
         assert not resolver.is_model_allowed("ch1", "dangerous-model")
         assert resolver.is_model_allowed("ch1", "gpt-4o")
 
     def test_list_allowed(self) -> None:
         resolver = ModelOverrideResolver()
-        resolver.set_channel_config("ch1", ChannelModelConfig(
-            allowed_models=["a", "b"],
-        ))
+        resolver.set_channel_config(
+            "ch1",
+            ChannelModelConfig(
+                allowed_models=["a", "b"],
+            ),
+        )
         assert resolver.list_allowed_models("ch1") == ["a", "b"]
         assert resolver.list_allowed_models("unknown") is None
 
@@ -311,6 +331,7 @@ class TestModelOverrides:
 
 
 # ===== Mention Gating =====
+
 
 class TestMentionDetector:
     def test_dm_always_mentioned(self) -> None:
@@ -326,43 +347,53 @@ class TestMentionDetector:
         assert "hello" in result.cleaned_text
 
     def test_group_without_mention(self) -> None:
-        detector = MentionDetector(MentionConfig(
-            bot_names=["Bot"],
-            require_mention_in_groups=True,
-        ))
+        detector = MentionDetector(
+            MentionConfig(
+                bot_names=["Bot"],
+                require_mention_in_groups=True,
+            )
+        )
         result = detector.detect("hello everyone", is_group=True)
         assert not result.is_mentioned
 
     def test_command_bypass(self) -> None:
-        detector = MentionDetector(MentionConfig(
-            bot_names=["Bot"],
-            bypass_commands=True,
-        ))
+        detector = MentionDetector(
+            MentionConfig(
+                bot_names=["Bot"],
+                bypass_commands=True,
+            )
+        )
         result = detector.detect("/help", is_group=True)
         assert result.is_mentioned
         assert result.is_command
 
     def test_no_command_bypass(self) -> None:
-        detector = MentionDetector(MentionConfig(
-            bot_names=["Bot"],
-            bypass_commands=False,
-            require_mention_in_groups=True,
-        ))
+        detector = MentionDetector(
+            MentionConfig(
+                bot_names=["Bot"],
+                bypass_commands=False,
+                require_mention_in_groups=True,
+            )
+        )
         result = detector.detect("/help", is_group=True)
         assert not result.is_mentioned
 
     def test_user_id_mention(self) -> None:
-        detector = MentionDetector(MentionConfig(
-            bot_user_id="U12345",
-        ))
+        detector = MentionDetector(
+            MentionConfig(
+                bot_user_id="U12345",
+            )
+        )
         result = detector.detect("Hey <@U12345> do this", is_group=True)
         assert result.is_mentioned
 
     def test_case_insensitive(self) -> None:
-        detector = MentionDetector(MentionConfig(
-            bot_names=["MyBot"],
-            case_sensitive=False,
-        ))
+        detector = MentionDetector(
+            MentionConfig(
+                bot_names=["MyBot"],
+                case_sensitive=False,
+            )
+        )
         result = detector.detect("@mybot hello", is_group=True)
         assert result.is_mentioned
 
@@ -383,13 +414,16 @@ class TestMentionDetector:
         assert result.is_mentioned
 
     def test_no_mention_required(self) -> None:
-        detector = MentionDetector(MentionConfig(
-            require_mention_in_groups=False,
-        ))
+        detector = MentionDetector(
+            MentionConfig(
+                require_mention_in_groups=False,
+            )
+        )
         assert detector.should_process("anything", is_group=True)
 
 
 # ===== Status / Health Checks =====
+
 
 class TestChannelIssue:
     def test_create_issue(self) -> None:

@@ -46,6 +46,7 @@ class ThinkingLevel(str, Enum):
 @dataclass
 class SessionOverrides:
     """Per-session overrides for model and behavior."""
+
     model: str = ""
     provider: str = ""
     temperature: float | None = None
@@ -62,6 +63,7 @@ class SessionOverrides:
 @dataclass
 class TranscriptEvent:
     """A recorded event in the session transcript."""
+
     event_type: str  # message | tool_call | tool_result | error | system
     timestamp: float = 0.0
     role: str = ""
@@ -76,6 +78,7 @@ class TranscriptEvent:
 @dataclass
 class SessionTag:
     """A tag on a session for filtering/grouping."""
+
     key: str
     value: str = ""
     created_at: float = 0.0
@@ -88,6 +91,7 @@ class SessionTag:
 @dataclass
 class SessionMetadata:
     """Extended metadata for a session."""
+
     session_id: str
     agent_id: str = ""
     input_source: InputSource = InputSource.WEB
@@ -167,9 +171,7 @@ class AdvancedSessionManager:
     def remove(self, session_id: str) -> bool:
         return self._sessions.pop(session_id, None) is not None
 
-    def set_overrides(
-        self, session_id: str, overrides: SessionOverrides
-    ) -> bool:
+    def set_overrides(self, session_id: str, overrides: SessionOverrides) -> bool:
         meta = self._sessions.get(session_id)
         if not meta:
             return False
@@ -199,9 +201,11 @@ class AdvancedSessionManager:
 # Send strategy helpers
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BatchConfig:
     """Configuration for batched send strategy."""
+
     max_batch_size: int = 5
     batch_window_ms: float = 500.0
     flush_on_tool: bool = True

@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 from pyclaw.gateway.methods.chat_advanced import (
     ChatAbortManager,
-    validate_chat_params,
-    sanitize_content,
     inject_time_context,
+    sanitize_content,
+    validate_chat_params,
 )
 
 if TYPE_CHECKING:
@@ -31,6 +31,7 @@ def _use_embedded_runner() -> bool:
     """Check config to decide runner: 'embedded' (default) or 'legacy'."""
     try:
         from pyclaw.config.io import load_config_raw
+
         raw = load_config_raw()
         runner_cfg = raw.get("runner", {})
         if isinstance(runner_cfg, dict):
@@ -42,14 +43,12 @@ def _use_embedded_runner() -> bool:
 
 def _make_session_key(agent_id: str, session_id: str) -> str:
     from pyclaw.config.paths import resolve_sessions_dir
+
     return str(resolve_sessions_dir(agent_id) / f"{session_id}.jsonl")
 
 
-def create_chat_handlers() -> dict[str, "MethodHandler"]:
-
-    async def handle_chat_send(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+def create_chat_handlers() -> dict[str, MethodHandler]:
+    async def handle_chat_send(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         """Send a message and stream the agent response back as events."""
         chat_params, err = validate_chat_params(params or {})
         if err or not chat_params:
@@ -84,9 +83,7 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
             method="chat.send",
         )
 
-    async def handle_chat_abort(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_chat_abort(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params or "sessionId" not in params:
             await conn.send_error("chat.abort", "invalid_params", "Missing 'sessionId'.")
             return
@@ -105,9 +102,7 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
         else:
             await conn.send_ok("chat.abort", {"aborted": False})
 
-    async def handle_chat_history(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_chat_history(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params:
             await conn.send_error("chat.history", "invalid_params", "Missing params.")
             return
@@ -129,9 +124,7 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
         messages = session.get_messages_as_dicts()
         await conn.send_ok("chat.history", {"messages": messages})
 
-    async def handle_chat_edit(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_chat_edit(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         """Edit the last user message and re-run the agent."""
         if not params or "message" not in params:
             await conn.send_error("chat.edit", "invalid_params", "Missing 'message'.")
@@ -165,9 +158,7 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
             method="chat.edit",
         )
 
-    async def handle_chat_resend(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_chat_resend(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         """Re-send the last user message (regenerate assistant response)."""
         agent_id = (params or {}).get("agentId", "main")
         session_id = (params or {}).get("sessionId", "default")
@@ -218,9 +209,8 @@ def create_chat_handlers() -> dict[str, "MethodHandler"]:
 # Model resolution — merge gateway params with config defaults
 # ---------------------------------------------------------------------------
 
-def _resolve_gateway_model(
-    provider: str, model_id: str, api_key: str
-) -> tuple[str, str, str, str | None]:
+
+def _resolve_gateway_model(provider: str, model_id: str, api_key: str) -> tuple[str, str, str, str | None]:
     """Return (provider, model, api_key, base_url) with config & provider defaults applied."""
     from pyclaw.config.defaults import get_provider_defaults
     from pyclaw.config.io import load_config_raw
@@ -266,6 +256,7 @@ def _resolve_gateway_model(
 # Shared run logic
 # ---------------------------------------------------------------------------
 
+
 async def _do_chat_run(
     *,
     message: str,
@@ -280,9 +271,8 @@ async def _do_chat_run(
     method: str,
 ) -> None:
     from pyclaw.agents.session import SessionManager
-    from pyclaw.agents.types import ModelConfig
     from pyclaw.agents.tools.registry import create_default_tools
-    from pyclaw.config.defaults import get_provider_defaults
+    from pyclaw.agents.types import ModelConfig
     from pyclaw.config.paths import resolve_sessions_dir
 
     sessions_dir = resolve_sessions_dir(agent_id)
@@ -294,8 +284,8 @@ async def _do_chat_run(
     if not session.messages:
         session.write_header()
 
-    effective_provider, effective_model, effective_key, effective_base = (
-        _resolve_gateway_model(provider, model_id, api_key)
+    effective_provider, effective_model, effective_key, effective_base = _resolve_gateway_model(
+        provider, model_id, api_key
     )
     model = ModelConfig(
         provider=effective_provider,
@@ -316,7 +306,10 @@ async def _do_chat_run(
         runtime_ctx = None
         if getattr(conn, "message_channel", ""):
             from pyclaw.agents.tools.runtime_context import RuntimeContext
-            runtime_ctx = RuntimeContext(channel=conn.message_channel, metadata={"message_channel": conn.message_channel})
+
+            runtime_ctx = RuntimeContext(
+                channel=conn.message_channel, metadata={"message_channel": conn.message_channel}
+            )
         if use_embedded:
             await _run_embedded(
                 message=message,
@@ -355,6 +348,7 @@ async def _do_chat_run(
 # Runner implementations
 # ---------------------------------------------------------------------------
 
+
 async def _run_embedded(
     *,
     message: str,
@@ -387,7 +381,8 @@ async def _run_embedded(
 
     messages = [Message(role="user", content=message)]
     build_request_payload(
-        messages, config,
+        messages,
+        config,
         tools=[t.schema() if hasattr(t, "schema") else t for t in tools] if tools else None,
         system_prompt=system_prompt or "",
     )
@@ -405,6 +400,7 @@ async def _run_embedded(
     ):
         if abort_event.is_set():
             from pyclaw.agents.embedded_runner.run import RunState
+
             tracker.finish_run(record.run_id, state=RunState.ABORTED)
             break
 
@@ -413,20 +409,26 @@ async def _run_embedded(
             record.total_input_tokens += event.usage.get("input_tokens", 0)
             record.total_output_tokens += event.usage.get("output_tokens", 0)
 
-        await conn.send_event(f"chat.{event.type}", {
-            k: v for k, v in {
-                "delta": event.delta,
-                "name": event.name,
-                "result": event.result,
-                "error": event.error,
-                "toolCallId": event.tool_call_id,
-                "usage": event.usage,
-                "runner": "embedded",
-            }.items() if v is not None
-        })
+        await conn.send_event(
+            f"chat.{event.type}",
+            {
+                k: v
+                for k, v in {
+                    "delta": event.delta,
+                    "name": event.name,
+                    "result": event.result,
+                    "error": event.error,
+                    "toolCallId": event.tool_call_id,
+                    "usage": event.usage,
+                    "runner": "embedded",
+                }.items()
+                if v is not None
+            },
+        )
 
     try:
         from pyclaw.infra.session_cost import record_usage
+
         record_usage(
             session_id=session_key,
             provider=model.provider,
@@ -438,6 +440,7 @@ async def _run_embedded(
         pass
 
     from pyclaw.agents.embedded_runner.run import RunState
+
     if not abort_event.is_set():
         tracker.finish_run(record.run_id, state=RunState.COMPLETED)
 
@@ -465,21 +468,27 @@ async def _run_legacy(
         abort_event=abort_event,
         runtime_context=runtime_context,
     ):
-        await conn.send_event(f"chat.{event.type}", {
-            k: v for k, v in {
-                "delta": event.delta,
-                "name": event.name,
-                "result": event.result,
-                "error": event.error,
-                "toolCallId": event.tool_call_id,
-                "usage": event.usage,
-            }.items() if v is not None
-        })
+        await conn.send_event(
+            f"chat.{event.type}",
+            {
+                k: v
+                for k, v in {
+                    "delta": event.delta,
+                    "name": event.name,
+                    "result": event.result,
+                    "error": event.error,
+                    "toolCallId": event.tool_call_id,
+                    "usage": event.usage,
+                }.items()
+                if v is not None
+            },
+        )
 
 
 # ---------------------------------------------------------------------------
 # Session manipulation helpers
 # ---------------------------------------------------------------------------
+
 
 def _remove_last_exchange(session: Any) -> None:
     """Remove the last user+assistant pair from the session's in-memory messages."""

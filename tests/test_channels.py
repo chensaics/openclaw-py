@@ -1,8 +1,5 @@
 """Tests for channel base, manager, and message routing."""
 
-import asyncio
-from typing import Any
-
 import pytest
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply

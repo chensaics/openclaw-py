@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import pytest
 
 from pyclaw.config.secrets import SecretRef
+from pyclaw.secrets.audit import _looks_like_plaintext_key, run_secrets_audit
+from pyclaw.secrets.plan import SecretProviderSetup, SecretsApplyPlan, SecretsPlanTarget
 from pyclaw.secrets.resolve import SecretRefResolveCache, resolve_secret_ref_value
-from pyclaw.secrets.plan import SecretsApplyPlan, SecretsPlanTarget, SecretProviderSetup
-from pyclaw.secrets.audit import run_secrets_audit, _looks_like_plaintext_key
 from pyclaw.secrets.runtime import SecretsRuntime
-
 
 # ---------------------------------------------------------------------------
 # Resolve
 # ---------------------------------------------------------------------------
+
 
 class TestResolveSecretRef:
     def test_env_ref(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -62,6 +61,7 @@ class TestResolveSecretRef:
 # Plan
 # ---------------------------------------------------------------------------
 
+
 class TestSecretsApplyPlan:
     def test_roundtrip(self) -> None:
         plan = SecretsApplyPlan(
@@ -90,6 +90,7 @@ class TestSecretsApplyPlan:
 # ---------------------------------------------------------------------------
 # Audit
 # ---------------------------------------------------------------------------
+
 
 class TestLooksLikePlaintext:
     def test_openai_key(self) -> None:
@@ -134,6 +135,7 @@ class TestSecretsAudit:
 # ---------------------------------------------------------------------------
 # Runtime
 # ---------------------------------------------------------------------------
+
 
 class TestSecretsRuntime:
     def test_resolve_string(self) -> None:

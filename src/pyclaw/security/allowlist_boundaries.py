@@ -75,7 +75,8 @@ class AllowlistBoundaryStore:
             self._violations.append(violation)
             logger.warning(
                 "Pairing entry scope forced to DM: sender=%s channel=%s",
-                entry.sender_id, entry.channel_id,
+                entry.sender_id,
+                entry.channel_id,
             )
             entry.scope = AllowlistScope.DM
 
@@ -122,7 +123,8 @@ class AllowlistBoundaryStore:
     def get_dm_allowed(self, *, channel_id: str = "") -> set[str]:
         """Get all sender IDs allowed for DMs."""
         return {
-            e.sender_id for e in self._entries.values()
+            e.sender_id
+            for e in self._entries.values()
             if e.scope in (AllowlistScope.DM, AllowlistScope.BOTH)
             and (not channel_id or not e.channel_id or e.channel_id == channel_id)
         }
@@ -130,7 +132,8 @@ class AllowlistBoundaryStore:
     def get_group_allowed(self, *, channel_id: str = "") -> set[str]:
         """Get all sender IDs allowed for groups."""
         return {
-            e.sender_id for e in self._entries.values()
+            e.sender_id
+            for e in self._entries.values()
             if e.scope in (AllowlistScope.GROUP, AllowlistScope.BOTH)
             and (not channel_id or not e.channel_id or e.channel_id == channel_id)
         }
@@ -170,19 +173,23 @@ def validate_pairing_dm_only(
             scope = AllowlistScope.DM
 
         if scope != AllowlistScope.DM:
-            violations.append(BoundaryViolation(
-                sender_id=sender_id,
-                violation_type="pairing_non_dm_scope",
-                detail=f"Pairing entry has scope={scope.value}, forced to dm",
-                channel_id=channel_id,
-            ))
+            violations.append(
+                BoundaryViolation(
+                    sender_id=sender_id,
+                    violation_type="pairing_non_dm_scope",
+                    detail=f"Pairing entry has scope={scope.value}, forced to dm",
+                    channel_id=channel_id,
+                )
+            )
             scope = AllowlistScope.DM
 
-        valid.append(AllowlistEntry(
-            sender_id=sender_id,
-            scope=scope,
-            source=AllowlistSource.PAIRING,
-            channel_id=channel_id,
-        ))
+        valid.append(
+            AllowlistEntry(
+                sender_id=sender_id,
+                scope=scope,
+                source=AllowlistSource.PAIRING,
+                channel_id=channel_id,
+            )
+        )
 
     return valid, violations

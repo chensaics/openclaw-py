@@ -5,7 +5,6 @@ Ported from ``src/auto-reply/reply/commands-info.ts``.
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 from .commands_registry import (

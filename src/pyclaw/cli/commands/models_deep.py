@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProbeResult:
     """Result of probing a model's availability."""
+
     model: str
     provider: str
     available: bool
@@ -37,6 +38,7 @@ class ProbeResult:
 @dataclass
 class ScanResult:
     """Result of scanning all providers."""
+
     results: list[ProbeResult] = field(default_factory=list)
     total_providers: int = 0
     available_count: int = 0
@@ -50,6 +52,7 @@ class ScanResult:
 @dataclass
 class AuthOverviewEntry:
     """Auth status for a provider."""
+
     provider: str
     configured: bool
     auth_method: str = ""  # api_key | oauth | none
@@ -78,7 +81,9 @@ def probe_model(
         caps = {"context": info.context_window, "tools": info.supports_tools, "vision": info.supports_vision}
     if not api_key and provider not in ("ollama", "lmstudio"):
         return ProbeResult(
-            model=model, provider=provider, available=False,
+            model=model,
+            provider=provider,
+            available=False,
             error="No API key configured",
         )
 
@@ -122,18 +127,21 @@ def get_auth_overview(
     """Get auth configuration overview for all providers."""
     entries: list[AuthOverviewEntry] = []
     for provider, key in providers.items():
-        entries.append(AuthOverviewEntry(
-            provider=provider,
-            configured=bool(key),
-            auth_method="api_key" if key else "none",
-            key_prefix=key[:8] + "..." if key and len(key) > 8 else "",
-        ))
+        entries.append(
+            AuthOverviewEntry(
+                provider=provider,
+                configured=bool(key),
+                auth_method="api_key" if key else "none",
+                key_prefix=key[:8] + "..." if key and len(key) > 8 else "",
+            )
+        )
     return entries
 
 
 @dataclass
 class ModelDefaultConfig:
     """Current default model configuration."""
+
     model: str = ""
     provider: str = ""
     image_model: str = ""
@@ -159,6 +167,7 @@ def set_default_model(
 # ---------------------------------------------------------------------------
 # Table formatting
 # ---------------------------------------------------------------------------
+
 
 def format_models_table(
     results: list[ProbeResult],

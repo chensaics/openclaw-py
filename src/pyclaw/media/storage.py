@@ -92,9 +92,11 @@ class MediaStore:
         files = []
         for p in sorted(self._base_dir.iterdir()):
             if p.is_file() and not p.name.startswith("."):
-                files.append({
-                    "filename": p.name,
-                    "size": p.stat().st_size,
-                    "mime": detect_mime_type(path=p),
-                })
+                files.append(
+                    {
+                        "filename": p.name,
+                        "size": p.stat().st_size,
+                        "mime": detect_mime_type(path=p),
+                    }
+                )
         return files

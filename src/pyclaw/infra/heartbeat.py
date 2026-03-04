@@ -9,9 +9,9 @@ import asyncio
 import logging
 import re
 import time
-from dataclasses import dataclass, field
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def parse_duration_ms(value: str) -> int:
 
 
 def resolve_heartbeat_query(
-    config: "HeartbeatConfig",
+    config: HeartbeatConfig,
     workspace_root: Path | None = None,
 ) -> str:
     """Resolve the heartbeat prompt, reading from HEARTBEAT.md if configured."""
@@ -109,6 +109,7 @@ def is_within_active_hours(config: HeartbeatConfig, now: float | None = None) ->
         return True
 
     import datetime
+
     dt = datetime.datetime.fromtimestamp(now or time.time())
     current_minutes = dt.hour * 60 + dt.minute
     start_minutes = start_h * 60 + start_m
@@ -206,7 +207,7 @@ class HeartbeatRunner:
                     try:
                         await asyncio.wait_for(wake_event.wait(), timeout=wait)
                         wake_event.clear()
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         pass
 
                 if not self._running:
@@ -242,26 +243,23 @@ class HeartbeatRunner:
             reply = await reply_fn(agent_id, prompt)
             summary.last_run = time.time()
             summary.runs += 1
-            if reply:
-                if reply != summary.last_text:
-                    summary.last_text = reply
-                    logger.info("Heartbeat[%s]: %s", agent_id, reply[:100])
+            if reply and reply != summary.last_text:
+                summary.last_text = reply
+                logger.info("Heartbeat[%s]: %s", agent_id, reply[:100])
 
-                    # Dispatch to last active channel if configured
-                    if (
-                        config.target.lower() == "last"
-                        and self._last_channel
-                        and self._dispatch_fn
-                    ):
-                        try:
-                            await self._dispatch_fn(self._last_channel, reply)
-                            logger.info(
-                                "Heartbeat[%s] dispatched to channel %s",
-                                agent_id, self._last_channel,
-                            )
-                        except Exception:
-                            logger.exception(
-                                "Heartbeat dispatch failed for %s", agent_id,
-                            )
+                # Dispatch to last active channel if configured
+                if config.target.lower() == "last" and self._last_channel and self._dispatch_fn:
+                    try:
+                        await self._dispatch_fn(self._last_channel, reply)
+                        logger.info(
+                            "Heartbeat[%s] dispatched to channel %s",
+                            agent_id,
+                            self._last_channel,
+                        )
+                    except Exception:
+                        logger.exception(
+                            "Heartbeat dispatch failed for %s",
+                            agent_id,
+                        )
         except Exception:
             logger.exception("Heartbeat reply error for %s", agent_id)

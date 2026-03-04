@@ -80,10 +80,7 @@ def _is_eligible(entry: SkillEntry) -> bool:
         if normalized not in [o.lower() for o in entry.metadata.os_filter]:
             return False
 
-    if entry.invocation.disable_model_invocation:
-        return False
-
-    return True
+    return not entry.invocation.disable_model_invocation
 
 
 def _format_skill_section(entry: SkillEntry) -> str:

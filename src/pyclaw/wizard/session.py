@@ -40,6 +40,7 @@ class StepStatus(str, Enum):
 @dataclass
 class WizardStep:
     """A step in the wizard flow."""
+
     step_id: str
     title: str
     description: str = ""
@@ -57,6 +58,7 @@ class WizardStep:
 @dataclass
 class WizardSession:
     """State for a multi-step wizard."""
+
     session_id: str
     wizard_type: str = "setup"
     state: WizardState = WizardState.NOT_STARTED
@@ -136,9 +138,11 @@ class WizardSession:
 # Clack-style prompt wrappers
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PromptOption:
     """An option for a select prompt."""
+
     value: str
     label: str
     hint: str = ""
@@ -182,6 +186,7 @@ def format_completion(wizard_type: str) -> str:
 # Shell completion setup
 # ---------------------------------------------------------------------------
 
+
 def generate_bash_completion(binary_name: str = "pyclaw") -> str:
     """Generate bash completion script."""
     return f"""# {binary_name} bash completion
@@ -223,9 +228,11 @@ SHELL_COMPLETIONS: dict[str, Any] = {
 # Gateway configuration guidance
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GatewaySetupGuide:
     """Gateway setup guidance steps."""
+
     mode: str = "local"  # local | remote
     bind: str = "loopback"
     port: int = 18789
@@ -247,6 +254,7 @@ class GatewaySetupGuide:
 # ---------------------------------------------------------------------------
 # Setup wizard factory
 # ---------------------------------------------------------------------------
+
 
 def create_setup_wizard(session_id: str = "") -> WizardSession:
     """Create the initial setup wizard."""

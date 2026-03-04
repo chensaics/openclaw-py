@@ -280,10 +280,7 @@ class RespawnTracker:
 
     def should_respawn(self) -> bool:
         if self._count >= self._config.max_respawns:
-            if (
-                self._first_respawn
-                and (time.time() - self._first_respawn) > self._config.reset_after_s
-            ):
+            if self._first_respawn and (time.time() - self._first_respawn) > self._config.reset_after_s:
                 self.reset()
                 return True
             return False

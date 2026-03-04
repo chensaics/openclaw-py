@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 
 import pytest
 
+from pyclaw.acp.acpx_runtime import (
+    AcpxHandleState,
+    decode_handle_state,
+    encode_handle_state,
+    resolve_acpx_config,
+)
 from pyclaw.acp.control_plane import (
     AcpRuntimeEvent,
     AcpRuntimeProtocol,
@@ -15,15 +20,19 @@ from pyclaw.acp.control_plane import (
     AcpSessionResolution,
     AcpSessionStatus,
 )
+from pyclaw.acp.event_mapper import (
+    extract_attachments_from_prompt,
+    extract_text_from_prompt,
+    format_tool_title,
+    infer_tool_kind,
+)
 from pyclaw.acp.session_mapper import AcpSessionMetaHints, parse_session_meta, resolve_session_key
-from pyclaw.acp.event_mapper import extract_text_from_prompt, extract_attachments_from_prompt, format_tool_title, infer_tool_kind
-from pyclaw.acp.acpx_runtime import encode_handle_state, decode_handle_state, AcpxHandleState, resolve_acpx_config
 from pyclaw.acp.thread_ownership import ThreadOwnershipTracker
-
 
 # ---------------------------------------------------------------------------
 # Session mapper
 # ---------------------------------------------------------------------------
+
 
 class TestParseSessionMeta:
     def test_none_input(self) -> None:
@@ -57,9 +66,7 @@ class TestResolveSessionKey:
         async def mock_gateway(method: str, params: dict) -> dict:
             return {}
 
-        key = await resolve_session_key(
-            meta=meta, fallback_key="fallback", gateway_request=mock_gateway
-        )
+        key = await resolve_session_key(meta=meta, fallback_key="fallback", gateway_request=mock_gateway)
         assert key == "direct-key"
 
     @pytest.mark.asyncio
@@ -69,9 +76,7 @@ class TestResolveSessionKey:
         async def mock_gateway(method: str, params: dict) -> dict:
             return {}
 
-        key = await resolve_session_key(
-            meta=meta, fallback_key="my-fallback", gateway_request=mock_gateway
-        )
+        key = await resolve_session_key(meta=meta, fallback_key="my-fallback", gateway_request=mock_gateway)
         assert key == "my-fallback"
 
     @pytest.mark.asyncio
@@ -83,15 +88,14 @@ class TestResolveSessionKey:
                 return {"key": "resolved-key"}
             return {}
 
-        key = await resolve_session_key(
-            meta=meta, fallback_key="fallback", gateway_request=mock_gateway
-        )
+        key = await resolve_session_key(meta=meta, fallback_key="fallback", gateway_request=mock_gateway)
         assert key == "resolved-key"
 
 
 # ---------------------------------------------------------------------------
 # Event mapper
 # ---------------------------------------------------------------------------
+
 
 class TestExtractText:
     def test_string_input(self) -> None:
@@ -148,6 +152,7 @@ class TestInferToolKind:
 # Acpx handle encoding
 # ---------------------------------------------------------------------------
 
+
 class TestAcpxHandleEncoding:
     def test_roundtrip(self) -> None:
         state = AcpxHandleState(name="test", agent="codex", cwd="/tmp", mode="persistent")
@@ -162,8 +167,11 @@ class TestAcpxHandleEncoding:
 
     def test_with_optional_fields(self) -> None:
         state = AcpxHandleState(
-            name="s1", agent="gpt", cwd="/home",
-            mode="oneshot", acpx_record_id="rec-123",
+            name="s1",
+            agent="gpt",
+            cwd="/home",
+            mode="oneshot",
+            acpx_record_id="rec-123",
         )
         encoded = encode_handle_state(state)
         decoded = decode_handle_state(encoded)
@@ -176,6 +184,7 @@ class TestAcpxHandleEncoding:
     def test_invalid_mode(self) -> None:
         # Encode manually with bad mode
         import base64
+
         payload = json.dumps({"name": "x", "agent": "y", "cwd": "/", "mode": "bad"})
         encoded = base64.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
         assert decode_handle_state(f"acpx:v1:{encoded}") is None
@@ -198,6 +207,7 @@ class TestResolveAcpxConfig:
 # Control plane
 # ---------------------------------------------------------------------------
 
+
 class MockRuntime(AcpRuntimeProtocol):
     def __init__(self) -> None:
         self._sessions: dict[str, AcpSessionResolution] = {}
@@ -205,10 +215,15 @@ class MockRuntime(AcpRuntimeProtocol):
     def is_healthy(self) -> bool:
         return True
 
-    async def ensure_session(self, session_key: str, agent: str, cwd: str, mode: str = "persistent") -> AcpSessionResolution:
+    async def ensure_session(
+        self, session_key: str, agent: str, cwd: str, mode: str = "persistent"
+    ) -> AcpSessionResolution:
         res = AcpSessionResolution(
-            session_key=session_key, backend="mock", runtime_session_name=f"mock:{session_key}",
-            cwd=cwd, agent_id=agent,
+            session_key=session_key,
+            backend="mock",
+            runtime_session_name=f"mock:{session_key}",
+            cwd=cwd,
+            agent_id=agent,
         )
         self._sessions[session_key] = res
         return res
@@ -272,6 +287,7 @@ class TestAcpSessionManager:
 # ---------------------------------------------------------------------------
 # Thread ownership
 # ---------------------------------------------------------------------------
+
 
 class TestThreadOwnership:
     def test_mention_tracking(self) -> None:

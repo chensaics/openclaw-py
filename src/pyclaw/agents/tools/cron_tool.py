@@ -81,6 +81,7 @@ class CronTool(BaseTool):
 
         if action == "add":
             import uuid
+
             from pyclaw.cron.scheduler import CronJob, ScheduleType
 
             name = arguments.get("name", "")
@@ -96,17 +97,11 @@ class CronTool(BaseTool):
                 stype = ScheduleType.CRON
 
             if stype == ScheduleType.CRON and not schedule:
-                return ToolResult.text(
-                    "Error: name and schedule are required for cron jobs.", is_error=True
-                )
+                return ToolResult.text("Error: name and schedule are required for cron jobs.", is_error=True)
             if stype == ScheduleType.EVERY and not every_seconds:
-                return ToolResult.text(
-                    "Error: every_seconds is required for interval jobs.", is_error=True
-                )
+                return ToolResult.text("Error: every_seconds is required for interval jobs.", is_error=True)
             if stype == ScheduleType.ONCE and not at:
-                return ToolResult.text(
-                    "Error: at is required for one-time jobs.", is_error=True
-                )
+                return ToolResult.text("Error: at is required for one-time jobs.", is_error=True)
             if not name:
                 return ToolResult.text("Error: name is required.", is_error=True)
 

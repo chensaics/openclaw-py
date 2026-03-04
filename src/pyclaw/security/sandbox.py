@@ -12,7 +12,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -83,14 +82,13 @@ def is_path_within(path: str | Path, boundary: str | Path) -> bool:
 # Workspace boundary
 # ---------------------------------------------------------------------------
 
+
 class WorkspaceBoundary:
     """Enforces file access within a workspace root."""
 
     def __init__(self, root: str | Path, *, allowed_external: list[str] | None = None) -> None:
         self._root = Path(root).resolve()
-        self._allowed_external = [
-            Path(p).resolve() for p in (allowed_external or [])
-        ]
+        self._allowed_external = [Path(p).resolve() for p in (allowed_external or [])]
 
     @property
     def root(self) -> Path:
@@ -103,20 +101,13 @@ class WorkspaceBoundary:
         if is_path_within(resolved, self._root):
             return True
 
-        for ext in self._allowed_external:
-            if is_path_within(resolved, ext):
-                return True
-
-        return False
+        return any(is_path_within(resolved, ext) for ext in self._allowed_external)
 
     def resolve(self, path: str) -> Path | None:
         """Resolve a path within the workspace, returning None if out of bounds."""
         sanitized = sanitize_path(path)
 
-        if os.path.isabs(sanitized):
-            resolved = Path(sanitized).resolve()
-        else:
-            resolved = (self._root / sanitized).resolve()
+        resolved = Path(sanitized).resolve() if os.path.isabs(sanitized) else (self._root / sanitized).resolve()
 
         if self.check(resolved):
             return resolved
@@ -167,10 +158,7 @@ def resolve_config_include(
     config_dir = Path(config_dir).resolve()
     boundary = Path(workspace_root).resolve() if workspace_root else config_dir
 
-    if os.path.isabs(sanitized):
-        resolved = Path(sanitized).resolve()
-    else:
-        resolved = (config_dir / sanitized).resolve()
+    resolved = Path(sanitized).resolve() if os.path.isabs(sanitized) else (config_dir / sanitized).resolve()
 
     if not is_path_within(resolved, boundary):
         logger.warning(

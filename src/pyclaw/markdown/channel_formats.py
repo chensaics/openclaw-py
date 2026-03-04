@@ -11,16 +11,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
 
-from pyclaw.markdown.ir import MarkdownIR, MarkdownStyle, StyleSpan, markdown_to_ir
+from pyclaw.markdown.ir import MarkdownStyle, markdown_to_ir
 from pyclaw.markdown.render import RenderOptions, StyleMarker, render_markdown_with_markers
-from pyclaw.markdown.tables import TableMode, convert_markdown_tables
-
 
 # ---------------------------------------------------------------------------
 # WhatsApp
 # ---------------------------------------------------------------------------
+
 
 def markdown_to_whatsapp(text: str) -> str:
     """Convert standard markdown to WhatsApp formatting.
@@ -95,11 +93,14 @@ def _build_telegram_link(text: str, url: str, title: str) -> str:
 def markdown_to_telegram_html(text: str) -> str:
     """Convert markdown to Telegram HTML."""
     ir = markdown_to_ir(text)
-    return render_markdown_with_markers(ir, RenderOptions(
-        style_markers=_TELEGRAM_MARKERS,
-        escape_text=_escape_html,
-        build_link=_build_telegram_link,
-    ))
+    return render_markdown_with_markers(
+        ir,
+        RenderOptions(
+            style_markers=_TELEGRAM_MARKERS,
+            escape_text=_escape_html,
+            build_link=_build_telegram_link,
+        ),
+    )
 
 
 def markdown_to_telegram_chunks(text: str, max_chars: int = 4096) -> list[str]:
@@ -108,11 +109,14 @@ def markdown_to_telegram_chunks(text: str, max_chars: int = 4096) -> list[str]:
     ir = markdown_to_ir(text)
     chunks = chunk_markdown_ir(ir, max_chars)
     return [
-        render_markdown_with_markers(chunk, RenderOptions(
-            style_markers=_TELEGRAM_MARKERS,
-            escape_text=_escape_html,
-            build_link=_build_telegram_link,
-        ))
+        render_markdown_with_markers(
+            chunk,
+            RenderOptions(
+                style_markers=_TELEGRAM_MARKERS,
+                escape_text=_escape_html,
+                build_link=_build_telegram_link,
+            ),
+        )
         for chunk in chunks
     ]
 
@@ -120,6 +124,7 @@ def markdown_to_telegram_chunks(text: str, max_chars: int = 4096) -> list[str]:
 # ---------------------------------------------------------------------------
 # Signal
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SignalStyleRange:
@@ -155,17 +160,19 @@ def markdown_to_signal_text(text: str) -> SignalFormattedText:
     for s in ir.styles:
         signal_style = _SIGNAL_STYLE_MAP.get(s.style)
         if signal_style:
-            styles.append(SignalStyleRange(
-                style=signal_style,
-                start=s.start,
-                length=s.end - s.start,
-            ))
+            styles.append(
+                SignalStyleRange(
+                    style=signal_style,
+                    start=s.start,
+                    length=s.end - s.start,
+                )
+            )
 
     # Expand links as (url) in plain text
     result_text = plain
     for l in reversed(ir.links):
-        link_text = plain[l.start:l.end]
-        result_text = result_text[:l.start] + f"{link_text} ({l.url})" + result_text[l.end:]
+        link_text = plain[l.start : l.end]
+        result_text = result_text[: l.start] + f"{link_text} ({l.url})" + result_text[l.end :]
 
     return SignalFormattedText(text=result_text, styles=styles)
 
@@ -190,10 +197,13 @@ def _build_slack_link(text: str, url: str, title: str) -> str:
 def markdown_to_slack_mrkdwn(text: str) -> str:
     """Convert standard markdown to Slack mrkdwn format."""
     ir = markdown_to_ir(text)
-    return render_markdown_with_markers(ir, RenderOptions(
-        style_markers=_SLACK_MARKERS,
-        build_link=_build_slack_link,
-    ))
+    return render_markdown_with_markers(
+        ir,
+        RenderOptions(
+            style_markers=_SLACK_MARKERS,
+            build_link=_build_slack_link,
+        ),
+    )
 
 
 def markdown_to_slack_mrkdwn_chunks(text: str, max_chars: int = 3000) -> list[str]:
@@ -202,9 +212,12 @@ def markdown_to_slack_mrkdwn_chunks(text: str, max_chars: int = 3000) -> list[st
     ir = markdown_to_ir(text)
     chunks = chunk_markdown_ir(ir, max_chars)
     return [
-        render_markdown_with_markers(chunk, RenderOptions(
-            style_markers=_SLACK_MARKERS,
-            build_link=_build_slack_link,
-        ))
+        render_markdown_with_markers(
+            chunk,
+            RenderOptions(
+                style_markers=_SLACK_MARKERS,
+                build_link=_build_slack_link,
+            ),
+        )
         for chunk in chunks
     ]

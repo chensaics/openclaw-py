@@ -7,7 +7,7 @@ broadcasting state changes to connected clients.
 from __future__ import annotations
 
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayServer
@@ -72,6 +72,7 @@ EVENT_SESSION_DELETED = "session.deleted"
 # ---------------------------------------------------------------------------
 # Payload builders
 # ---------------------------------------------------------------------------
+
 
 def agent_state_payload(
     agent_id: str,
@@ -161,6 +162,7 @@ def update_available_payload(
 # ---------------------------------------------------------------------------
 # Broadcast helpers
 # ---------------------------------------------------------------------------
+
 
 async def broadcast_agent_state(
     server: GatewayServer,

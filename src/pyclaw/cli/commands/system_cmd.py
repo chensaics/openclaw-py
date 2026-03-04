@@ -12,12 +12,13 @@ from typing import Any
 
 import typer
 
-from pyclaw.infra.system_events import EventBus
-from pyclaw.infra.system_events import EventType
-from pyclaw.infra.system_events import PresenceManager
-from pyclaw.infra.system_events import PresenceState
-from pyclaw.infra.system_events import SystemEvent
-
+from pyclaw.infra.system_events import (
+    EventBus,
+    EventType,
+    PresenceManager,
+    PresenceState,
+    SystemEvent,
+)
 
 _BUS = EventBus()
 _PRESENCE = PresenceManager(idle_timeout_s=300.0)
@@ -31,6 +32,7 @@ def _try_rpc(method: str, params: dict[str, Any] | None = None) -> dict[str, Any
     """Attempt a Gateway RPC call; returns None if unreachable."""
     try:
         import asyncio
+
         from pyclaw.cli.commands.gateway_cmd import _default_gateway_url, _rpc_call
 
         gw_url = _default_gateway_url()

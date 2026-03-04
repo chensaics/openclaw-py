@@ -29,11 +29,7 @@ def _render_markdown(text: str) -> ft.Control:
     from pyclaw.ui.theme import get_theme
 
     theme = get_theme()
-    code_theme = (
-        ft.MarkdownCodeTheme.MONOKAI
-        if theme.name == "dark"
-        else ft.MarkdownCodeTheme.GITHUB
-    )
+    code_theme = ft.MarkdownCodeTheme.MONOKAI if theme.name == "dark" else ft.MarkdownCodeTheme.GITHUB
     return ft.Markdown(
         value=text,
         selectable=True,
@@ -63,7 +59,7 @@ class ToolCallCard(ft.Container):
         *,
         is_running: bool = False,
     ) -> None:
-        from pyclaw.ui.theme import get_theme, StatusColors
+        from pyclaw.ui.theme import StatusColors, get_theme
 
         theme = get_theme()
         display = _get_tool_display(tool_name)
@@ -126,16 +122,14 @@ class ToolCallCard(ft.Container):
 
     def set_result(self, result: str) -> None:
         """Update the card with a tool result (replaces spinner with check)."""
-        from pyclaw.ui.theme import get_theme, StatusColors
+        from pyclaw.ui.theme import StatusColors, get_theme
 
         theme = get_theme()
         col = self.content
         if isinstance(col, ft.Column):
             header_row = col.controls[0]
             if isinstance(header_row, ft.Row) and header_row.controls:
-                header_row.controls[-1] = ft.Icon(
-                    ft.Icons.CHECK_CIRCLE, size=14, color=StatusColors.SUCCESS
-                )
+                header_row.controls[-1] = ft.Icon(ft.Icons.CHECK_CIRCLE, size=14, color=StatusColors.SUCCESS)
             if result:
                 result_preview = result[:300] + ("..." if len(result) > 300 else "")
                 col.controls.append(
@@ -194,7 +188,7 @@ class ChatMessage(ft.Container):
         self._content_control: ft.Control | None = None
         self._tool_cards: dict[str, ToolCallCard] = {}
 
-        from pyclaw.ui.theme import get_theme, RoleColors
+        from pyclaw.ui.theme import RoleColors, get_theme
 
         is_user = role == "user"
         theme = get_theme()
@@ -231,13 +225,19 @@ class ChatMessage(ft.Container):
         from pyclaw.ui.media_preview import build_media_preview
 
         media_extensions = (
-            ".png", ".jpg", ".jpeg", ".gif", ".webp",
-            ".mp3", ".wav", ".ogg", ".mp4", ".webm",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".webp",
+            ".mp3",
+            ".wav",
+            ".ogg",
+            ".mp4",
+            ".webm",
         )
         for word in content.split():
-            if word.startswith(("http://", "https://")) and any(
-                word.lower().endswith(ext) for ext in media_extensions
-            ):
+            if word.startswith(("http://", "https://")) and any(word.lower().endswith(ext) for ext in media_extensions):
                 preview = build_media_preview(url=word)
                 if preview:
                     children.append(preview)
@@ -253,29 +253,39 @@ class ChatMessage(ft.Container):
         if is_user and on_edit:
             action_buttons.append(
                 ft.IconButton(
-                    icon=ft.Icons.EDIT, icon_size=14, tooltip=t("chat.edit", default="Edit"),
+                    icon=ft.Icons.EDIT,
+                    icon_size=14,
+                    tooltip=t("chat.edit", default="Edit"),
                     on_click=lambda e: _fire_async(on_edit, content),
                 )
             )
         if not is_user and on_resend:
             action_buttons.append(
                 ft.IconButton(
-                    icon=ft.Icons.REFRESH, icon_size=14, tooltip=t("chat.retry"),
+                    icon=ft.Icons.REFRESH,
+                    icon_size=14,
+                    tooltip=t("chat.retry"),
                     on_click=lambda e: _fire_async(on_resend),
                 )
             )
 
         bubble_content_controls: list[ft.Control] = [ft.Column(children, spacing=4, tight=True)]
         if action_buttons:
-            bubble_content_controls.append(
-                ft.Row(action_buttons, spacing=0, alignment=ft.MainAxisAlignment.END)
-            )
+            bubble_content_controls.append(ft.Row(action_buttons, spacing=0, alignment=ft.MainAxisAlignment.END))
 
         bubble_radius = (
             ft.border_radius.only(
-                top_left=18, top_right=18, bottom_left=4, bottom_right=18,
-            ) if is_user else ft.border_radius.only(
-                top_left=18, top_right=18, bottom_left=18, bottom_right=4,
+                top_left=18,
+                top_right=18,
+                bottom_left=4,
+                bottom_right=18,
+            )
+            if is_user
+            else ft.border_radius.only(
+                top_left=18,
+                top_right=18,
+                bottom_left=18,
+                bottom_right=4,
             )
         )
 
@@ -285,7 +295,8 @@ class ChatMessage(ft.Container):
             padding=ft.padding.symmetric(horizontal=16, vertical=12),
             border_radius=bubble_radius,
             shadow=ft.BoxShadow(
-                spread_radius=0, blur_radius=8,
+                spread_radius=0,
+                blur_radius=8,
                 color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
                 offset=ft.Offset(0, 2),
             ),
@@ -436,7 +447,9 @@ class SessionSidebar(ft.Column):
                 self._sessions_list.controls.append(
                     ft.Container(
                         content=ft.Text(
-                            group_name, size=10, weight=ft.FontWeight.BOLD,
+                            group_name,
+                            size=10,
+                            weight=ft.FontWeight.BOLD,
                             color=ft.Colors.ON_SURFACE_VARIANT,
                         ),
                         padding=ft.padding.only(left=8, top=8, bottom=2),
@@ -459,18 +472,23 @@ class SessionSidebar(ft.Column):
                     ft.Column(
                         [
                             ft.Text(
-                                name, size=12,
+                                name,
+                                size=12,
                                 weight=ft.FontWeight.BOLD if is_selected else None,
                                 max_lines=1,
                             ),
                             ft.Text(age, size=10, color=ft.Colors.ON_SURFACE_VARIANT),
                         ],
-                        spacing=2, expand=True, tight=True,
+                        spacing=2,
+                        expand=True,
+                        tight=True,
                     ),
                     ft.IconButton(
-                        icon=ft.Icons.DELETE_OUTLINE, icon_size=14,
+                        icon=ft.Icons.DELETE_OUTLINE,
+                        icon_size=14,
                         tooltip=t("sessions.delete_tooltip"),
-                        data=sid, on_click=self._handle_delete,
+                        data=sid,
+                        on_click=self._handle_delete,
                     ),
                 ],
                 spacing=4,
@@ -491,7 +509,9 @@ class SessionSidebar(ft.Column):
         if not query:
             self._render_filtered(self._all_sessions)
             return
-        filtered = [s for s in self._all_sessions if query in s.get("name", "").lower() or query in s.get("id", "").lower()]
+        filtered = [
+            s for s in self._all_sessions if query in s.get("name", "").lower() or query in s.get("id", "").lower()
+        ]
         self._render_filtered(filtered)
 
     async def _handle_select(self, e: Any) -> None:
@@ -539,13 +559,18 @@ class ChatView(ft.Column):
 
         self._search_bar = ft.TextField(
             hint_text=t("chat.search", default="Search messages..."),
-            dense=True, border_radius=20, prefix_icon=ft.Icons.SEARCH,
-            height=32, text_size=12, visible=False,
+            dense=True,
+            border_radius=20,
+            prefix_icon=ft.Icons.SEARCH,
+            height=32,
+            text_size=12,
+            visible=False,
         )
         self._search_bar.on_change = self._handle_search
 
         self._messages_list = ft.ListView(
-            expand=True, spacing=8,
+            expand=True,
+            spacing=8,
             padding=ft.padding.symmetric(horizontal=16, vertical=8),
             auto_scroll=True,
         )
@@ -589,7 +614,8 @@ class ChatView(ft.Column):
         self._progress_text = ft.Text("", size=12, visible=False)
         self._progress_row = ft.Row(
             controls=[self._progress_bar, self._progress_text],
-            spacing=8, visible=False,
+            spacing=8,
+            visible=False,
         )
 
         self._scroll_to_bottom_btn = ft.FloatingActionButton(
@@ -628,7 +654,8 @@ class ChatView(ft.Column):
                 chat_area,
                 bottom_bar,
             ],
-            expand=True, spacing=0,
+            expand=True,
+            spacing=0,
         )
 
     def add_message(
@@ -639,8 +666,11 @@ class ChatView(ft.Column):
         msg_id: str = "",
     ) -> ChatMessage:
         msg = ChatMessage(
-            role, content, tool_calls,
-            on_edit=self._on_edit, on_resend=self._on_resend,
+            role,
+            content,
+            tool_calls,
+            on_edit=self._on_edit,
+            on_resend=self._on_resend,
             msg_id=msg_id,
         )
         msg.opacity = 0
@@ -656,7 +686,7 @@ class ChatView(ft.Column):
 
     def start_streaming(self) -> ChatMessage:
         """Create an empty assistant message bubble for streaming into."""
-        from pyclaw.ui.components import streaming_indicator, pulse_streaming_dots
+        from pyclaw.ui.components import pulse_streaming_dots, streaming_indicator
 
         msg = self.add_message("assistant", "")
         self._current_assistant_msg = msg
@@ -742,25 +772,27 @@ class ChatView(ft.Column):
         for i, step in enumerate(steps):
             status = step.get("status", "pending")
             color = (
-                ft.Colors.GREEN if status == "completed"
-                else ft.Colors.BLUE if status == "running"
+                ft.Colors.GREEN
+                if status == "completed"
+                else ft.Colors.BLUE
+                if status == "running"
                 else ft.Colors.ON_SURFACE_VARIANT
             )
             icon = (
-                ft.Icons.CHECK_CIRCLE if status == "completed"
-                else ft.Icons.PLAY_CIRCLE if status == "running"
+                ft.Icons.CHECK_CIRCLE
+                if status == "completed"
+                else ft.Icons.PLAY_CIRCLE
+                if status == "running"
                 else ft.Icons.CIRCLE_OUTLINED
             )
             step_indicators.append(
                 ft.Container(
                     content=ft.Icon(icon, size=16, color=color),
-                    tooltip=step.get("description", f"Step {i+1}"),
+                    tooltip=step.get("description", f"Step {i + 1}"),
                 )
             )
             if i < total - 1:
-                step_indicators.append(
-                    ft.Container(width=16, height=2, bgcolor=color)
-                )
+                step_indicators.append(ft.Container(width=16, height=2, bgcolor=color))
 
         self._plan_progress.content = ft.Container(
             content=ft.Column(
@@ -768,7 +800,8 @@ class ChatView(ft.Column):
                     ft.Row(step_indicators, spacing=2, alignment=ft.MainAxisAlignment.CENTER),
                     ft.Text(f"{completed}/{total} steps", size=11, text_align=ft.TextAlign.CENTER),
                 ],
-                spacing=4, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=4,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             padding=ft.padding.symmetric(horizontal=16, vertical=8),
             bgcolor=ft.Colors.SURFACE_CONTAINER,
@@ -794,6 +827,7 @@ class ChatView(ft.Column):
 
         if loading and not hasattr(self, "_shimmer") or not self._shimmer:
             from pyclaw.ui.shimmer import ShimmerContainer, shimmer_chat_skeleton
+
             self._shimmer = ShimmerContainer(content=shimmer_chat_skeleton(3))
             self._messages_list.controls.append(self._shimmer)
             self._shimmer.start()
@@ -901,15 +935,13 @@ class SettingsView(ft.Column):
         self._gw = gateway_client
 
         from pyclaw.agents.model_catalog import ModelCatalog
+
         self._catalog = ModelCatalog()
 
         cfg = current_config or {}
         _active_provider = cfg.get("provider") or DEFAULT_PROVIDER
 
-        provider_options = [
-            ft.dropdown.Option(p["id"], p["name"])
-            for p in self._catalog.list_providers()
-        ]
+        provider_options = [ft.dropdown.Option(p["id"], p["name"]) for p in self._catalog.list_providers()]
         self._provider = ft.Dropdown(
             label=t("settings.provider"),
             value=_active_provider,
@@ -928,7 +960,9 @@ class SettingsView(ft.Column):
         _initial_env_key = self._catalog.provider_env_key(_active_provider)
         self._api_key = ft.TextField(
             label=t("settings.api_key"),
-            password=True, can_reveal_password=True, width=400,
+            password=True,
+            can_reveal_password=True,
+            width=400,
             value=cfg.get("api_key") or "",
             hint_text=_initial_env_key or "",
         )
@@ -941,7 +975,8 @@ class SettingsView(ft.Column):
         )
 
         self._theme_toggle = ft.Switch(
-            label=t("settings.dark_mode"), value=True,
+            label=t("settings.dark_mode"),
+            value=True,
         )
         self._theme_toggle.on_change = self._handle_theme_change
 
@@ -960,15 +995,18 @@ class SettingsView(ft.Column):
 
         self._seed_color_field = ft.TextField(
             label=t("settings.seed_color", default="Theme Color"),
-            value="#6366f1", width=150,
+            value="#6366f1",
+            width=150,
         )
         self._seed_color_field.on_submit = self._handle_seed_color_change
 
         from pyclaw.ui.theme import PRESET_SEED_COLORS
+
         self._color_swatches = ft.Row(
             controls=[
                 ft.Container(
-                    width=36, height=36,
+                    width=36,
+                    height=36,
                     border_radius=20,
                     bgcolor=color,
                     border=ft.border.all(
@@ -980,9 +1018,12 @@ class SettingsView(ft.Column):
                     tooltip=name.capitalize(),
                     animate=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
                     shadow=ft.BoxShadow(
-                        blur_radius=8, spread_radius=2,
+                        blur_radius=8,
+                        spread_radius=2,
                         color=ft.Colors.with_opacity(0.3, color),
-                    ) if color == "#6366f1" else None,
+                    )
+                    if color == "#6366f1"
+                    else None,
                 )
                 for name, color in PRESET_SEED_COLORS.items()
             ],
@@ -997,7 +1038,9 @@ class SettingsView(ft.Column):
         )
 
         save_btn = ft.Button(
-            t("settings.save"), icon=ft.Icons.SAVE, on_click=self._handle_save,
+            t("settings.save"),
+            icon=ft.Icons.SAVE,
+            on_click=self._handle_save,
         )
 
         super().__init__(
@@ -1037,10 +1080,7 @@ class SettingsView(ft.Column):
     def _build_model_options(self, provider: str) -> list[Any]:
         """Build dropdown options for models belonging to a provider."""
         models = self._catalog.list_models(provider)
-        return [
-            ft.dropdown.Option(m.model_id, m.display_name or m.model_id)
-            for m in models
-        ]
+        return [ft.dropdown.Option(m.model_id, m.display_name or m.model_id) for m in models]
 
     async def load_models_from_gateway(self) -> None:
         """Fetch model list from gateway and populate the dropdown.
@@ -1068,11 +1108,11 @@ class SettingsView(ft.Column):
                     ]
                     catalog_default = self._catalog.default_model_for_provider(provider)
                     model_ids = [
-                        (m.get("model_id") or m.get("key", ""))
-                        if isinstance(m, dict) else str(m)
-                        for m in models
+                        (m.get("model_id") or m.get("key", "")) if isinstance(m, dict) else str(m) for m in models
                     ]
-                    default_model = catalog_default if catalog_default in model_ids else (model_ids[0] if model_ids else "")
+                    default_model = (
+                        catalog_default if catalog_default in model_ids else (model_ids[0] if model_ids else "")
+                    )
             except Exception:
                 pass
 
@@ -1117,9 +1157,7 @@ class SettingsView(ft.Column):
         try:
             page = self._theme_toggle.page
             if page:
-                page.theme_mode = (
-                    ft.ThemeMode.DARK if self._theme_toggle.value else ft.ThemeMode.LIGHT
-                )
+                page.theme_mode = ft.ThemeMode.DARK if self._theme_toggle.value else ft.ThemeMode.LIGHT
                 page.update()
         except RuntimeError:
             pass
@@ -1144,10 +1182,15 @@ class SettingsView(ft.Column):
                     3 if is_selected else 1.5,
                     ft.Colors.ON_SURFACE if is_selected else ft.Colors.OUTLINE,
                 )
-                swatch.shadow = ft.BoxShadow(
-                    blur_radius=8, spread_radius=2,
-                    color=ft.Colors.with_opacity(0.3, swatch.data),
-                ) if is_selected else None
+                swatch.shadow = (
+                    ft.BoxShadow(
+                        blur_radius=8,
+                        spread_radius=2,
+                        color=ft.Colors.with_opacity(0.3, swatch.data),
+                    )
+                    if is_selected
+                    else None
+                )
         self._safe_update(self._color_swatches)
 
         await self._handle_seed_color_change(e)
@@ -1156,6 +1199,7 @@ class SettingsView(ft.Column):
         color = self._seed_color_field.value or "#6366f1"
         try:
             from pyclaw.ui.theme import get_theme, set_seed_color
+
             set_seed_color(color)
             page = self._seed_color_field.page
             if page:
@@ -1270,8 +1314,7 @@ class PyClawApp:
         ]
 
         nav_destinations = [
-            ft.NavigationRailDestination(icon=ic, selected_icon=sel, label=lbl)
-            for ic, sel, lbl in nav_items
+            ft.NavigationRailDestination(icon=ic, selected_icon=sel, label=lbl) for ic, sel, lbl in nav_items
         ]
 
         self._nav_rail = ft.NavigationRail(
@@ -1318,12 +1361,15 @@ class PyClawApp:
             content=ft.Row(
                 [
                     ft.Container(
-                        width=8, height=8, border_radius=4,
+                        width=8,
+                        height=8,
+                        border_radius=4,
                         bgcolor=ft.Colors.GREEN if self._gw_connected else ft.Colors.RED,
                     ),
                     ft.Text(
                         "Gateway" if self._gw_connected else "Offline",
-                        size=10, color=ft.Colors.ON_SURFACE_VARIANT,
+                        size=10,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
                     ),
                 ],
                 spacing=4,
@@ -1340,14 +1386,19 @@ class PyClawApp:
             top_bar_controls.append(self._toolbar)
         top_bar_controls.append(gw_indicator)
 
-        self._top_bar = ft.Row(
-            top_bar_controls,
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        ) if top_bar_controls else None
+        self._top_bar = (
+            ft.Row(
+                top_bar_controls,
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            )
+            if top_bar_controls
+            else None
+        )
 
         main_content = ft.Column(
             controls=[c for c in [self._top_bar, self._content_area] if c],
-            expand=True, spacing=0,
+            expand=True,
+            spacing=0,
         )
 
         self._sidebar_divider1 = ft.VerticalDivider(width=1)
@@ -1520,14 +1571,16 @@ class PyClawApp:
         if self._gw_connected and self._gw:
             self._chat_view.start_streaming()
             try:
-                from pyclaw.ui.gateway_client import chat_send
                 # chat.edit re-runs from the edited message
-                await self._gw.call("chat.edit", {
-                    "message": original_content,
-                    "sessionId": self._current_session or "",
-                    "provider": self._config.get("provider"),
-                    "model": self._config.get("model"),
-                })
+                await self._gw.call(
+                    "chat.edit",
+                    {
+                        "message": original_content,
+                        "sessionId": self._current_session or "",
+                        "provider": self._config.get("provider"),
+                        "model": self._config.get("model"),
+                    },
+                )
             except Exception:
                 pass
             finally:
@@ -1540,7 +1593,8 @@ class PyClawApp:
                 from pyclaw.ui.gateway_client import chat_send
 
                 await chat_send(
-                    self._gw, "",
+                    self._gw,
+                    "",
                     on_delta=lambda delta: self._chat_view.append_delta(delta),
                     provider=self._config.get("provider"),
                     model=self._config.get("model"),
@@ -1569,16 +1623,19 @@ class PyClawApp:
 
         if self._gw_connected and self._gw:
             try:
-                await self._gw.call("config.patch", {
-                    "patch": {
-                        "agents": {
-                            "defaults": {
-                                "model": model,
-                                "provider": provider,
+                await self._gw.call(
+                    "config.patch",
+                    {
+                        "patch": {
+                            "agents": {
+                                "defaults": {
+                                    "model": model,
+                                    "provider": provider,
+                                }
                             }
                         }
-                    }
-                })
+                    },
+                )
             except Exception:
                 pass
 
@@ -1617,15 +1674,15 @@ class PyClawApp:
             if not hasattr(self, "_pending_attachments"):
                 self._pending_attachments: list[dict[str, str]] = []
             for f in result.files:
-                self._pending_attachments.append({
-                    "name": f.name,
-                    "path": f.path or "",
-                    "size": str(f.size or 0),
-                })
+                self._pending_attachments.append(
+                    {
+                        "name": f.name,
+                        "path": f.path or "",
+                        "size": str(f.size or 0),
+                    }
+                )
             names = ", ".join(f.name for f in result.files)
-            self._show_snackbar(
-                t("toolbar.attached", default="Attached: {names}", names=names)
-            )
+            self._show_snackbar(t("toolbar.attached", default="Attached: {names}", names=names))
 
         if picker in self._page.overlay:
             self._page.overlay.remove(picker)
@@ -1686,9 +1743,7 @@ class PyClawApp:
     def _toggle_theme(self) -> None:
         if self._page:
             self._page.theme_mode = (
-                ft.ThemeMode.LIGHT
-                if self._page.theme_mode == ft.ThemeMode.DARK
-                else ft.ThemeMode.DARK
+                ft.ThemeMode.LIGHT if self._page.theme_mode == ft.ThemeMode.DARK else ft.ThemeMode.DARK
             )
             self._page.update()
 
@@ -1729,8 +1784,7 @@ class PyClawApp:
                 for msg in messages:
                     raw_content = msg.get("content", "")
                     content_str = (
-                        raw_content if isinstance(raw_content, str)
-                        else str(raw_content) if raw_content else ""
+                        raw_content if isinstance(raw_content, str) else str(raw_content) if raw_content else ""
                     )
                     self._chat_view.add_message(
                         msg.get("role", "user"),
@@ -1830,9 +1884,7 @@ class PyClawApp:
 
         main_sessions = agents_dir / "main" / "sessions"
         if main_sessions.is_dir():
-            for f in sorted(
-                main_sessions.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True
-            )[:20]:
+            for f in sorted(main_sessions.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:20]:
                 mtime = f.stat().st_mtime
                 delta = now.timestamp() - mtime
                 if delta < 60:
@@ -1880,7 +1932,9 @@ class PyClawApp:
 
         self._plan_list = ft.ListView(expand=True, spacing=6)
         refresh_btn = ft.IconButton(
-            icon=ft.Icons.REFRESH, tooltip="Refresh", icon_size=20,
+            icon=ft.Icons.REFRESH,
+            tooltip="Refresh",
+            icon_size=20,
             on_click=lambda e: _fire_async(self._refresh_plans),
         )
         return ft.Column(
@@ -1888,7 +1942,8 @@ class PyClawApp:
                 page_header(ft.Icons.CHECKLIST, t("nav.plans", default="Plans"), [refresh_btn]),
                 self._plan_list,
             ],
-            spacing=0, expand=True,
+            spacing=0,
+            expand=True,
         )
 
     async def _refresh_plans(self) -> None:
@@ -1918,8 +1973,10 @@ class PyClawApp:
             for p in plans:
                 status = p.get("status", "pending")
                 color = {
-                    "completed": StatusColors.SUCCESS, "running": StatusColors.INFO,
-                    "paused": StatusColors.WARNING, "failed": StatusColors.ERROR,
+                    "completed": StatusColors.SUCCESS,
+                    "running": StatusColors.INFO,
+                    "paused": StatusColors.WARNING,
+                    "failed": StatusColors.ERROR,
                 }.get(status, "#94a3b8")
 
                 steps = p.get("steps", [])
@@ -1928,29 +1985,47 @@ class PyClawApp:
 
                 actions: list[ft.Control] = []
                 if status == "paused":
-                    actions.append(ft.IconButton(
-                        icon=ft.Icons.PLAY_ARROW, icon_size=16, tooltip="Resume",
+                    actions.append(
+                        ft.IconButton(
+                            icon=ft.Icons.PLAY_ARROW,
+                            icon_size=16,
+                            tooltip="Resume",
+                            data=p.get("id"),
+                            on_click=lambda e: _fire_async(self._resume_plan, e.control.data),
+                        )
+                    )
+                actions.append(
+                    ft.IconButton(
+                        icon=ft.Icons.DELETE_OUTLINE,
+                        icon_size=16,
+                        tooltip="Delete",
                         data=p.get("id"),
-                        on_click=lambda e: _fire_async(self._resume_plan, e.control.data),
-                    ))
-                actions.append(ft.IconButton(
-                    icon=ft.Icons.DELETE_OUTLINE, icon_size=16, tooltip="Delete",
-                    data=p.get("id"),
-                    on_click=lambda e: _fire_async(self._delete_plan, e.control.data),
-                ))
+                        on_click=lambda e: _fire_async(self._delete_plan, e.control.data),
+                    )
+                )
 
-                tile_content = ft.Row([
-                    ft.Icon(ft.Icons.CHECKLIST, color=color, size=20),
-                    ft.Column([
-                        ft.Text(p.get("goal", "Plan"), weight=ft.FontWeight.BOLD, size=13),
-                        ft.Row([
-                            status_chip(status, color),
-                            ft.Text(f"{done}/{total} steps", size=11,
-                                    color=ft.Colors.ON_SURFACE_VARIANT),
-                        ], spacing=8),
-                    ], spacing=4, expand=True, tight=True),
-                    ft.Row(actions, spacing=0),
-                ], spacing=8)
+                tile_content = ft.Row(
+                    [
+                        ft.Icon(ft.Icons.CHECKLIST, color=color, size=20),
+                        ft.Column(
+                            [
+                                ft.Text(p.get("goal", "Plan"), weight=ft.FontWeight.BOLD, size=13),
+                                ft.Row(
+                                    [
+                                        status_chip(status, color),
+                                        ft.Text(f"{done}/{total} steps", size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                                    ],
+                                    spacing=8,
+                                ),
+                            ],
+                            spacing=4,
+                            expand=True,
+                            tight=True,
+                        ),
+                        ft.Row(actions, spacing=0),
+                    ],
+                    spacing=8,
+                )
                 self._plan_list.controls.append(card_tile(tile_content))
             self._safe_update(self._plan_list)
         except Exception:
@@ -1987,11 +2062,14 @@ class PyClawApp:
         async def _add_job(e: Any) -> None:
             if self._gw and add_name.value and add_schedule.value:
                 try:
-                    await self._gw.call("cron.add", {
-                        "name": add_name.value,
-                        "schedule": add_schedule.value,
-                        "message": add_message.value or "",
-                    })
+                    await self._gw.call(
+                        "cron.add",
+                        {
+                            "name": add_name.value,
+                            "schedule": add_schedule.value,
+                            "message": add_message.value or "",
+                        },
+                    )
                     add_name.value = ""
                     add_schedule.value = ""
                     add_message.value = ""
@@ -2004,21 +2082,31 @@ class PyClawApp:
         return ft.Column(
             controls=[
                 page_header(
-                    ft.Icons.SCHEDULE, t("nav.cron", default="Scheduled Tasks"),
-                    [ft.IconButton(icon=ft.Icons.REFRESH, icon_size=20,
-                                   on_click=lambda e: _fire_async(self._refresh_cron))],
+                    ft.Icons.SCHEDULE,
+                    t("nav.cron", default="Scheduled Tasks"),
+                    [
+                        ft.IconButton(
+                            icon=ft.Icons.REFRESH, icon_size=20, on_click=lambda e: _fire_async(self._refresh_cron)
+                        )
+                    ],
                 ),
                 self._cron_list,
                 ft.Divider(height=1),
                 ft.ExpansionTile(
                     title=ft.Text("Add Job", size=14),
-                    controls=[ft.Container(
-                        content=ft.Column([
-                            ft.Row([add_name, add_schedule], spacing=8),
-                            add_message, add_btn,
-                        ], spacing=8),
-                        padding=12,
-                    )],
+                    controls=[
+                        ft.Container(
+                            content=ft.Column(
+                                [
+                                    ft.Row([add_name, add_schedule], spacing=8),
+                                    add_message,
+                                    add_btn,
+                                ],
+                                spacing=8,
+                            ),
+                            padding=12,
+                        )
+                    ],
                 ),
                 ft.Divider(height=1),
                 ft.Container(
@@ -2027,7 +2115,9 @@ class PyClawApp:
                 ),
                 self._cron_history_list,
             ],
-            spacing=0, expand=True, scroll=ft.ScrollMode.AUTO,
+            spacing=0,
+            expand=True,
+            scroll=ft.ScrollMode.AUTO,
         )
 
     async def _refresh_cron(self) -> None:
@@ -2043,26 +2133,37 @@ class PyClawApp:
             for job in jobs:
                 enabled = job.get("enabled", True)
                 job_color = StatusColors.SUCCESS if enabled else "#94a3b8"
-                tile_content = ft.Row([
-                    ft.Icon(
-                        ft.Icons.TIMER if enabled else ft.Icons.TIMER_OFF,
-                        size=18, color=job_color,
-                    ),
-                    ft.Column([
-                        ft.Text(job.get("name", job.get("title", "Job")),
-                                weight=ft.FontWeight.BOLD, size=13),
-                        ft.Row([
-                            status_chip("enabled" if enabled else "disabled", job_color),
-                            ft.Text(job.get("schedule", ""), size=11,
-                                    color=ft.Colors.ON_SURFACE_VARIANT),
-                        ], spacing=8),
-                    ], spacing=4, expand=True, tight=True),
-                    ft.IconButton(
-                        icon=ft.Icons.DELETE_OUTLINE, icon_size=16,
-                        data=job.get("id"),
-                        on_click=lambda e: _fire_async(self._delete_cron_job, e.control.data),
-                    ),
-                ], spacing=8)
+                tile_content = ft.Row(
+                    [
+                        ft.Icon(
+                            ft.Icons.TIMER if enabled else ft.Icons.TIMER_OFF,
+                            size=18,
+                            color=job_color,
+                        ),
+                        ft.Column(
+                            [
+                                ft.Text(job.get("name", job.get("title", "Job")), weight=ft.FontWeight.BOLD, size=13),
+                                ft.Row(
+                                    [
+                                        status_chip("enabled" if enabled else "disabled", job_color),
+                                        ft.Text(job.get("schedule", ""), size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                                    ],
+                                    spacing=8,
+                                ),
+                            ],
+                            spacing=4,
+                            expand=True,
+                            tight=True,
+                        ),
+                        ft.IconButton(
+                            icon=ft.Icons.DELETE_OUTLINE,
+                            icon_size=16,
+                            data=job.get("id"),
+                            on_click=lambda e: _fire_async(self._delete_cron_job, e.control.data),
+                        ),
+                    ],
+                    spacing=8,
+                )
                 self._cron_list.controls.append(card_tile(tile_content))
             self._safe_update(self._cron_list)
         except Exception:
@@ -2075,19 +2176,24 @@ class PyClawApp:
             for rec in records:
                 status = rec.get("status", "")
                 color = {
-                    "completed": StatusColors.SUCCESS, "running": StatusColors.INFO,
+                    "completed": StatusColors.SUCCESS,
+                    "running": StatusColors.INFO,
                     "failed": StatusColors.ERROR,
                 }.get(status, "#94a3b8")
-                self._cron_history_list.controls.append(ft.Container(
-                    content=ft.Row([
-                        ft.Container(width=8, height=8, border_radius=4, bgcolor=color),
-                        ft.Text(rec.get("job_title", ""), size=12, expand=True),
-                        ft.Text(rec.get("started_at", "")[:19], size=10,
-                                color=ft.Colors.ON_SURFACE_VARIANT),
-                        status_chip(status, color),
-                    ], spacing=6),
-                    padding=ft.padding.symmetric(horizontal=12, vertical=4),
-                ))
+                self._cron_history_list.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Container(width=8, height=8, border_radius=4, bgcolor=color),
+                                ft.Text(rec.get("job_title", ""), size=12, expand=True),
+                                ft.Text(rec.get("started_at", "")[:19], size=10, color=ft.Colors.ON_SURFACE_VARIANT),
+                                status_chip(status, color),
+                            ],
+                            spacing=6,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=12, vertical=4),
+                    )
+                )
             self._safe_update(self._cron_history_list)
         except Exception:
             pass
@@ -2109,20 +2215,26 @@ class PyClawApp:
         self._system_logs_list = ft.ListView(spacing=2, height=300)
 
         backup_btn = ft.OutlinedButton(
-            "Export Backup", icon=ft.Icons.BACKUP,
+            "Export Backup",
+            icon=ft.Icons.BACKUP,
             on_click=lambda e: _fire_async(self._export_backup),
         )
         doctor_btn = ft.OutlinedButton(
-            "Run Doctor", icon=ft.Icons.HEALTH_AND_SAFETY,
+            "Run Doctor",
+            icon=ft.Icons.HEALTH_AND_SAFETY,
             on_click=lambda e: _fire_async(self._run_doctor),
         )
 
         return ft.Column(
             controls=[
                 page_header(
-                    ft.Icons.MONITOR_HEART, t("nav.system", default="System"),
-                    [ft.IconButton(icon=ft.Icons.REFRESH, icon_size=20,
-                                   on_click=lambda e: _fire_async(self._refresh_system))],
+                    ft.Icons.MONITOR_HEART,
+                    t("nav.system", default="System"),
+                    [
+                        ft.IconButton(
+                            icon=ft.Icons.REFRESH, icon_size=20, on_click=lambda e: _fire_async(self._refresh_system)
+                        )
+                    ],
                 ),
                 ft.Container(content=self._system_info_col, padding=ft.padding.all(16)),
                 ft.Divider(height=1),
@@ -2137,7 +2249,9 @@ class PyClawApp:
                 ),
                 self._system_logs_list,
             ],
-            spacing=0, expand=True, scroll=ft.ScrollMode.AUTO,
+            spacing=0,
+            expand=True,
+            scroll=ft.ScrollMode.AUTO,
         )
 
     async def _refresh_system(self) -> None:
@@ -2154,10 +2268,13 @@ class PyClawApp:
             self._system_info_col.controls.clear()
             for key, val in info.items():
                 self._system_info_col.controls.append(
-                    ft.Row([
-                        ft.Text(key, weight=ft.FontWeight.BOLD, size=12, width=150),
-                        ft.Text(str(val), size=12),
-                    ], spacing=8)
+                    ft.Row(
+                        [
+                            ft.Text(key, weight=ft.FontWeight.BOLD, size=12, width=150),
+                            ft.Text(str(val), size=12),
+                        ],
+                        spacing=8,
+                    )
                 )
             self._safe_update(self._system_info_col)
         except Exception:
@@ -2169,9 +2286,7 @@ class PyClawApp:
             self._system_logs_list.controls.clear()
             for line in lines:
                 text = line if isinstance(line, str) else str(line)
-                self._system_logs_list.controls.append(
-                    ft.Text(text, size=10, font_family="monospace", max_lines=2)
-                )
+                self._system_logs_list.controls.append(ft.Text(text, size=10, font_family="monospace", max_lines=2))
             self._safe_update(self._system_logs_list)
         except Exception:
             pass
@@ -2191,29 +2306,36 @@ class PyClawApp:
                 result = await self._gw.call("doctor.run")
                 checks = result.get("checks", result)
                 self._system_info_col.controls.clear()
-                self._system_info_col.controls.append(
-                    ft.Text("Doctor Results", size=14, weight=ft.FontWeight.BOLD)
-                )
+                self._system_info_col.controls.append(ft.Text("Doctor Results", size=14, weight=ft.FontWeight.BOLD))
                 if isinstance(checks, list):
                     for check in checks:
                         name = check.get("name", "")
                         status = check.get("status", "")
                         color = ft.Colors.GREEN if status == "ok" else ft.Colors.RED
                         self._system_info_col.controls.append(
-                            ft.Row([
-                                ft.Icon(ft.Icons.CHECK_CIRCLE if status == "ok" else ft.Icons.ERROR,
-                                        size=16, color=color),
-                                ft.Text(name, size=12, expand=True),
-                                ft.Text(status, size=12, color=color),
-                            ], spacing=4)
+                            ft.Row(
+                                [
+                                    ft.Icon(
+                                        ft.Icons.CHECK_CIRCLE if status == "ok" else ft.Icons.ERROR,
+                                        size=16,
+                                        color=color,
+                                    ),
+                                    ft.Text(name, size=12, expand=True),
+                                    ft.Text(status, size=12, color=color),
+                                ],
+                                spacing=4,
+                            )
                         )
                 elif isinstance(checks, dict):
                     for k, v in checks.items():
                         self._system_info_col.controls.append(
-                            ft.Row([
-                                ft.Text(k, size=12, weight=ft.FontWeight.BOLD, width=150),
-                                ft.Text(str(v), size=12),
-                            ], spacing=4)
+                            ft.Row(
+                                [
+                                    ft.Text(k, size=12, weight=ft.FontWeight.BOLD, width=150),
+                                    ft.Text(str(v), size=12),
+                                ],
+                                spacing=4,
+                            )
                         )
                 self._safe_update(self._system_info_col)
             except Exception:
@@ -2261,6 +2383,7 @@ class PyClawApp:
     def _get_catalog_meta(channel_type: str) -> dict[str, Any]:
         try:
             from pyclaw.channels.plugins.catalog import BUILTIN_CATALOG
+
             entry = BUILTIN_CATALOG.get(channel_type)
             if entry:
                 spec = entry.action_spec
@@ -2284,7 +2407,7 @@ class PyClawApp:
 
     async def _check_permissions(self, page: ft.Page) -> None:
         """Show permission guard on mobile platforms before proceeding."""
-        from pyclaw.ui.permissions import build_permission_guard_panel, _IS_MOBILE
+        from pyclaw.ui.permissions import _IS_MOBILE, build_permission_guard_panel
 
         if not _IS_MOBILE:
             return
@@ -2337,9 +2460,7 @@ class PyClawApp:
             api_key = config.get("api_key")
             model_id = config.get("model", DEFAULT_MODEL)
 
-            provider_cfg = ModelProviderConfig(
-                baseUrl="", apiKey=api_key
-            ) if api_key else None
+            provider_cfg = ModelProviderConfig(baseUrl="", apiKey=api_key) if api_key else None
             providers = {provider: provider_cfg} if provider_cfg else None
 
             channels_selected = config.get("channels", [])
@@ -2349,11 +2470,7 @@ class PyClawApp:
 
             cfg = PyClawConfig(
                 models=ModelsConfig(default=None, providers=providers) if providers else None,
-                agents=AgentsConfig(
-                    defaults=AgentDefaultsConfig(
-                        model=model_id, provider=provider, workspaceDir=None
-                    )
-                ),
+                agents=AgentsConfig(defaults=AgentDefaultsConfig(model=model_id, provider=provider, workspaceDir=None)),
                 channels=ChannelsConfig(**channels_data) if channels_data else None,
             )
             save_config(cfg, config_path)

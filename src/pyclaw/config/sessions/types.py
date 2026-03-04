@@ -111,6 +111,4 @@ class SessionStore(_CamelModel):
         return cls(entries=entries)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            k: v.model_dump(by_alias=True, exclude_none=True) for k, v in self.entries.items()
-        }
+        return {k: v.model_dump(by_alias=True, exclude_none=True) for k, v in self.entries.items()}

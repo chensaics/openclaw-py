@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from pyclaw.config.paths import resolve_config_path, resolve_agents_dir, resolve_state_dir
-from pyclaw.config.secrets import SecretRef, coerce_secret_ref, is_secret_ref
+from pyclaw.config.paths import resolve_agents_dir, resolve_config_path, resolve_state_dir
+from pyclaw.config.secrets import coerce_secret_ref, is_secret_ref
 from pyclaw.secrets.resolve import SecretRefResolveCache, resolve_secret_ref_value
 
 logger = logging.getLogger(__name__)
@@ -37,22 +37,24 @@ class SecretsAuditReport:
     version: int = 1
     status: str = "clean"  # "clean" | "findings" | "unresolved"
     files_scanned: list[str] = field(default_factory=list)
-    summary: dict[str, int] = field(default_factory=lambda: {
-        "plaintext_count": 0,
-        "unresolved_ref_count": 0,
-        "shadowed_ref_count": 0,
-        "legacy_residue_count": 0,
-    })
+    summary: dict[str, int] = field(
+        default_factory=lambda: {
+            "plaintext_count": 0,
+            "unresolved_ref_count": 0,
+            "shadowed_ref_count": 0,
+            "legacy_residue_count": 0,
+        }
+    )
     findings: list[SecretsAuditFinding] = field(default_factory=list)
 
 
 # Known patterns that look like plaintext API keys
 _API_KEY_PATTERNS = [
-    "sk-",       # OpenAI
-    "sk-ant-",   # Anthropic
-    "AIzaSy",    # Google
-    "gsk_",      # Groq
-    "xai-",      # xAI
+    "sk-",  # OpenAI
+    "sk-ant-",  # Anthropic
+    "AIzaSy",  # Google
+    "gsk_",  # Groq
+    "xai-",  # xAI
 ]
 
 
@@ -100,14 +102,16 @@ def run_secrets_audit(
             legacy_auth = agent_dir / "auth.json"
             if legacy_auth.exists():
                 report.files_scanned.append(str(legacy_auth))
-                report.findings.append(SecretsAuditFinding(
-                    code="LEGACY_RESIDUE",
-                    severity="warn",
-                    file=str(legacy_auth),
-                    json_path="/",
-                    message=f"Legacy auth.json found for agent '{agent_dir.name}'. "
-                            "Migrate to auth-profiles.json or remove.",
-                ))
+                report.findings.append(
+                    SecretsAuditFinding(
+                        code="LEGACY_RESIDUE",
+                        severity="warn",
+                        file=str(legacy_auth),
+                        json_path="/",
+                        message=f"Legacy auth.json found for agent '{agent_dir.name}'. "
+                        "Migrate to auth-profiles.json or remove.",
+                    )
+                )
                 report.summary["legacy_residue_count"] += 1
 
     # Set status
@@ -123,11 +127,10 @@ def run_secrets_audit(
     return report
 
 
-def _audit_config_file(
-    path: Path, report: SecretsAuditReport, providers: dict[str, Any] | None
-) -> None:
+def _audit_config_file(path: Path, report: SecretsAuditReport, providers: dict[str, Any] | None) -> None:
     try:
         import json5
+
         data = json5.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return
@@ -143,14 +146,16 @@ def _audit_config_file(
             json_path = f"models.providers.{prov_id}.apiKey"
 
             if isinstance(api_key, str) and _looks_like_plaintext_key(api_key):
-                report.findings.append(SecretsAuditFinding(
-                    code="PLAINTEXT_FOUND",
-                    severity="error",
-                    file=str(path),
-                    json_path=json_path,
-                    message=f"Plaintext API key found for provider '{prov_id}'.",
-                    provider=prov_id,
-                ))
+                report.findings.append(
+                    SecretsAuditFinding(
+                        code="PLAINTEXT_FOUND",
+                        severity="error",
+                        file=str(path),
+                        json_path=json_path,
+                        message=f"Plaintext API key found for provider '{prov_id}'.",
+                        provider=prov_id,
+                    )
+                )
                 report.summary["plaintext_count"] += 1
             elif is_secret_ref(api_key):
                 ref = coerce_secret_ref(api_key)
@@ -158,15 +163,17 @@ def _audit_config_file(
                     cache = SecretRefResolveCache()
                     resolved = resolve_secret_ref_value(ref, providers, cache=cache)
                     if resolved is None:
-                        report.findings.append(SecretsAuditFinding(
-                            code="REF_UNRESOLVED",
-                            severity="error",
-                            file=str(path),
-                            json_path=json_path,
-                            message=f"SecretRef for '{prov_id}' cannot be resolved: "
-                                    f"{ref.source}:{ref.provider}:{ref.id}",
-                            provider=prov_id,
-                        ))
+                        report.findings.append(
+                            SecretsAuditFinding(
+                                code="REF_UNRESOLVED",
+                                severity="error",
+                                file=str(path),
+                                json_path=json_path,
+                                message=f"SecretRef for '{prov_id}' cannot be resolved: "
+                                f"{ref.source}:{ref.provider}:{ref.id}",
+                                provider=prov_id,
+                            )
+                        )
                         report.summary["unresolved_ref_count"] += 1
 
 
@@ -188,13 +195,14 @@ def _audit_auth_profiles(path: Path, agent_id: str, report: SecretsAuditReport) 
         for field_name in ("apiKey", "token", "accessToken", "refreshToken"):
             value = profile.get(field_name)
             if isinstance(value, str) and _looks_like_plaintext_key(value):
-                report.findings.append(SecretsAuditFinding(
-                    code="PLAINTEXT_FOUND",
-                    severity="error",
-                    file=str(path),
-                    json_path=f"profiles.{profile_id}.{field_name}",
-                    message=f"Plaintext credential in auth profile '{profile_id}' "
-                            f"for agent '{agent_id}'.",
-                    profile_id=profile_id,
-                ))
+                report.findings.append(
+                    SecretsAuditFinding(
+                        code="PLAINTEXT_FOUND",
+                        severity="error",
+                        file=str(path),
+                        json_path=f"profiles.{profile_id}.{field_name}",
+                        message=f"Plaintext credential in auth profile '{profile_id}' for agent '{agent_id}'.",
+                        profile_id=profile_id,
+                    )
+                )
                 report.summary["plaintext_count"] += 1

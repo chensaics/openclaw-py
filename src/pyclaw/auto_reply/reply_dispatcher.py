@@ -16,8 +16,9 @@ import hashlib
 import logging
 import time
 from collections import OrderedDict
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +26,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InboundMessage:
     """An inbound message to be dispatched."""
+
     text: str
     sender_id: str
     channel_id: str
-    channel_type: str = ""    # "dm" | "group"
+    channel_type: str = ""  # "dm" | "group"
     session_id: str = ""
     message_id: str = ""
     timestamp: float = 0.0
@@ -43,11 +45,12 @@ class InboundMessage:
 @dataclass
 class DispatchResult:
     """Result of dispatching a message."""
+
     dispatched: bool = True
     reply_text: str = ""
     error: str = ""
     deduplicated: bool = False
-    routed_to: str = ""       # Agent or handler
+    routed_to: str = ""  # Agent or handler
 
 
 ReplyHandler = Callable[[InboundMessage], Coroutine[Any, Any, DispatchResult]]
@@ -56,16 +59,18 @@ ReplyHandler = Callable[[InboundMessage], Coroutine[Any, Any, DispatchResult]]
 @dataclass
 class DispatchRoute:
     """A dispatch route mapping."""
+
     name: str
     handler: ReplyHandler
     priority: int = 0
-    channel_filter: str = ""     # Empty = all channels
-    sender_filter: str = ""      # Empty = all senders
+    channel_filter: str = ""  # Empty = all channels
+    sender_filter: str = ""  # Empty = all senders
 
 
 # ---------------------------------------------------------------------------
 # Deduplication
 # ---------------------------------------------------------------------------
+
 
 class InboundDeduplicator:
     """Prevent processing the same message twice.
@@ -108,6 +113,7 @@ class InboundDeduplicator:
 # ---------------------------------------------------------------------------
 # Reply Dispatcher
 # ---------------------------------------------------------------------------
+
 
 class ReplyDispatcher:
     """Dispatch inbound messages to handlers via routes."""
@@ -171,6 +177,7 @@ class ReplyDispatcher:
 # ---------------------------------------------------------------------------
 # Dispatcher Registry
 # ---------------------------------------------------------------------------
+
 
 class DispatcherRegistry:
     """Track active dispatchers."""

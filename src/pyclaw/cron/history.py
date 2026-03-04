@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -73,7 +73,7 @@ class HistoryStore:
     def add(self, record: ExecutionRecord) -> None:
         self._records.append(record)
         if len(self._records) > self._max_size:
-            self._records = self._records[-self._max_size:]
+            self._records = self._records[-self._max_size :]
         self._save()
 
     def update(self, record_id: str, **kwargs: Any) -> ExecutionRecord | None:
@@ -113,10 +113,8 @@ class HistoryStore:
             return
         try:
             self._persist_path.parent.mkdir(parents=True, exist_ok=True)
-            data = [r.to_dict() for r in self._records[-self._max_size:]]
-            self._persist_path.write_text(
-                json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            data = [r.to_dict() for r in self._records[-self._max_size :]]
+            self._persist_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         except Exception:
             logger.debug("Failed to persist cron history")
 

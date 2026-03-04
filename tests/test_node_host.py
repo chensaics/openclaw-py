@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
-from pyclaw.node_host.invoke import InvokeRequest, InvokeResult, handle_invoke, sanitize_env
+from pyclaw.node_host.invoke import InvokeRequest, handle_invoke, sanitize_env
 
 
 class TestSanitizeEnv:
     def test_removes_dangerous_vars(self):
         import os
+
         os.environ["LD_PRELOAD"] = "/tmp/evil.so"
         env = sanitize_env()
         assert "LD_PRELOAD" not in env
@@ -23,6 +22,7 @@ class TestSanitizeEnv:
 
     def test_removes_dyld(self):
         import os
+
         os.environ["DYLD_INSERT_LIBRARIES"] = "/tmp/evil.dylib"
         env = sanitize_env()
         assert "DYLD_INSERT_LIBRARIES" not in env

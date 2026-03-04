@@ -6,8 +6,8 @@ import platform
 
 import pytest
 
-from pyclaw.daemon.service import GatewayServiceInstallArgs, resolve_gateway_service
 from pyclaw.daemon.launchd import build_launch_agent_plist
+from pyclaw.daemon.service import GatewayServiceInstallArgs, resolve_gateway_service
 
 
 class TestBuildLaunchAgentPlist:
@@ -77,5 +77,6 @@ class TestResolveGatewayService:
     @pytest.mark.skipif(platform.system() != "Darwin", reason="macOS only")
     def test_macos_returns_launchd(self):
         from pyclaw.daemon.launchd import LaunchdService
+
         svc = resolve_gateway_service()
         assert isinstance(svc, LaunchdService)

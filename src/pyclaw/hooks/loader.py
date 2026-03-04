@@ -50,7 +50,9 @@ def load_hook_entries(directory: Path) -> list[HookEntry]:
         _events = fm.get("events")
         _requires = fm.get("requires")
         events: list[str] = _events if isinstance(_events, list) else ([_events] if isinstance(_events, str) else [])
-        requires: list[str] = _requires if isinstance(_requires, list) else ([_requires] if isinstance(_requires, str) else [])
+        requires: list[str] = (
+            _requires if isinstance(_requires, list) else ([_requires] if isinstance(_requires, str) else [])
+        )
         meta = HookEntryMeta(
             name=str(fm.get("name", hook_md.parent.name)),
             events=events,

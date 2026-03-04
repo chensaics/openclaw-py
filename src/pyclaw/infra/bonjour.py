@@ -10,9 +10,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import platform
 import socket
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -93,11 +92,7 @@ async def start_gateway_bonjour_advertiser(
         logger.warning("zeroconf not installed; Bonjour advertising disabled")
         return BonjourAdvertiser()
 
-    mdns_hostname = (
-        os.environ.get("PYCLAW_MDNS_HOSTNAME")
-        or os.environ.get("CLAWDBOT_MDNS_HOSTNAME")
-        or "pyclaw"
-    )
+    mdns_hostname = os.environ.get("PYCLAW_MDNS_HOSTNAME") or os.environ.get("CLAWDBOT_MDNS_HOSTNAME") or "pyclaw"
     mdns_hostname = mdns_hostname.replace(".local", "").split(".")[0]
 
     instance_name = opts.instance_name or f"{socket.gethostname().split('.')[0]} (pyclaw)"

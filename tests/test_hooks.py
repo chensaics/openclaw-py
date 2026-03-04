@@ -125,7 +125,7 @@ class TestHookLoader:
     def test_parse_frontmatter(self):
         from pyclaw.hooks.loader import _parse_frontmatter
 
-        text = '---\nname: test-hook\nevents: [command:new, session:start]\nrequires: memory\n---\n# Hook'
+        text = "---\nname: test-hook\nevents: [command:new, session:start]\nrequires: memory\n---\n# Hook"
         result = _parse_frontmatter(text)
         assert result["name"] == "test-hook"
         assert "command:new" in result["events"]

@@ -103,43 +103,45 @@ class MediaFetcher:
             return FetchResult(url=url, error="httpx not installed")
 
         try:
-            async with httpx.AsyncClient(
-                timeout=self._timeout,
-                follow_redirects=True,
-                limits=httpx.Limits(max_connections=5),
-            ) as client:
-                async with client.stream("GET", url) as resp:
-                    resp.raise_for_status()
+            async with (
+                httpx.AsyncClient(
+                    timeout=self._timeout,
+                    follow_redirects=True,
+                    limits=httpx.Limits(max_connections=5),
+                ) as client,
+                client.stream("GET", url) as resp,
+            ):
+                resp.raise_for_status()
 
-                    content_type = resp.headers.get("content-type", "")
-                    mime = content_type.split(";")[0].strip() or "application/octet-stream"
+                content_type = resp.headers.get("content-type", "")
+                mime = content_type.split(";")[0].strip() or "application/octet-stream"
 
-                    if not any(mime.startswith(p) for p in self._allowed_mimes):
+                if not any(mime.startswith(p) for p in self._allowed_mimes):
+                    return FetchResult(
+                        url=url,
+                        mime_type=mime,
+                        error=f"MIME type '{mime}' not allowed",
+                    )
+
+                content_length = int(resp.headers.get("content-length", 0))
+                if content_length > self._max_size:
+                    return FetchResult(
+                        url=url,
+                        size=content_length,
+                        error=f"File too large ({content_length} > {self._max_size})",
+                    )
+
+                chunks: list[bytes] = []
+                total = 0
+                async for chunk in resp.aiter_bytes(chunk_size=65536):
+                    total += len(chunk)
+                    if total > self._max_size:
                         return FetchResult(
                             url=url,
-                            mime_type=mime,
-                            error=f"MIME type '{mime}' not allowed",
+                            size=total,
+                            error=f"Download exceeded size limit ({self._max_size})",
                         )
-
-                    content_length = int(resp.headers.get("content-length", 0))
-                    if content_length > self._max_size:
-                        return FetchResult(
-                            url=url,
-                            size=content_length,
-                            error=f"File too large ({content_length} > {self._max_size})",
-                        )
-
-                    chunks: list[bytes] = []
-                    total = 0
-                    async for chunk in resp.aiter_bytes(chunk_size=65536):
-                        total += len(chunk)
-                        if total > self._max_size:
-                            return FetchResult(
-                                url=url,
-                                size=total,
-                                error=f"Download exceeded size limit ({self._max_size})",
-                            )
-                        chunks.append(chunk)
+                    chunks.append(chunk)
 
             data = b"".join(chunks)
 

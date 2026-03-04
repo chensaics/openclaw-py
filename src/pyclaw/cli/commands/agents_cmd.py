@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import shutil
-from pathlib import Path
 
 import typer
 
@@ -28,10 +27,12 @@ def agents_list() -> None:
             continue
         sessions_dir = d / "sessions"
         session_count = len(list(sessions_dir.glob("*.jsonl"))) if sessions_dir.is_dir() else 0
-        rows.append({
-            "id": d.name,
-            "sessions": str(session_count),
-        })
+        rows.append(
+            {
+                "id": d.name,
+                "sessions": str(session_count),
+            }
+        )
 
     if not rows:
         typer.echo(f"  {p.muted}No agents found.{p.reset}")
@@ -60,9 +61,7 @@ def agents_add(agent_id: str, model: str | None = None) -> None:
 
     if model:
         config = {"model": model}
-        (agent_dir / "config.json").write_text(
-            json.dumps(config, indent=2) + "\n", encoding="utf-8"
-        )
+        (agent_dir / "config.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
     typer.echo(f"{p.success}Created agent '{agent_id}'.{p.reset}")
 

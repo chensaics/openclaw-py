@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import platform
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pyclaw import __version__
 from pyclaw.gateway.protocol.frames import PROTOCOL_VERSION
@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 
 
 def create_connect_handler(server: GatewayServer) -> MethodHandler:
-    async def handle_connect(
-        params: dict[str, Any] | None, conn: GatewayConnection
-    ) -> None:
+    async def handle_connect(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         params = params or {}
 
         # Protocol version negotiation
@@ -25,8 +23,7 @@ def create_connect_handler(server: GatewayServer) -> MethodHandler:
             await conn.send_error(
                 "connect",
                 "protocol_mismatch",
-                f"Server requires protocol v{PROTOCOL_VERSION}, "
-                f"client supports v{min_proto}-v{max_proto}.",
+                f"Server requires protocol v{PROTOCOL_VERSION}, client supports v{min_proto}-v{max_proto}.",
             )
             return
 
@@ -35,21 +32,22 @@ def create_connect_handler(server: GatewayServer) -> MethodHandler:
             auth = params.get("auth", {})
             token = auth.get("token", "")
             if token != server.auth_token:
-                await conn.send_error(
-                    "connect", "auth_failed", "Invalid authentication token."
-                )
+                await conn.send_error("connect", "auth_failed", "Invalid authentication token.")
                 return
 
         conn.authenticated = True
         conn.client_name = params.get("clientName", "unknown")
 
-        await conn.send_ok("connect", {
-            "protocol": PROTOCOL_VERSION,
-            "server": {
-                "name": "pyclaw-py",
-                "version": __version__,
-                "platform": platform.system().lower(),
+        await conn.send_ok(
+            "connect",
+            {
+                "protocol": PROTOCOL_VERSION,
+                "server": {
+                    "name": "pyclaw-py",
+                    "version": __version__,
+                    "platform": platform.system().lower(),
+                },
             },
-        })
+        )
 
     return handle_connect

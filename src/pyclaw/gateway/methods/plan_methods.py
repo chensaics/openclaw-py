@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
@@ -11,25 +11,23 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def create_plan_handlers() -> dict[str, "MethodHandler"]:
-
-    async def handle_plan_list(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+def create_plan_handlers() -> dict[str, MethodHandler]:
+    async def handle_plan_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.agents.planner import PlanManager
         from pyclaw.config.paths import resolve_state_dir
 
         workspace = resolve_state_dir()
         mgr = PlanManager(workspace)
         plans = mgr.list_plans()
-        await conn.send_ok("plan.list", {
-            "plans": [p.to_dict() for p in plans],
-            "count": len(plans),
-        })
+        await conn.send_ok(
+            "plan.list",
+            {
+                "plans": [p.to_dict() for p in plans],
+                "count": len(plans),
+            },
+        )
 
-    async def handle_plan_get(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_plan_get(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params or "planId" not in params:
             await conn.send_error("plan.get", "invalid_params", "Missing 'planId'")
             return
@@ -46,9 +44,7 @@ def create_plan_handlers() -> dict[str, "MethodHandler"]:
 
         await conn.send_ok("plan.get", plan.to_dict())
 
-    async def handle_plan_resume(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_plan_resume(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params or "planId" not in params:
             await conn.send_error("plan.resume", "invalid_params", "Missing 'planId'")
             return
@@ -68,14 +64,15 @@ def create_plan_handlers() -> dict[str, "MethodHandler"]:
             mgr.save(plan)
             await conn.send_ok("plan.resume", {"resumed": True, "plan": plan.to_dict()})
         else:
-            await conn.send_ok("plan.resume", {
-                "resumed": False,
-                "reason": f"Plan status is {plan.status.value}, not paused",
-            })
+            await conn.send_ok(
+                "plan.resume",
+                {
+                    "resumed": False,
+                    "reason": f"Plan status is {plan.status.value}, not paused",
+                },
+            )
 
-    async def handle_plan_delete(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_plan_delete(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params or "planId" not in params:
             await conn.send_error("plan.delete", "invalid_params", "Missing 'planId'")
             return

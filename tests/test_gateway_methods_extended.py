@@ -3,35 +3,16 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-# Phase 37a: Extended RPC
-from pyclaw.gateway.methods.extended import create_extended_handlers
-
 # Phase 37b: Chat Advanced
 from pyclaw.gateway.methods.chat_advanced import (
     ChatAbortManager,
-    ChatAttachment,
-    ChatParams,
     inject_time_context,
     sanitize_content,
     validate_chat_params,
-)
-
-# Phase 37c: Sessions Advanced
-from pyclaw.sessions.advanced import (
-    AdvancedSessionManager,
-    BatchConfig,
-    InputSource,
-    SendStrategy,
-    SessionMetadata,
-    SessionOverrides,
-    ThinkingLevel,
-    TranscriptEvent,
-    resolve_send_strategy,
 )
 
 # Phase 37d: Exec Approvals
@@ -41,10 +22,25 @@ from pyclaw.gateway.methods.exec_approvals import (
     ApprovalStore,
 )
 
+# Phase 37a: Extended RPC
+from pyclaw.gateway.methods.extended import create_extended_handlers
+
+# Phase 37c: Sessions Advanced
+from pyclaw.sessions.advanced import (
+    AdvancedSessionManager,
+    InputSource,
+    SendStrategy,
+    SessionMetadata,
+    SessionOverrides,
+    ThinkingLevel,
+    TranscriptEvent,
+    resolve_send_strategy,
+)
 
 # =====================================================================
 # Phase 37a: Extended RPC Methods
 # =====================================================================
+
 
 class TestExtendedHandlers:
     def test_handlers_registered(self) -> None:
@@ -98,6 +94,7 @@ class TestExtendedHandlers:
 # Phase 37b: Chat Advanced
 # =====================================================================
 
+
 class TestChatParams:
     def test_validate_valid(self) -> None:
         params, err = validate_chat_params({"message": "Hello"})
@@ -121,12 +118,14 @@ class TestChatParams:
         assert "too long" in err
 
     def test_validate_with_attachments(self) -> None:
-        params, err = validate_chat_params({
-            "message": "Check this",
-            "attachments": [
-                {"filename": "test.png", "mimeType": "image/png", "size": 1024},
-            ],
-        })
+        params, err = validate_chat_params(
+            {
+                "message": "Check this",
+                "attachments": [
+                    {"filename": "test.png", "mimeType": "image/png", "size": 1024},
+                ],
+            }
+        )
         assert params is not None
         assert params.has_attachments
         assert params.attachments[0].is_image
@@ -201,6 +200,7 @@ class TestChatAbortManager:
 # Phase 37c: Sessions Advanced
 # =====================================================================
 
+
 class TestAdvancedSessionManager:
     def test_get_or_create(self) -> None:
         mgr = AdvancedSessionManager()
@@ -261,6 +261,7 @@ class TestSendStrategy:
 # =====================================================================
 # Phase 37d: Exec Approvals
 # =====================================================================
+
 
 class TestApprovalStore:
     def test_create_and_get(self) -> None:

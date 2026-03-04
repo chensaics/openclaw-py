@@ -15,7 +15,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
@@ -34,6 +34,7 @@ class ApprovalStatus(str, Enum):
 @dataclass
 class ApprovalRequest:
     """An exec approval request."""
+
     request_id: str
     command: str
     args: list[str] = field(default_factory=list)
@@ -154,7 +155,8 @@ class ApprovalStore:
 
     def cleanup_expired(self) -> int:
         expired = [
-            rid for rid, req in self._requests.items()
+            rid
+            for rid, req in self._requests.items()
             if req.is_expired or req.status in (ApprovalStatus.EXPIRED, ApprovalStatus.CANCELLED)
         ]
         for rid in expired:
@@ -170,20 +172,19 @@ class ApprovalStore:
 _store = ApprovalStore()
 
 
-def create_exec_approval_handlers() -> dict[str, "MethodHandler"]:
-    async def handle_exec_list(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+def create_exec_approval_handlers() -> dict[str, MethodHandler]:
+    async def handle_exec_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         show_all = (params or {}).get("all", False)
         requests = _store.list_all() if show_all else _store.list_pending()
-        await conn.send_ok("exec.list", {
-            "requests": [r.to_dict() for r in requests],
-            "count": len(requests),
-        })
+        await conn.send_ok(
+            "exec.list",
+            {
+                "requests": [r.to_dict() for r in requests],
+                "count": len(requests),
+            },
+        )
 
-    async def handle_exec_get(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_exec_get(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         request_id = (params or {}).get("requestId", "")
         if not request_id:
             await conn.send_error("exec.get", "invalid_params", "Missing requestId")
@@ -194,9 +195,7 @@ def create_exec_approval_handlers() -> dict[str, "MethodHandler"]:
             return
         await conn.send_ok("exec.get", {"request": req.to_dict()})
 
-    async def handle_exec_approve(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_exec_approve(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         request_id = (params or {}).get("requestId", "")
         if not request_id:
             await conn.send_error("exec.approve", "invalid_params", "Missing requestId")
@@ -207,9 +206,7 @@ def create_exec_approval_handlers() -> dict[str, "MethodHandler"]:
             return
         await conn.send_ok("exec.approve", {"request": req.to_dict()})
 
-    async def handle_exec_deny(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_exec_deny(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         request_id = (params or {}).get("requestId", "")
         if not request_id:
             await conn.send_error("exec.deny", "invalid_params", "Missing requestId")
@@ -220,9 +217,7 @@ def create_exec_approval_handlers() -> dict[str, "MethodHandler"]:
             return
         await conn.send_ok("exec.deny", {"request": req.to_dict()})
 
-    async def handle_exec_create(
-        params: dict[str, Any] | None, conn: "GatewayConnection"
-    ) -> None:
+    async def handle_exec_create(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         command = (params or {}).get("command", "")
         if not command:
             await conn.send_error("exec.create", "invalid_params", "Missing command")

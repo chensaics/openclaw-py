@@ -28,9 +28,9 @@ class MessageRole(str, Enum):
 
 
 class RetentionPolicy(str, Enum):
-    KEEP = "keep"         # Never compact
-    COMPACT = "compact"   # Can be summarized
-    PRUNE = "prune"       # Can be removed entirely
+    KEEP = "keep"  # Never compact
+    COMPACT = "compact"  # Can be summarized
+    PRUNE = "prune"  # Can be removed entirely
 
 
 @dataclass
@@ -43,12 +43,14 @@ class CompactionConfig:
     preserve_last_n_turns: int = 4
     dedup_threshold: float = 0.85
     prune_unavailable_tools: bool = True
-    role_policies: dict[str, RetentionPolicy] = field(default_factory=lambda: {
-        "system": RetentionPolicy.KEEP,
-        "user": RetentionPolicy.COMPACT,
-        "assistant": RetentionPolicy.COMPACT,
-        "tool": RetentionPolicy.COMPACT,
-    })
+    role_policies: dict[str, RetentionPolicy] = field(
+        default_factory=lambda: {
+            "system": RetentionPolicy.KEEP,
+            "user": RetentionPolicy.COMPACT,
+            "assistant": RetentionPolicy.COMPACT,
+            "tool": RetentionPolicy.COMPACT,
+        }
+    )
 
 
 @dataclass
@@ -214,15 +216,17 @@ def plan_compaction(
         if is_id and cfg.preserve_system:
             policy = RetentionPolicy.KEEP
 
-        candidates.append(CompactionCandidate(
-            index=i,
-            role=role,
-            content=content,
-            token_estimate=tokens,
-            policy=policy,
-            content_hash=content_hash(content),
-            is_identifier=is_id,
-        ))
+        candidates.append(
+            CompactionCandidate(
+                index=i,
+                role=role,
+                content=content,
+                token_estimate=tokens,
+                policy=policy,
+                content_hash=content_hash(content),
+                is_identifier=is_id,
+            )
+        )
 
     # Detect duplicates
     duplicates = detect_near_duplicates(messages, threshold=cfg.dedup_threshold)
@@ -242,9 +246,7 @@ def plan_compaction(
     tokens_saved = 0
 
     for c in candidates:
-        if c.index in protected:
-            keep.append(c.index)
-        elif c.policy == RetentionPolicy.KEEP:
+        if c.index in protected or c.policy == RetentionPolicy.KEEP:
             keep.append(c.index)
         elif c.policy == RetentionPolicy.PRUNE or c.is_duplicate:
             prune.append(c.index)

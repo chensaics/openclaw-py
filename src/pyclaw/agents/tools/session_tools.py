@@ -115,6 +115,4 @@ class SessionsSendTool(BaseTool):
 
     async def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> ToolResult:
         # Placeholder — requires gateway integration for cross-session messaging
-        return ToolResult.text(
-            "sessions_send is not yet connected to a live gateway. Message was not delivered."
-        )
+        return ToolResult.text("sessions_send is not yet connected to a live gateway. Message was not delivered.")

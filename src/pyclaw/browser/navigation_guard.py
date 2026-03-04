@@ -96,9 +96,7 @@ class NavigationGuard:
             return result
 
         if scheme == "javascript" and not self._policy.allow_javascript_urls:
-            result = NavigationCheckResult(
-                allowed=False, url=url, reason="javascript: URLs blocked"
-            )
+            result = NavigationCheckResult(allowed=False, url=url, reason="javascript: URLs blocked")
             self._record(result)
             return result
 
@@ -113,9 +111,7 @@ class NavigationGuard:
             return NavigationCheckResult(allowed=True, url=url)
 
         if scheme and scheme not in self._policy.allowed_schemes:
-            result = NavigationCheckResult(
-                allowed=False, url=url, reason=f"Blocked scheme: {scheme}"
-            )
+            result = NavigationCheckResult(allowed=False, url=url, reason=f"Blocked scheme: {scheme}")
             self._record(result)
             return result
 

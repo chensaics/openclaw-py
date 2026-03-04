@@ -11,8 +11,9 @@ import contextvars
 from dataclasses import dataclass, field
 from typing import Any
 
-_current_ctx: contextvars.ContextVar["RuntimeContext | None"] = contextvars.ContextVar(
-    "runtime_context", default=None,
+_current_ctx: contextvars.ContextVar[RuntimeContext | None] = contextvars.ContextVar(
+    "runtime_context",
+    default=None,
 )
 
 

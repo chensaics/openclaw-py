@@ -123,21 +123,13 @@ class ChannelActionsHelper:
         return True
 
     async def remove_reaction(self, chat_id: str, message_id: str, emoji: str) -> bool:
-        if not self._caps.reactions:
-            return False
-        return True
+        return self._caps.reactions
 
     async def pin_message(self, chat_id: str, message_id: str) -> bool:
-        if not self._caps.pins:
-            return False
-        return True
+        return self._caps.pins
 
     async def edit_message(self, chat_id: str, message_id: str, text: str) -> bool:
-        if not self._caps.edit:
-            return False
-        return True
+        return self._caps.edit
 
     async def delete_message(self, chat_id: str, message_id: str) -> bool:
-        if not self._caps.delete:
-            return False
-        return True
+        return self._caps.delete

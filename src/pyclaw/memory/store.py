@@ -113,8 +113,7 @@ class MemoryStore:
         now = time.time()
 
         cursor = self._conn.execute(
-            "INSERT INTO memories (content, source, tags, metadata, created_at) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO memories (content, source, tags, metadata, created_at) VALUES (?, ?, ?, ?, ?)",
             (content, source, json.dumps(tags_list), json.dumps(metadata) if metadata else None, now),
         )
         self._conn.commit()
@@ -193,14 +192,16 @@ class MemoryStore:
         for row in rows:
             entry = self._row_to_entry(row)
             entries_by_id[entry.id] = entry
-            items.append({
-                "id": str(entry.id),
-                "content": entry.content,
-                "score": 1.0 / (1.0 + max(0.0, row["rank"] if "rank" in row.keys() else 0.0)),
-                "path": entry.source,
-                "source": entry.source,
-                "snippet": entry.content[:200],
-            })
+            items.append(
+                {
+                    "id": str(entry.id),
+                    "content": entry.content,
+                    "score": 1.0 / (1.0 + max(0.0, row.get("rank", 0.0))),
+                    "path": entry.source,
+                    "source": entry.source,
+                    "snippet": entry.content[:200],
+                }
+            )
 
         # Apply temporal decay
         if temporal_decay and temporal_decay.enabled:
@@ -225,8 +226,7 @@ class MemoryStore:
         """List the most recent memories."""
         assert self._conn
         rows = self._conn.execute(
-            "SELECT id, content, source, tags, metadata, created_at "
-            "FROM memories ORDER BY created_at DESC LIMIT ?",
+            "SELECT id, content, source, tags, metadata, created_at FROM memories ORDER BY created_at DESC LIMIT ?",
             (limit,),
         ).fetchall()
         return [self._row_to_entry(row) for row in rows]
@@ -235,8 +235,7 @@ class MemoryStore:
         """Get a memory by ID."""
         assert self._conn
         row = self._conn.execute(
-            "SELECT id, content, source, tags, metadata, created_at "
-            "FROM memories WHERE id = ?",
+            "SELECT id, content, source, tags, metadata, created_at FROM memories WHERE id = ?",
             (memory_id,),
         ).fetchone()
         return self._row_to_entry(row) if row else None

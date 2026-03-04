@@ -99,9 +99,7 @@ def should_clear_reaction(config: ReactionConfig, status: StatusType) -> bool:
     """Determine if the reaction should be cleared for a given status."""
     if status == StatusType.DONE and config.clear_on_done:
         return True
-    if status == StatusType.ERROR and config.clear_on_error:
-        return True
-    return False
+    return bool(status == StatusType.ERROR and config.clear_on_error)
 
 
 class AckReactionManager:

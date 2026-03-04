@@ -31,6 +31,7 @@ class HealthStatus(str, Enum):
 @dataclass
 class HealthCheckConfig:
     """Configuration for channel health monitoring."""
+
     check_interval_s: float = 60.0
     cooldown_s: float = 300.0
     max_restarts_per_hour: int = 3
@@ -42,6 +43,7 @@ class HealthCheckConfig:
 @dataclass
 class ChannelHealthState:
     """Health state for a single channel."""
+
     channel_id: str
     status: HealthStatus = HealthStatus.UNKNOWN
     consecutive_failures: int = 0
@@ -57,6 +59,7 @@ class ChannelHealthState:
 @dataclass
 class HealthCheckResult:
     """Result from a single health check."""
+
     channel_id: str
     healthy: bool
     latency_ms: float = 0.0
@@ -67,6 +70,7 @@ class HealthCheckResult:
 @dataclass
 class RestartDecision:
     """Whether a channel should be restarted."""
+
     should_restart: bool
     reason: str = ""
     cooldown_remaining_s: float = 0.0

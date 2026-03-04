@@ -7,18 +7,19 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
-OWNER_ONLY_TOOLS = frozenset({
-    "whatsapp_login",
-    "cron",
-    "gateway",
-    "nodes",
-    "exec",
-    "process",
-})
+OWNER_ONLY_TOOLS = frozenset(
+    {
+        "whatsapp_login",
+        "cron",
+        "gateway",
+        "nodes",
+        "exec",
+        "process",
+    }
+)
 
 # Built-in tool groups
 TOOL_GROUPS: dict[str, list[str]] = {
@@ -37,6 +38,7 @@ TOOL_GROUPS: dict[str, list[str]] = {
 @dataclass
 class ToolPolicy:
     """An allow/deny policy for tools."""
+
     allow: list[str] = field(default_factory=list)
     deny: list[str] = field(default_factory=list)
     also_allow: list[str] = field(default_factory=list)

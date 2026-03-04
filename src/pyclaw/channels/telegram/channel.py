@@ -52,9 +52,9 @@ class TelegramChannel(ChannelPlugin):
 
     async def start(self) -> None:
         from aiogram import Bot, Dispatcher
+        from aiogram.client.default import DefaultBotProperties
         from aiogram.enums import ParseMode
 
-        from aiogram.client.default import DefaultBotProperties
         self._bot = Bot(token=self._token, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN))
         self._dp = Dispatcher()
 
@@ -103,9 +103,7 @@ class TelegramChannel(ChannelPlugin):
 
         text = reply.text
         chunks = (
-            chunk_telegram_message(text, max_length=4096)
-            if chunk_telegram_message and len(text) > 4096
-            else [text]
+            chunk_telegram_message(text, max_length=4096) if chunk_telegram_message and len(text) > 4096 else [text]
         )
 
         from aiogram.enums import ParseMode
@@ -118,9 +116,7 @@ class TelegramChannel(ChannelPlugin):
                     **kwargs,
                 )
             except Exception as e:
-                if markdown_to_telegram_html and (
-                    "Markdown" in str(e) or "parse" in str(e).lower()
-                ):
+                if markdown_to_telegram_html and ("Markdown" in str(e) or "parse" in str(e).lower()):
                     html_chunk = markdown_to_telegram_html(chunk)
                     await self._bot.send_message(
                         chat_id=int(reply.chat_id),

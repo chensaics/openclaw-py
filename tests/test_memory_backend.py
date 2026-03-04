@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import time
+from typing import Any
+
 import pytest
 
 from pyclaw.memory.backend import (
@@ -15,8 +18,6 @@ from pyclaw.memory.backend import (
     list_memory_backends,
     register_memory_backend,
 )
-from typing import Any
-import time
 
 
 class InMemoryBackend(MemoryBackend):
@@ -205,9 +206,7 @@ class TestMemoryManager:
         )
         await manager.initialize()
 
-        captured = await manager.auto_capture(
-            "I like tea", "Noted!", extracted_facts=["User likes tea"]
-        )
+        captured = await manager.auto_capture("I like tea", "Noted!", extracted_facts=["User likes tea"])
         assert len(captured) == 0
 
     @pytest.mark.asyncio

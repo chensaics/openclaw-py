@@ -75,10 +75,7 @@ class ChatToolbar:
         import flet as ft
 
         models = self._catalog.list_models(provider)
-        return [
-            ft.dropdown.Option(m.model_id, m.display_name or m.model_id)
-            for m in models
-        ]
+        return [ft.dropdown.Option(m.model_id, m.display_name or m.model_id) for m in models]
 
     def update_provider(self, provider: str, model: str = "") -> None:
         """Rebuild model options for a new provider."""

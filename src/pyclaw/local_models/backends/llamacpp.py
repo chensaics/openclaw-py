@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,7 @@ class LlamaCppBackend:
         try:
             from llama_cpp import Llama
         except ImportError as exc:
-            raise ImportError(
-                "llama-cpp-python is required. Install with: pip install 'pyclaw[llamacpp]'"
-            ) from exc
+            raise ImportError("llama-cpp-python is required. Install with: pip install 'pyclaw[llamacpp]'") from exc
 
         self._model_path = model_path
         self._llm = Llama(

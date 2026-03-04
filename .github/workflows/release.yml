@@ -38,10 +38,12 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint
-        run: ruff check src tests
+        run: |
+          ruff format --check src tests
+          ruff check src tests
 
       - name: Type check
-        run: mypy src/pyclaw --ignore-missing-imports
+        run: mypy src/pyclaw
 
       - name: Test
         run: pytest tests/

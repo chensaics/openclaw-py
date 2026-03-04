@@ -37,10 +37,12 @@ def inject_context_management(
     if threshold is None:
         threshold = min(int(context_window * 0.7), 80_000)
 
-    payload["context_management"] = [{
-        "type": "compaction",
-        "compact_threshold": threshold,
-    }]
+    payload["context_management"] = [
+        {
+            "type": "compaction",
+            "compact_threshold": threshold,
+        }
+    ]
     return payload
 
 

@@ -22,6 +22,7 @@ from typing import Any
 @dataclass
 class ModelPricing:
     """Pricing for a specific model (per 1M tokens)."""
+
     model_id: str
     provider: str = ""
     input_per_1m: float = 0.0
@@ -44,6 +45,7 @@ DEFAULT_PRICING: dict[str, ModelPricing] = {
 @dataclass
 class TokenUsage:
     """Token usage for a single API call."""
+
     input_tokens: int = 0
     output_tokens: int = 0
     cached_tokens: int = 0
@@ -58,6 +60,7 @@ class TokenUsage:
 @dataclass
 class SessionCost:
     """Accumulated cost for a session."""
+
     session_id: str
     entries: list[TokenUsage] = field(default_factory=list)
     custom_pricing: dict[str, ModelPricing] | None = None
@@ -139,7 +142,9 @@ def format_session_cost_summary(session_cost: SessionCost) -> str:
     if by_model:
         lines.append("  By model:")
         for model, stats in by_model.items():
-            lines.append(f"    {model}: {format_tokens(stats['input'])} in / {format_tokens(stats['output'])} out ({stats['calls']} calls)")
+            lines.append(
+                f"    {model}: {format_tokens(stats['input'])} in / {format_tokens(stats['output'])} out ({stats['calls']} calls)"
+            )
 
     return "\n".join(lines)
 
@@ -147,6 +152,7 @@ def format_session_cost_summary(session_cost: SessionCost) -> str:
 # ---------------------------------------------------------------------------
 # Usage Aggregation
 # ---------------------------------------------------------------------------
+
 
 class UsageAggregator:
     """Aggregate usage across multiple sessions."""
@@ -371,12 +377,8 @@ def summarize_session_usage(
             summary["calls"] += 1
             summary["input_tokens"] += input_tokens
             summary["output_tokens"] += output_tokens
-            summary["session_tokens"] += int(
-                row.get("total_tokens", input_tokens + output_tokens) or 0
-            )
-            summary["estimated_cost_value"] += float(
-                row.get("estimated_cost_value", 0.0) or 0.0
-            )
+            summary["session_tokens"] += int(row.get("total_tokens", input_tokens + output_tokens) or 0)
+            summary["estimated_cost_value"] += float(row.get("estimated_cost_value", 0.0) or 0.0)
 
     summary["estimated_cost"] = format_cost(float(summary["estimated_cost_value"]))
     return summary

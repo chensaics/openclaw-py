@@ -11,10 +11,8 @@ Provides:
 
 from __future__ import annotations
 
-import json
 import logging
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -23,9 +21,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BedrockModelMapping:
     """Map a friendly name to a Bedrock model ARN/ID."""
+
     alias: str
     model_id: str
-    provider: str           # "anthropic" | "amazon" | "meta" | "mistral" | "cohere"
+    provider: str  # "anthropic" | "amazon" | "meta" | "mistral" | "cohere"
     context_window: int = 0
     max_output: int = 4096
     supports_tools: bool = True
@@ -34,9 +33,13 @@ class BedrockModelMapping:
 
 
 BEDROCK_MODELS: list[BedrockModelMapping] = [
-    BedrockModelMapping("claude-3.5-sonnet", "anthropic.claude-3-5-sonnet-20241022-v2:0", "anthropic", 200000, 8192, True, True),
+    BedrockModelMapping(
+        "claude-3.5-sonnet", "anthropic.claude-3-5-sonnet-20241022-v2:0", "anthropic", 200000, 8192, True, True
+    ),
     BedrockModelMapping("claude-3.5-haiku", "anthropic.claude-3-5-haiku-20241022-v1:0", "anthropic", 200000, 8192),
-    BedrockModelMapping("claude-3-opus", "anthropic.claude-3-opus-20240229-v1:0", "anthropic", 200000, 4096, True, True),
+    BedrockModelMapping(
+        "claude-3-opus", "anthropic.claude-3-opus-20240229-v1:0", "anthropic", 200000, 4096, True, True
+    ),
     BedrockModelMapping("llama-3.1-70b", "meta.llama3-1-70b-instruct-v1:0", "meta", 131072, 2048),
     BedrockModelMapping("llama-3.1-8b", "meta.llama3-1-8b-instruct-v1:0", "meta", 131072, 2048),
     BedrockModelMapping("mistral-large", "mistral.mistral-large-2407-v1:0", "mistral", 131072, 8192),
@@ -48,26 +51,29 @@ BEDROCK_MODELS: list[BedrockModelMapping] = [
 @dataclass
 class BedrockConfig:
     """Configuration for the Bedrock provider."""
+
     region: str = "us-east-1"
-    profile: str = ""           # AWS profile name
+    profile: str = ""  # AWS profile name
     access_key_id: str = ""
     secret_access_key: str = ""
     session_token: str = ""
-    endpoint_url: str = ""      # Custom endpoint
+    endpoint_url: str = ""  # Custom endpoint
     default_model: str = "claude-3.5-sonnet"
 
 
 @dataclass
 class ConverseMessage:
     """A message in Bedrock Converse format."""
-    role: str           # "user" | "assistant"
+
+    role: str  # "user" | "assistant"
     content: list[dict[str, Any]]
 
 
 @dataclass
 class ConverseStreamChunk:
     """A parsed Bedrock Converse stream event."""
-    type: str = ""           # "contentBlockDelta" | "contentBlockStart" | "contentBlockStop" | "messageStop" | "metadata"
+
+    type: str = ""  # "contentBlockDelta" | "contentBlockStart" | "contentBlockStop" | "messageStop" | "metadata"
     delta_text: str = ""
     stop_reason: str = ""
     usage: dict[str, int] | None = None

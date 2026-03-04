@@ -3,7 +3,6 @@ audit extensions, and dangerous tools."""
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -11,8 +10,8 @@ import pytest
 from pyclaw.channels.auth_guard import (
     AuthAction,
     AuthDecision,
-    AuthRequest,
     AuthRateLimiter,
+    AuthRequest,
     ChannelAuthConfig,
     ChannelAuthGuard,
 )
@@ -35,7 +34,6 @@ from pyclaw.security.dangerous_tools import (
     ExternalContentAction,
     ExternalContentPolicy,
     RiskCategory,
-    SkillScanFinding,
     filter_tools_by_risk,
     get_all_dangerous_tools,
     get_tool_risk,
@@ -46,8 +44,8 @@ from pyclaw.security.dangerous_tools import (
     scan_skill_file,
 )
 
-
 # ===== Auth Guard =====
+
 
 class TestAuthRateLimiter:
     def test_allows_under_limit(self) -> None:
@@ -80,12 +78,14 @@ class TestChannelAuthGuard:
     @pytest.fixture
     def guard(self) -> ChannelAuthGuard:
         g = ChannelAuthGuard()
-        g.register_channel(ChannelAuthConfig(
-            channel_id="telegram",
-            dm_policy="allowlist",
-            config_allow_list=["user1", "user2"],
-            owner_ids={"owner1"},
-        ))
+        g.register_channel(
+            ChannelAuthConfig(
+                channel_id="telegram",
+                dm_policy="allowlist",
+                config_allow_list=["user1", "user2"],
+                owner_ids={"owner1"},
+            )
+        )
         return g
 
     def test_allow_listed_user(self, guard: ChannelAuthGuard) -> None:
@@ -110,40 +110,48 @@ class TestChannelAuthGuard:
 
     def test_pairing_policy(self) -> None:
         guard = ChannelAuthGuard()
-        guard.register_channel(ChannelAuthConfig(
-            channel_id="telegram",
-            dm_policy="pairing",
-        ))
+        guard.register_channel(
+            ChannelAuthConfig(
+                channel_id="telegram",
+                dm_policy="pairing",
+            )
+        )
         req = AuthRequest(channel_id="telegram", sender_id="new_user", action=AuthAction.MESSAGE)
         resp = guard.check(req)
         assert resp.decision == AuthDecision.PAIRING
 
     def test_reaction_denied_when_disabled(self) -> None:
         guard = ChannelAuthGuard()
-        guard.register_channel(ChannelAuthConfig(
-            channel_id="feishu",
-            allow_reactions=False,
-        ))
+        guard.register_channel(
+            ChannelAuthConfig(
+                channel_id="feishu",
+                allow_reactions=False,
+            )
+        )
         req = AuthRequest(channel_id="feishu", sender_id="user1", action=AuthAction.REACTION)
         resp = guard.check(req)
         assert resp.decision == AuthDecision.DENY
 
     def test_reaction_allowed(self) -> None:
         guard = ChannelAuthGuard()
-        guard.register_channel(ChannelAuthConfig(
-            channel_id="feishu",
-            allow_reactions=True,
-        ))
+        guard.register_channel(
+            ChannelAuthConfig(
+                channel_id="feishu",
+                allow_reactions=True,
+            )
+        )
         req = AuthRequest(channel_id="feishu", sender_id="user1", action=AuthAction.REACTION)
         resp = guard.check(req)
         assert resp.decision == AuthDecision.ALLOW
 
     def test_file_upload_denied(self) -> None:
         guard = ChannelAuthGuard()
-        guard.register_channel(ChannelAuthConfig(
-            channel_id="telegram",
-            allow_file_uploads=False,
-        ))
+        guard.register_channel(
+            ChannelAuthConfig(
+                channel_id="telegram",
+                allow_file_uploads=False,
+            )
+        )
         req = AuthRequest(channel_id="telegram", sender_id="user1", action=AuthAction.FILE_UPLOAD)
         resp = guard.check(req)
         assert resp.decision == AuthDecision.DENY
@@ -157,14 +165,18 @@ class TestChannelAuthGuard:
 
     def test_group_message_denied(self) -> None:
         guard = ChannelAuthGuard()
-        guard.register_channel(ChannelAuthConfig(
-            channel_id="discord",
-            group_policy="allowlist",
-            config_allow_list=["user1"],
-        ))
+        guard.register_channel(
+            ChannelAuthConfig(
+                channel_id="discord",
+                group_policy="allowlist",
+                config_allow_list=["user1"],
+            )
+        )
         req = AuthRequest(
-            channel_id="discord", sender_id="stranger",
-            action=AuthAction.MESSAGE, is_group=True,
+            channel_id="discord",
+            sender_id="stranger",
+            action=AuthAction.MESSAGE,
+            is_group=True,
         )
         resp = guard.check(req)
         assert resp.decision == AuthDecision.DENY
@@ -177,6 +189,7 @@ class TestChannelAuthGuard:
 
 
 # ===== Allowlist Boundaries =====
+
 
 class TestAllowlistBoundaryStore:
     def test_dm_entry_allows_dm(self) -> None:
@@ -207,20 +220,26 @@ class TestAllowlistBoundaryStore:
 
     def test_pairing_forced_to_dm(self) -> None:
         store = AllowlistBoundaryStore()
-        store.add_entry(AllowlistEntry(
-            sender_id="u1", scope=AllowlistScope.BOTH,
-            source=AllowlistSource.PAIRING,
-        ))
+        store.add_entry(
+            AllowlistEntry(
+                sender_id="u1",
+                scope=AllowlistScope.BOTH,
+                source=AllowlistSource.PAIRING,
+            )
+        )
         # Should be forced to DM scope
         assert store.is_allowed("u1", is_group=False) is True
         assert store.is_allowed("u1", is_group=True) is False
 
     def test_violations_logged(self) -> None:
         store = AllowlistBoundaryStore()
-        store.add_entry(AllowlistEntry(
-            sender_id="u1", scope=AllowlistScope.GROUP,
-            source=AllowlistSource.PAIRING,
-        ))
+        store.add_entry(
+            AllowlistEntry(
+                sender_id="u1",
+                scope=AllowlistScope.GROUP,
+                source=AllowlistSource.PAIRING,
+            )
+        )
         violations = store.get_violations()
         assert len(violations) == 1
         assert "pairing" in violations[0].violation_type
@@ -259,23 +278,28 @@ class TestAllowlistBoundaryStore:
 
 class TestValidatePairingDmOnly:
     def test_valid_dm_entries(self) -> None:
-        entries, violations = validate_pairing_dm_only([
-            {"sender_id": "u1", "scope": "dm"},
-            {"sender_id": "u2"},  # default is dm
-        ])
+        entries, violations = validate_pairing_dm_only(
+            [
+                {"sender_id": "u1", "scope": "dm"},
+                {"sender_id": "u2"},  # default is dm
+            ]
+        )
         assert len(entries) == 2
         assert len(violations) == 0
 
     def test_non_dm_forced(self) -> None:
-        entries, violations = validate_pairing_dm_only([
-            {"sender_id": "u1", "scope": "group"},
-        ])
+        entries, violations = validate_pairing_dm_only(
+            [
+                {"sender_id": "u1", "scope": "group"},
+            ]
+        )
         assert len(entries) == 1
         assert entries[0].scope == AllowlistScope.DM
         assert len(violations) == 1
 
 
 # ===== Audit Extensions =====
+
 
 class TestAuditGatewayHttp:
     def test_nonlocal_no_tls(self) -> None:
@@ -291,88 +315,113 @@ class TestAuditGatewayHttp:
         assert any(f.id == "gateway-cors-wildcard" for f in findings)
 
     def test_weak_tls(self) -> None:
-        findings = audit_gateway_http({
-            "gateway": {"tls": {"enabled": True, "minVersion": "TLSv1"}},
-        })
+        findings = audit_gateway_http(
+            {
+                "gateway": {"tls": {"enabled": True, "minVersion": "TLSv1"}},
+            }
+        )
         assert any(f.id == "gateway-weak-tls" for f in findings)
 
 
 class TestAuditPlugins:
     def test_exec_permission(self) -> None:
-        findings = audit_plugins({
-            "plugins": {"installed": [{"name": "evil", "permissions": ["exec"]}]},
-        })
+        findings = audit_plugins(
+            {
+                "plugins": {"installed": [{"name": "evil", "permissions": ["exec"]}]},
+            }
+        )
         assert any("exec-permission" in f.id for f in findings)
 
     def test_untrusted_source(self) -> None:
-        findings = audit_plugins({
-            "plugins": {"installed": [{"name": "unknown", "source": "github:evil/pkg"}]},
-        })
+        findings = audit_plugins(
+            {
+                "plugins": {"installed": [{"name": "unknown", "source": "github:evil/pkg"}]},
+            }
+        )
         assert any("untrusted-source" in f.id for f in findings)
 
     def test_trusted_source(self) -> None:
-        findings = audit_plugins({
-            "plugins": {"installed": [{"name": "memory", "source": "@pyclaw/memory-core"}]},
-        })
+        findings = audit_plugins(
+            {
+                "plugins": {"installed": [{"name": "memory", "source": "@pyclaw/memory-core"}]},
+            }
+        )
         assert not any("untrusted-source" in f.id for f in findings)
 
 
 class TestAuditHooks:
     def test_shell_exec(self) -> None:
-        findings = audit_hooks({
-            "hooks": {"on_message": {"handler": "bash -c 'rm -rf /'"}},
-        })
+        findings = audit_hooks(
+            {
+                "hooks": {"on_message": {"handler": "bash -c 'rm -rf /'"}},
+            }
+        )
         assert any("shell-exec" in f.id for f in findings)
 
     def test_insecure_url(self) -> None:
-        findings = audit_hooks({
-            "hooks": {"webhook": {"url": "http://example.com/hook"}},
-        })
+        findings = audit_hooks(
+            {
+                "hooks": {"webhook": {"url": "http://example.com/hook"}},
+            }
+        )
         assert any("insecure-url" in f.id for f in findings)
 
 
 class TestAuditChannels:
     def test_open_dm(self) -> None:
-        findings = audit_channels({
-            "channels": {"telegram": {"dmPolicy": "open"}},
-        })
+        findings = audit_channels(
+            {
+                "channels": {"telegram": {"dmPolicy": "open"}},
+            }
+        )
         assert any("open-dm" in f.id for f in findings)
 
     def test_empty_allowlist(self) -> None:
-        findings = audit_channels({
-            "channels": {"telegram": {"dmPolicy": "allowlist"}},
-        })
+        findings = audit_channels(
+            {
+                "channels": {"telegram": {"dmPolicy": "allowlist"}},
+            }
+        )
         assert any("empty-allowlist" in f.id for f in findings)
 
     def test_plaintext_token(self) -> None:
-        findings = audit_channels({
-            "channels": {"telegram": {"token": "123456:ABC-DEF"}},
-        })
+        findings = audit_channels(
+            {
+                "channels": {"telegram": {"token": "123456:ABC-DEF"}},
+            }
+        )
         assert any("plaintext-secret" in f.id for f in findings)
 
     def test_env_ref_ok(self) -> None:
-        findings = audit_channels({
-            "channels": {"telegram": {"token": "$TELEGRAM_TOKEN"}},
-        })
+        findings = audit_channels(
+            {
+                "channels": {"telegram": {"token": "$TELEGRAM_TOKEN"}},
+            }
+        )
         assert not any("plaintext-secret" in f.id for f in findings)
 
 
 class TestRunExtendedAudit:
     def test_clean_config(self) -> None:
-        result = run_extended_audit({
-            "gateway": {"bind": "loopback"},
-        })
+        result = run_extended_audit(
+            {
+                "gateway": {"bind": "loopback"},
+            }
+        )
         assert any(f.id == "extended-all-clear" for f in result.findings)
 
     def test_multiple_findings(self) -> None:
-        result = run_extended_audit({
-            "gateway": {"bind": "0.0.0.0"},
-            "channels": {"telegram": {"dmPolicy": "open"}},
-        })
+        result = run_extended_audit(
+            {
+                "gateway": {"bind": "0.0.0.0"},
+                "channels": {"telegram": {"dmPolicy": "open"}},
+            }
+        )
         assert len(result.findings) >= 2
 
 
 # ===== Dangerous Tools =====
+
 
 class TestDangerousTools:
     def test_system_run_is_dangerous(self) -> None:
@@ -396,11 +445,13 @@ class TestDangerousTools:
         assert "file_write" in all_tools
 
     def test_register_custom(self) -> None:
-        register_dangerous_tool(DangerousToolDef(
-            tool_name="custom_danger",
-            risk_categories=[RiskCategory.DESTRUCTIVE],
-            max_risk_level=3,
-        ))
+        register_dangerous_tool(
+            DangerousToolDef(
+                tool_name="custom_danger",
+                risk_categories=[RiskCategory.DESTRUCTIVE],
+                max_risk_level=3,
+            )
+        )
         assert is_tool_dangerous("custom_danger") is True
 
     def test_filter_by_risk_level(self) -> None:
@@ -501,6 +552,6 @@ class TestSanitizeHtml:
         assert "javascript:" not in result
 
     def test_preserves_safe_content(self) -> None:
-        html = '<p>Hello <b>world</b></p>'
+        html = "<p>Hello <b>world</b></p>"
         result = sanitize_html_content(html)
         assert result == html

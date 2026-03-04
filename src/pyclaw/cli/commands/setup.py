@@ -8,10 +8,9 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
 import typer
-
-from typing import Any
 
 from pyclaw.cli.commands.auth_providers import PROVIDER_SPECS, AuthMethod
 from pyclaw.config.defaults import get_provider_defaults
@@ -20,18 +19,46 @@ from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir, re
 _SELF_HOSTED_PROVIDERS = {"ollama", "vllm", "litellm"}
 
 _PROVIDER_GROUPS: list[tuple[str, list[str]]] = [
-    ("Global", [
-        "anthropic", "openai", "google", "xai", "openrouter",
-        "together", "groq", "perplexity", "fireworks", "huggingface",
-        "bedrock", "nvidia", "copilot",
-    ]),
-    ("China", [
-        "deepseek", "qwen", "moonshot", "volcengine", "zhipu",
-        "minimax", "qianfan", "byteplus", "xiaomi",
-    ]),
-    ("Self-hosted / Proxy", [
-        "ollama", "vllm", "litellm",
-    ]),
+    (
+        "Global",
+        [
+            "anthropic",
+            "openai",
+            "google",
+            "xai",
+            "openrouter",
+            "together",
+            "groq",
+            "perplexity",
+            "fireworks",
+            "huggingface",
+            "bedrock",
+            "nvidia",
+            "copilot",
+        ],
+    ),
+    (
+        "China",
+        [
+            "deepseek",
+            "qwen",
+            "moonshot",
+            "volcengine",
+            "zhipu",
+            "minimax",
+            "qianfan",
+            "byteplus",
+            "xiaomi",
+        ],
+    ),
+    (
+        "Self-hosted / Proxy",
+        [
+            "ollama",
+            "vllm",
+            "litellm",
+        ],
+    ),
 ]
 
 
@@ -152,9 +179,7 @@ def _run_wizard(config_path: Path) -> None:
             f"\n  Model name (e.g. the model served by {provider_label})",
             default=hint,
         )
-        if model_name and model_name != hint:
-            provider_cfg["models"] = [{"id": model_name, "name": model_name}]
-        elif model_name:
+        if model_name and model_name != hint or model_name:
             provider_cfg["models"] = [{"id": model_name, "name": model_name}]
 
     config["models"] = {"providers": {provider_id: provider_cfg}}

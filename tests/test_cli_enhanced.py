@@ -2,44 +2,49 @@
 
 from __future__ import annotations
 
-import json
-import tempfile
 from pathlib import Path
 
-import pytest
-
-from pyclaw.cli.commands.doctor_flows import (
-    BUILTIN_CHECKS,
-    DiagnosticRegistry,
-    DiagnosticResult,
-    DiagnosticReport,
-    Severity,
-    check_config,
-    check_platform,
-    create_default_registry,
-    run_doctor,
-)
 from pyclaw.cli.commands.auth_providers import (
+    PROVIDER_SPECS,
     AuthCredential,
     AuthMethod,
-    AuthResult,
     CredentialStore,
-    PROVIDER_SPECS,
     apply_api_key_auth,
     get_provider_auth_info,
     list_available_providers,
     validate_api_key,
 )
+from pyclaw.cli.commands.channels_enhanced import (
+    CHANNEL_SPECS,
+    ChannelCapability,
+    channel_summary,
+    get_channel_capabilities,
+    list_channels,
+    transform_channel_config,
+    validate_channel_config,
+)
+from pyclaw.cli.commands.doctor_flows import (
+    BUILTIN_CHECKS,
+    DiagnosticRegistry,
+    DiagnosticReport,
+    DiagnosticResult,
+    Severity,
+    check_platform,
+    run_doctor,
+)
+from pyclaw.cli.commands.models_cmd import (
+    ModelCapability,
+    ModelRegistry,
+)
 from pyclaw.cli.commands.onboarding_enhanced import (
-    OnboardingMode,
     OnboardingState,
     OnboardingStep,
-    handle_risk_ack,
-    handle_gateway_config,
     handle_auth_select,
-    handle_provider_auth,
-    handle_skills_install,
     handle_finalize,
+    handle_gateway_config,
+    handle_provider_auth,
+    handle_risk_ack,
+    handle_skills_install,
     run_non_interactive,
 )
 from pyclaw.cli.commands.status_enhanced import (
@@ -51,26 +56,9 @@ from pyclaw.cli.commands.status_enhanced import (
     collect_sessions_status,
     generate_status_report,
 )
-from pyclaw.cli.commands.models_cmd import (
-    BUILTIN_MODELS,
-    DEFAULT_ALIASES,
-    FallbackChain,
-    ModelCapability,
-    ModelInfo,
-    ModelRegistry,
-)
-from pyclaw.cli.commands.channels_enhanced import (
-    CHANNEL_SPECS,
-    ChannelCapability,
-    channel_summary,
-    get_channel_capabilities,
-    list_channels,
-    transform_channel_config,
-    validate_channel_config,
-)
-
 
 # ===== Doctor Flows =====
+
 
 class TestDiagnosticResult:
     def test_ok(self) -> None:
@@ -84,26 +72,34 @@ class TestDiagnosticResult:
 
 class TestDiagnosticReport:
     def test_has_errors(self) -> None:
-        report = DiagnosticReport(results=[
-            DiagnosticResult(check_name="a", category="c", severity=Severity.OK),
-            DiagnosticResult(check_name="b", category="c", severity=Severity.ERROR),
-        ])
+        report = DiagnosticReport(
+            results=[
+                DiagnosticResult(check_name="a", category="c", severity=Severity.OK),
+                DiagnosticResult(check_name="b", category="c", severity=Severity.ERROR),
+            ]
+        )
         assert report.has_errors
         assert report.error_count == 1
 
     def test_by_category(self) -> None:
-        report = DiagnosticReport(results=[
-            DiagnosticResult(check_name="a", category="config"),
-            DiagnosticResult(check_name="b", category="auth"),
-        ])
+        report = DiagnosticReport(
+            results=[
+                DiagnosticResult(check_name="a", category="config"),
+                DiagnosticResult(check_name="b", category="auth"),
+            ]
+        )
         cats = report.by_category()
         assert "config" in cats
         assert "auth" in cats
 
     def test_summary_text(self) -> None:
-        report = DiagnosticReport(results=[
-            DiagnosticResult(check_name="test", category="config", severity=Severity.OK, message="OK"),
-        ], platform="darwin", python_version="3.14")
+        report = DiagnosticReport(
+            results=[
+                DiagnosticResult(check_name="test", category="config", severity=Severity.OK, message="OK"),
+            ],
+            platform="darwin",
+            python_version="3.14",
+        )
         text = report.summary_text()
         assert "Doctor Report" in text
         assert "darwin" in text
@@ -141,6 +137,7 @@ class TestBuiltinChecks:
 
 
 # ===== Auth Providers =====
+
 
 class TestProviderSpecs:
     def test_count(self) -> None:
@@ -234,6 +231,7 @@ class TestAuthCredential:
 
     def test_not_expired(self) -> None:
         import time
+
         cred = AuthCredential(provider_id="t", auth_method=AuthMethod.OAUTH, expires_at=time.time() + 9999)
         assert not cred.is_expired
 
@@ -245,6 +243,7 @@ class TestAuthCredential:
 
 
 # ===== Onboarding Enhanced =====
+
 
 class TestOnboardingSteps:
     def test_risk_ack_denied(self) -> None:
@@ -316,18 +315,23 @@ class TestOnboardingState:
 
 # ===== Status Enhanced =====
 
+
 class TestStatusReport:
     def test_overall_ok(self) -> None:
-        report = StatusReport(subsystems=[
-            SubsystemStatus(name="a", level=StatusLevel.OK),
-        ])
+        report = StatusReport(
+            subsystems=[
+                SubsystemStatus(name="a", level=StatusLevel.OK),
+            ]
+        )
         assert report.overall_level == StatusLevel.OK
 
     def test_overall_error(self) -> None:
-        report = StatusReport(subsystems=[
-            SubsystemStatus(name="a", level=StatusLevel.OK),
-            SubsystemStatus(name="b", level=StatusLevel.ERROR),
-        ])
+        report = StatusReport(
+            subsystems=[
+                SubsystemStatus(name="a", level=StatusLevel.OK),
+                SubsystemStatus(name="b", level=StatusLevel.ERROR),
+            ]
+        )
         assert report.overall_level == StatusLevel.ERROR
 
     def test_format(self) -> None:
@@ -361,6 +365,7 @@ class TestGenerateReport:
 
 
 # ===== Models CLI =====
+
 
 class TestModelRegistry:
     def test_list_all(self) -> None:
@@ -418,6 +423,7 @@ class TestModelRegistry:
 
 
 # ===== Channels Enhanced =====
+
 
 class TestChannelSpecs:
     def test_count(self) -> None:

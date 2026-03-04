@@ -7,8 +7,7 @@ which are then mounted on the FastAPI application.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from dataclasses import dataclass
 
 from fastapi import APIRouter, FastAPI
 
@@ -30,11 +29,13 @@ class PluginRouteRegistry:
 
     def register(self, plugin_id: str, prefix: str, router: APIRouter) -> None:
         """Register a plugin's API router under a prefix."""
-        self._routes.append(PluginRoute(
-            plugin_id=plugin_id,
-            prefix=prefix,
-            router=router,
-        ))
+        self._routes.append(
+            PluginRoute(
+                plugin_id=plugin_id,
+                prefix=prefix,
+                router=router,
+            )
+        )
         logger.info("Plugin route registered: %s → %s", plugin_id, prefix)
 
     def mount_all(self, app: FastAPI) -> None:
@@ -45,10 +46,7 @@ class PluginRouteRegistry:
             logger.info("Mounted plugin route: %s", full_prefix)
 
     def list_routes(self) -> list[dict[str, str]]:
-        return [
-            {"pluginId": r.plugin_id, "prefix": f"/plugins/{r.plugin_id}{r.prefix}"}
-            for r in self._routes
-        ]
+        return [{"pluginId": r.plugin_id, "prefix": f"/plugins/{r.plugin_id}{r.prefix}"} for r in self._routes]
 
     def __len__(self) -> int:
         return len(self._routes)

@@ -11,12 +11,12 @@ Provides:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class GatewayDrainingError(Exception):
 @dataclass
 class QueuedCommand:
     """A command waiting in a lane."""
+
     command_id: str
     lane: str
     payload: dict[str, Any] = field(default_factory=dict)
@@ -59,6 +60,7 @@ class QueuedCommand:
 @dataclass
 class LaneStats:
     """Statistics for a command lane."""
+
     lane: str
     pending: int = 0
     completed: int = 0

@@ -48,6 +48,7 @@ class TestBrowserDeepCommands:
             result = runner.invoke(app, ["browser", "--json", "profiles"])
         assert result.exit_code == 0, result.stdout
         import json
+
         data = json.loads(result.stdout)
         assert data["count"] == 2
 

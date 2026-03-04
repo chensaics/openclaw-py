@@ -6,23 +6,6 @@ import asyncio
 
 import pytest
 
-from pyclaw.process.supervisor import (
-    ManagedProcess,
-    ProcessConfig,
-    ProcessInfo,
-    ProcessScope,
-    ProcessState,
-    ProcessSupervisor,
-    kill_process_tree,
-)
-from pyclaw.process.command_queue import (
-    CommandLane,
-    CommandLaneClearedError,
-    CommandQueue,
-    GatewayDrainingError,
-    QueueState,
-    QueuedCommand,
-)
 from pyclaw.media.understanding.extended import (
     ALL_EXTENDED_PROVIDERS,
     DeepgramConfig,
@@ -61,9 +44,25 @@ from pyclaw.memory.extended import (
     VoyageConfig,
     VoyageEmbeddingProvider,
 )
-
+from pyclaw.process.command_queue import (
+    CommandLane,
+    CommandQueue,
+    GatewayDrainingError,
+    QueuedCommand,
+    QueueState,
+)
+from pyclaw.process.supervisor import (
+    ManagedProcess,
+    ProcessConfig,
+    ProcessInfo,
+    ProcessScope,
+    ProcessState,
+    ProcessSupervisor,
+    kill_process_tree,
+)
 
 # ===== Process Supervisor =====
+
 
 class TestManagedProcess:
     @pytest.mark.asyncio
@@ -100,6 +99,7 @@ class TestManagedProcess:
 
     def test_uptime(self) -> None:
         import time
+
         info = ProcessInfo(process_id="p1", started_at=time.time() - 10)
         assert info.uptime_s >= 9
 
@@ -139,6 +139,7 @@ class TestProcessSupervisor:
 
 
 # ===== Command Queue =====
+
 
 class TestCommandLane:
     def test_enqueue_dequeue(self) -> None:
@@ -234,6 +235,7 @@ class TestCommandQueue:
 
 # ===== Media Understanding Extended =====
 
+
 class TestGroqProvider:
     def test_supported_types(self) -> None:
         p = GroqUnderstandingProvider(GroqConfig(api_key="test"))
@@ -265,10 +267,12 @@ class TestMistralProvider:
 
     def test_parse(self) -> None:
         p = MistralUnderstandingProvider(MistralConfig())
-        result = p.parse_response({
-            "choices": [{"message": {"content": "dog"}}],
-            "usage": {"total_tokens": 100},
-        })
+        result = p.parse_response(
+            {
+                "choices": [{"message": {"content": "dog"}}],
+                "usage": {"total_tokens": 100},
+            }
+        )
         assert result.text == "dog"
         assert result.tokens_used == 100
 
@@ -280,9 +284,11 @@ class TestDeepgramProvider:
 
     def test_parse(self) -> None:
         p = DeepgramUnderstandingProvider(DeepgramConfig())
-        result = p.parse_response({
-            "results": {"channels": [{"alternatives": [{"transcript": "hello world", "confidence": 0.95}]}]},
-        })
+        result = p.parse_response(
+            {
+                "results": {"channels": [{"alternatives": [{"transcript": "hello world", "confidence": 0.95}]}]},
+            }
+        )
         assert result.text == "hello world"
         assert result.confidence == 0.95
 
@@ -327,6 +333,7 @@ class TestProviderSelection:
 
 
 # ===== Video Understanding =====
+
 
 class TestVideoUtils:
     def test_compute_timestamps(self) -> None:
@@ -392,6 +399,7 @@ class TestConcurrencyLimiter:
 
 
 # ===== Memory Extended =====
+
 
 class TestVoyageProvider:
     def test_name(self) -> None:
@@ -464,11 +472,13 @@ class TestBatchRunner:
 
 class TestRemoteEmbeddingClient:
     def test_build_request(self) -> None:
-        client = RemoteEmbeddingClient(RemoteEmbeddingConfig(
-            url="https://embed.example.com/v1/embeddings",
-            api_key="k",
-            model="custom-embed",
-        ))
+        client = RemoteEmbeddingClient(
+            RemoteEmbeddingConfig(
+                url="https://embed.example.com/v1/embeddings",
+                api_key="k",
+                model="custom-embed",
+            )
+        )
         req = client.build_request(["hello"])
         assert req["url"] == "https://embed.example.com/v1/embeddings"
         assert req["body"]["model"] == "custom-embed"

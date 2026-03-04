@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from pyclaw.security.gateway_hardening import (
     CanonicalAuthHeader,
     PairingMetadata,

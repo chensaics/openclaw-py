@@ -46,16 +46,18 @@ class AnthropicMediaProvider:
         response = await client.messages.create(
             model=request.model or "claude-sonnet-4-20250514",
             max_tokens=request.max_tokens,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {  # type: ignore[list-item]
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": media_type, "data": b64},
-                    },
-                    {"type": "text", "text": (request.prompt or "Describe this image in detail.")},
-                ],
-            }],
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {  # type: ignore[list-item]
+                            "type": "image",
+                            "source": {"type": "base64", "media_type": media_type, "data": b64},
+                        },
+                        {"type": "text", "text": (request.prompt or "Describe this image in detail.")},
+                    ],
+                }
+            ],
         )
 
         text = ""

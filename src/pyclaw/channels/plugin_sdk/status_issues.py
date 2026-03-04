@@ -64,9 +64,7 @@ class MediaLimits:
     supported_image_types: list[str] = field(default_factory=lambda: ["jpg", "png", "gif", "webp"])
     supported_audio_types: list[str] = field(default_factory=lambda: ["mp3", "ogg", "wav"])
     supported_video_types: list[str] = field(default_factory=lambda: ["mp4"])
-    supported_document_types: list[str] = field(
-        default_factory=lambda: ["pdf", "txt", "docx", "xlsx"]
-    )
+    supported_document_types: list[str] = field(default_factory=lambda: ["pdf", "txt", "docx", "xlsx"])
 
 
 @dataclass

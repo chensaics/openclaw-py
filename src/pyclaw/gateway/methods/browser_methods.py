@@ -19,7 +19,6 @@ from pyclaw.browser.session_manager import (
     BrowserConfig,
     BrowserSessionManager,
     LaunchOptions,
-    ProfileConfig,
     list_profiles,
     profile_path,
 )
@@ -32,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 def _profiles_dir() -> Path:
     from pyclaw.config.paths import resolve_state_dir
+
     d = resolve_state_dir() / "browser-profiles"
     d.mkdir(parents=True, exist_ok=True)
     return d
@@ -59,9 +59,7 @@ class BrowserRuntime:
 
     def __init__(self) -> None:
         self._guard = NavigationGuard()
-        self._manager = BrowserSessionManager(
-            BrowserConfig(headless=True, idle_timeout_s=600.0, max_sessions=5)
-        )
+        self._manager = BrowserSessionManager(BrowserConfig(headless=True, idle_timeout_s=600.0, max_sessions=5))
         self._profiles: dict[str, _ProfileRuntime] = {}
         self._lock = asyncio.Lock()
         self._pw_available: bool | None = None
@@ -70,6 +68,7 @@ class BrowserRuntime:
         if self._pw_available is None:
             try:
                 import playwright  # noqa: F401
+
                 self._pw_available = True
             except ImportError:
                 self._pw_available = False
@@ -161,12 +160,14 @@ class BrowserRuntime:
             for tab in rt.tabs:
                 tab.url = await self._get_page_url(tab.page)
                 tab.title = await self._get_page_title(tab.page)
-                result.append({
-                    "id": tab.tab_id,
-                    "url": tab.url,
-                    "title": tab.title,
-                    "active": tab.active,
-                })
+                result.append(
+                    {
+                        "id": tab.tab_id,
+                        "url": tab.url,
+                        "title": tab.title,
+                        "active": tab.active,
+                    }
+                )
             return {"tabs": result}
 
     async def open(self, profile: str, url: str) -> dict[str, Any]:
@@ -240,6 +241,7 @@ class BrowserRuntime:
 
     async def screenshot(self, profile: str, full_page: bool = True) -> dict[str, Any]:
         import base64 as b64mod
+
         async with self._lock:
             rt = self._get_rt(profile)
             tab = self._active_tab(rt)
@@ -343,6 +345,7 @@ class BrowserRuntime:
 
     async def create_profile(self, name: str) -> dict[str, Any]:
         import json
+
         p = profile_path(str(_profiles_dir()), name)
         if p.exists():
             return {"created": False, "profile": name, "reason": "already exists"}
@@ -366,10 +369,10 @@ class BrowserRuntime:
 _RUNTIME = BrowserRuntime()
 
 
-def create_browser_handlers() -> dict[str, "MethodHandler"]:
+def create_browser_handlers() -> dict[str, MethodHandler]:
     """Create browser.* RPC handlers backed by real Playwright execution."""
 
-    async def _safe(method: str, coro: Any, conn: "GatewayConnection") -> None:
+    async def _safe(method: str, coro: Any, conn: GatewayConnection) -> None:
         try:
             result = await coro
             await conn.send_ok(method, result)
@@ -381,23 +384,23 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             logger.warning("%s unexpected error: %s", method, exc)
             await conn.send_error(method, "internal", str(exc))
 
-    async def handle_browser_status(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_status(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         await _safe("browser.status", _RUNTIME.status(profile), conn)
 
-    async def handle_browser_start(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_start(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         await _safe("browser.start", _RUNTIME.start(profile), conn)
 
-    async def handle_browser_stop(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_stop(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         await _safe("browser.stop", _RUNTIME.stop(profile), conn)
 
-    async def handle_browser_tabs(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_tabs(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         await _safe("browser.tabs", _RUNTIME.tabs(profile), conn)
 
-    async def handle_browser_open(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_open(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         url = str((p or {}).get("url", ""))
         if not url:
@@ -405,7 +408,7 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             return
         await _safe("browser.open", _RUNTIME.open(profile, url), conn)
 
-    async def handle_browser_navigate(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_navigate(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         url = str((p or {}).get("url", ""))
         if not url:
@@ -413,7 +416,7 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             return
         await _safe("browser.navigate", _RUNTIME.navigate(profile, url), conn)
 
-    async def handle_browser_click(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_click(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         ref = str((p or {}).get("ref", (p or {}).get("selector", "")))
         if not ref:
@@ -421,7 +424,7 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             return
         await _safe("browser.click", _RUNTIME.click(profile, ref), conn)
 
-    async def handle_browser_type(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_type(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         ref = str((p or {}).get("ref", (p or {}).get("selector", "")))
         text = str((p or {}).get("text", ""))
@@ -430,16 +433,16 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             return
         await _safe("browser.type", _RUNTIME.type_text(profile, ref, text), conn)
 
-    async def handle_browser_screenshot(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_screenshot(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         full_page = bool((p or {}).get("fullPage", True))
         await _safe("browser.screenshot", _RUNTIME.screenshot(profile, full_page=full_page), conn)
 
-    async def handle_browser_snapshot(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_snapshot(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         await _safe("browser.snapshot", _RUNTIME.snapshot(profile), conn)
 
-    async def handle_browser_evaluate(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_evaluate(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         fn = str((p or {}).get("fn", ""))
         if not fn:
@@ -447,24 +450,24 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             return
         await _safe("browser.evaluate", _RUNTIME.evaluate(profile, fn), conn)
 
-    async def handle_browser_profiles(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_profiles(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         await _safe("browser.profiles", _RUNTIME.list_profiles(), conn)
 
-    async def handle_browser_create_profile(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_create_profile(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         name = str((p or {}).get("name", ""))
         if not name:
             await conn.send_error("browser.createProfile", "invalid_params", "Missing 'name'")
             return
         await _safe("browser.createProfile", _RUNTIME.create_profile(name), conn)
 
-    async def handle_browser_delete_profile(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_delete_profile(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         name = str((p or {}).get("name", ""))
         if not name:
             await conn.send_error("browser.deleteProfile", "invalid_params", "Missing 'name'")
             return
         await _safe("browser.deleteProfile", _RUNTIME.delete_profile(name), conn)
 
-    async def handle_browser_focus(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_focus(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         tab_id = str((p or {}).get("tabId", ""))
         if not tab_id:
@@ -472,7 +475,7 @@ def create_browser_handlers() -> dict[str, "MethodHandler"]:
             return
         await _safe("browser.focus", _RUNTIME.focus_tab(profile, tab_id), conn)
 
-    async def handle_browser_close(p: dict[str, Any] | None, conn: "GatewayConnection") -> None:
+    async def handle_browser_close(p: dict[str, Any] | None, conn: GatewayConnection) -> None:
         profile = str((p or {}).get("profile", "pyclaw"))
         tab_id = str((p or {}).get("tabId", ""))
         if not tab_id:

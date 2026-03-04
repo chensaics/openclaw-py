@@ -11,7 +11,7 @@ import logging
 import secrets
 import time
 import urllib.parse
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # PKCE helpers (shared)
 # ---------------------------------------------------------------------------
 
+
 def generate_code_verifier(length: int = 64) -> str:
     """Generate a PKCE code verifier."""
     return secrets.token_urlsafe(length)[:length]
@@ -29,6 +30,7 @@ def generate_code_verifier(length: int = 64) -> str:
 def generate_code_challenge(verifier: str) -> str:
     """Generate a PKCE S256 code challenge from a verifier."""
     import base64
+
     digest = hashlib.sha256(verifier.encode("ascii")).digest()
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
@@ -37,9 +39,11 @@ def generate_code_challenge(verifier: str) -> str:
 # OAuth flow states
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OAuthFlowState:
     """State for an in-progress OAuth flow."""
+
     provider: str
     state: str
     code_verifier: str = ""
@@ -54,6 +58,7 @@ class OAuthFlowState:
 @dataclass
 class OAuthTokens:
     """OAuth token response."""
+
     access_token: str
     refresh_token: str = ""
     token_type: str = "Bearer"
@@ -75,6 +80,7 @@ class OAuthTokens:
 @dataclass
 class DeviceCodeResponse:
     """GitHub/OAuth device code flow response."""
+
     device_code: str
     user_code: str
     verification_uri: str
@@ -85,6 +91,7 @@ class DeviceCodeResponse:
 # ---------------------------------------------------------------------------
 # MiniMax Portal OAuth
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MiniMaxOAuthConfig:
@@ -155,6 +162,7 @@ class MiniMaxOAuthFlow:
 # Qwen Portal OAuth
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class QwenOAuthConfig:
     client_id: str
@@ -222,6 +230,7 @@ class QwenOAuthFlow:
 # ---------------------------------------------------------------------------
 # GitHub Copilot Device OAuth
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CopilotDeviceConfig:

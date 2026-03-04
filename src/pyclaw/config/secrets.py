@@ -27,6 +27,7 @@ _ENV_SECRET_TEMPLATE_RE = re.compile(r"^\$\{([A-Z][A-Z0-9_]{0,127})\}$")
 @dataclass(frozen=True)
 class SecretRef:
     """Stable identifier for a secret in a configured source."""
+
     source: SecretRefSource
     provider: str
     id: str
@@ -66,6 +67,7 @@ SecretInput = str | SecretRef
 # Normalization
 # ---------------------------------------------------------------------------
 
+
 def normalize_secret_input(value: Any) -> str:
     """Strip line-break characters from copy-pasted credentials.
 
@@ -85,6 +87,7 @@ def normalize_optional_secret_input(value: Any) -> str | None:
 # ---------------------------------------------------------------------------
 # SecretRef helpers
 # ---------------------------------------------------------------------------
+
 
 def is_secret_ref(value: Any) -> bool:
     if not isinstance(value, dict):
@@ -168,9 +171,8 @@ def resolve_secret_ref(ref: SecretRef, providers: dict[str, SecretProviderConfig
 
     if ref.source == "env":
         val = os.environ.get(ref.id, "").strip()
-        if cfg and isinstance(cfg, EnvSecretProvider) and cfg.allowlist:
-            if ref.id not in cfg.allowlist:
-                return None
+        if cfg and isinstance(cfg, EnvSecretProvider) and cfg.allowlist and ref.id not in cfg.allowlist:
+            return None
         return val or None
 
     if ref.source == "file":

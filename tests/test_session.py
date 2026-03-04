@@ -9,7 +9,7 @@ import pytest
 from pyclaw.agents.session import AgentMessage, SessionManager
 from pyclaw.agents.session_lock import SessionLockError, acquire_session_lock
 from pyclaw.agents.tokens import estimate_message_tokens, estimate_messages_tokens, estimate_tokens
-from pyclaw.routing.session_key import parse_session_key, build_main_session_key
+from pyclaw.routing.session_key import build_main_session_key, parse_session_key
 
 
 def test_session_manager_empty():
@@ -21,44 +21,54 @@ def test_session_manager_load_existing_jsonl():
     """Should load a JSONL file in TypeScript SessionManager format."""
     lines = [
         json.dumps({"type": "session", "version": 3, "id": "abc123"}),
-        json.dumps({
-            "type": "message",
-            "message": {"role": "user", "content": "Hello"},
-        }),
-        json.dumps({
-            "type": "message",
-            "message": {
-                "role": "assistant",
-                "content": "Hi! How can I help?",
-            },
-        }),
-        json.dumps({
-            "type": "custom",
-            "customType": "pyclaw.cache-ttl",
-            "data": {"ttl": 300},
-        }),
-        json.dumps({
-            "type": "message",
-            "message": {
-                "role": "user",
-                "content": "What's the weather?",
-            },
-        }),
-        json.dumps({
-            "type": "message",
-            "message": {
-                "role": "assistant",
-                "content": [
-                    {"type": "text", "text": "Let me check..."},
-                    {
-                        "type": "tool_use",
-                        "id": "tc_1",
-                        "name": "web_fetch",
-                        "input": {"url": "https://weather.example.com"},
-                    },
-                ],
-            },
-        }),
+        json.dumps(
+            {
+                "type": "message",
+                "message": {"role": "user", "content": "Hello"},
+            }
+        ),
+        json.dumps(
+            {
+                "type": "message",
+                "message": {
+                    "role": "assistant",
+                    "content": "Hi! How can I help?",
+                },
+            }
+        ),
+        json.dumps(
+            {
+                "type": "custom",
+                "customType": "pyclaw.cache-ttl",
+                "data": {"ttl": 300},
+            }
+        ),
+        json.dumps(
+            {
+                "type": "message",
+                "message": {
+                    "role": "user",
+                    "content": "What's the weather?",
+                },
+            }
+        ),
+        json.dumps(
+            {
+                "type": "message",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "text", "text": "Let me check..."},
+                        {
+                            "type": "tool_use",
+                            "id": "tc_1",
+                            "name": "web_fetch",
+                            "input": {"url": "https://weather.example.com"},
+                        },
+                    ],
+                },
+            }
+        ),
     ]
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
@@ -201,10 +211,9 @@ def test_session_lock_reentrant_fails(tmp_path: Path):
     session_file = tmp_path / "test.jsonl"
     session_file.touch()
 
-    with acquire_session_lock(session_file):
-        with pytest.raises(SessionLockError):
-            with acquire_session_lock(session_file):
-                pass
+    with acquire_session_lock(session_file), pytest.raises(SessionLockError):
+        with acquire_session_lock(session_file):
+            pass
 
 
 def test_session_lock_stale_cleanup(tmp_path: Path):
@@ -228,10 +237,12 @@ def test_session_lock_stale_cleanup(tmp_path: Path):
 def test_session_compact_basic():
     mgr = SessionManager.in_memory()
     for i in range(10):
-        mgr.messages.append(AgentMessage(
-            role="user" if i % 2 == 0 else "assistant",
-            content=f"Message {i}",
-        ))
+        mgr.messages.append(
+            AgentMessage(
+                role="user" if i % 2 == 0 else "assistant",
+                content=f"Message {i}",
+            )
+        )
 
     result = mgr.compact("Summary of earlier conversation", keep_last_n=4)
     assert result["tokens_before"] > result["tokens_after"]

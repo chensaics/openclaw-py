@@ -44,28 +44,22 @@ ANDROID_SYSTEM_COMMANDS = [*SYSTEM_COMMANDS, "system.notify"]
 # Aggregated platform allowlists
 # ---------------------------------------------------------------------------
 
-ANDROID_ALL_COMMANDS = sorted(set(
-    ANDROID_DEVICE_COMMANDS
-    + ANDROID_CAMERA_COMMANDS
-    + ANDROID_NOTIFICATION_COMMANDS
-    + ANDROID_CONTACTS_COMMANDS
-    + ANDROID_CALENDAR_COMMANDS
-    + PHOTOS_COMMANDS
-    + MOTION_COMMANDS
-    + ANDROID_SYSTEM_COMMANDS
-))
+ANDROID_ALL_COMMANDS = sorted(
+    set(
+        ANDROID_DEVICE_COMMANDS
+        + ANDROID_CAMERA_COMMANDS
+        + ANDROID_NOTIFICATION_COMMANDS
+        + ANDROID_CONTACTS_COMMANDS
+        + ANDROID_CALENDAR_COMMANDS
+        + PHOTOS_COMMANDS
+        + MOTION_COMMANDS
+        + ANDROID_SYSTEM_COMMANDS
+    )
+)
 
-IOS_ALL_COMMANDS = sorted(set(
-    IOS_DEVICE_COMMANDS
-    + IOS_CAMERA_COMMANDS
-    + PHOTOS_COMMANDS
-    + SYSTEM_COMMANDS
-))
+IOS_ALL_COMMANDS = sorted(set(IOS_DEVICE_COMMANDS + IOS_CAMERA_COMMANDS + PHOTOS_COMMANDS + SYSTEM_COMMANDS))
 
-MACOS_ALL_COMMANDS = sorted(set(
-    MACOS_DEVICE_COMMANDS
-    + SYSTEM_COMMANDS
-))
+MACOS_ALL_COMMANDS = sorted(set(MACOS_DEVICE_COMMANDS + SYSTEM_COMMANDS))
 
 PLATFORM_COMMANDS: dict[str, list[str]] = {
     "android": ANDROID_ALL_COMMANDS,
@@ -79,6 +73,7 @@ PLATFORM_COMMANDS: dict[str, list[str]] = {
 # ---------------------------------------------------------------------------
 # Capability-based filtering
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class NodeCapabilities:
@@ -279,10 +274,12 @@ def get_node_tool_definitions(platform: str, node_caps: NodeCapabilities | None 
     for cmd in commands:
         tool_def = _NODE_TOOL_DEFS.get(cmd)
         if tool_def:
-            tools.append({
-                "name": f"node_{cmd.replace('.', '_')}",
-                "description": tool_def["description"],
-                "parameters": tool_def["parameters"],
-                "_node_command": cmd,
-            })
+            tools.append(
+                {
+                    "name": f"node_{cmd.replace('.', '_')}",
+                    "description": tool_def["description"],
+                    "parameters": tool_def["parameters"],
+                    "_node_command": cmd,
+                }
+            )
     return tools

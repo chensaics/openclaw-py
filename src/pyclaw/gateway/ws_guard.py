@@ -174,7 +174,10 @@ class WsFloodGuard:
         if self._log_counter % self._config.sample_interval == 1:
             logger.warning(
                 "WS flood guard blocked connection: ip=%s reason=%s count=%d total_blocked=%d",
-                ip, reason, count, self._total_blocked,
+                ip,
+                reason,
+                count,
+                self._total_blocked,
             )
 
     def _maybe_prune(self, now: float) -> None:
@@ -184,7 +187,8 @@ class WsFloodGuard:
 
         stale_cutoff = now - self._config.window_s * 3
         stale_keys = [
-            k for k, v in self._buckets.items()
+            k
+            for k, v in self._buckets.items()
             if v.banned_until < now and (not v.timestamps or v.timestamps[-1] < stale_cutoff)
         ]
         for k in stale_keys:

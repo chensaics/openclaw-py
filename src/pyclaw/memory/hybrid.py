@@ -18,6 +18,7 @@ from pyclaw.memory.temporal_decay import (
 def bm25_rank_to_score(rank: float) -> float:
     """Convert a BM25 rank value to a [0, 1] score."""
     import math
+
     normalized = max(0.0, rank) if math.isfinite(rank) else 999.0
     return 1.0 / (1.0 + normalized)
 
@@ -41,14 +42,14 @@ def merge_hybrid_results(
     """
     by_id: dict[str, dict[str, Any]] = {}
 
-    for r in (vector or []):
+    for r in vector or []:
         by_id[r["id"]] = {
             **r,
             "vector_score": r.get("vector_score", 0.0),
             "text_score": 0.0,
         }
 
-    for r in (keyword or []):
+    for r in keyword or []:
         rid = r["id"]
         if rid in by_id:
             by_id[rid]["text_score"] = r.get("text_score", 0.0)
@@ -64,16 +65,18 @@ def merge_hybrid_results(
     merged = []
     for entry in by_id.values():
         score = vector_weight * entry["vector_score"] + text_weight * entry["text_score"]
-        merged.append({
-            "id": entry["id"],
-            "path": entry.get("path", ""),
-            "start_line": entry.get("start_line", 0),
-            "end_line": entry.get("end_line", 0),
-            "score": score,
-            "snippet": entry.get("snippet", ""),
-            "source": entry.get("source", ""),
-            "content": entry.get("content", entry.get("snippet", "")),
-        })
+        merged.append(
+            {
+                "id": entry["id"],
+                "path": entry.get("path", ""),
+                "start_line": entry.get("start_line", 0),
+                "end_line": entry.get("end_line", 0),
+                "score": score,
+                "snippet": entry.get("snippet", ""),
+                "source": entry.get("source", ""),
+                "content": entry.get("content", entry.get("snippet", "")),
+            }
+        )
 
     # Temporal decay
     decay_cfg = temporal_decay or DEFAULT_TEMPORAL_DECAY

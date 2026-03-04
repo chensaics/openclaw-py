@@ -37,8 +37,7 @@ class BrowserTool(BaseTool):
                 "action": {
                     "type": "string",
                     "description": (
-                        "Action to perform: 'navigate', 'click', 'fill', "
-                        "'screenshot', 'content', 'evaluate', 'close'."
+                        "Action to perform: 'navigate', 'click', 'fill', 'screenshot', 'content', 'evaluate', 'close'."
                     ),
                 },
                 "url": {
@@ -110,9 +109,7 @@ class BrowserTool(BaseTool):
             import base64
 
             b64 = base64.b64encode(data).decode("ascii")
-            return ToolResult.text(
-                f"Screenshot taken ({len(data)} bytes). Base64 length: {len(b64)}"
-            )
+            return ToolResult.text(f"Screenshot taken ({len(data)} bytes). Base64 length: {len(b64)}")
 
         if action == "content":
             selector = arguments.get("selector")
@@ -129,9 +126,7 @@ class BrowserTool(BaseTool):
         if action == "evaluate":
             expr = arguments.get("value", "")
             if not expr:
-                return ToolResult.text(
-                    "Error: value (JS expression) is required for evaluate.", is_error=True
-                )
+                return ToolResult.text("Error: value (JS expression) is required for evaluate.", is_error=True)
             result = await page.evaluate(expr)
             return ToolResult.text(json.dumps(result, default=str, ensure_ascii=False))
 

@@ -8,7 +8,6 @@ Each provider is an OpenAI-compatible endpoint with specific model mappings.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from .openai_compat import ModelMapping, OpenAICompatConfig
 
@@ -16,6 +15,7 @@ from .openai_compat import ModelMapping, OpenAICompatConfig
 @dataclass
 class CNProviderSpec:
     """Specification for a Chinese LLM provider."""
+
     name: str
     display_name: str
     base_url: str
@@ -182,10 +182,7 @@ def build_cn_config(spec: CNProviderSpec, api_key: str) -> OpenAICompatConfig:
 
 def list_cn_providers() -> list[dict[str, str]]:
     """List all available Chinese providers with display info."""
-    return [
-        {"name": s.name, "display_name": s.display_name, "docs": s.docs_url}
-        for s in ALL_CN_PROVIDERS.values()
-    ]
+    return [{"name": s.name, "display_name": s.display_name, "docs": s.docs_url} for s in ALL_CN_PROVIDERS.values()]
 
 
 def get_cn_provider_models(name: str) -> list[str]:

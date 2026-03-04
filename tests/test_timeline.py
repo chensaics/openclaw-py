@@ -1,7 +1,5 @@
 """Tests for message timeline (F06) — session.py extensions."""
 
-import pytest
-
 from pyclaw.agents.session import (
     AgentMessage,
     TimelineActivity,

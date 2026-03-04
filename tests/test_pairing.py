@@ -6,21 +6,18 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from pyclaw.pairing.store import (
-    AllowFromEntry,
-    PairingRequest,
-    add_allow_from_entry,
-    approve_pairing_code,
-    read_allow_from_store,
-    upsert_pairing_request,
-)
 from pyclaw.pairing.challenge import build_pairing_reply, issue_pairing_challenge
 from pyclaw.pairing.setup_code import (
     PairingSetup,
     decode_pairing_setup_code,
     encode_pairing_setup_code,
+)
+from pyclaw.pairing.store import (
+    PairingRequest,
+    add_allow_from_entry,
+    approve_pairing_code,
+    read_allow_from_store,
+    upsert_pairing_request,
 )
 
 
@@ -79,9 +76,7 @@ class TestPairingChallenge:
         async def mock_send(sender_id: str, text: str) -> None:
             sent.append(text)
 
-        req = asyncio.run(
-            issue_pairing_challenge("telegram", "user1", "User", send_reply=mock_send)
-        )
+        req = asyncio.run(issue_pairing_challenge("telegram", "user1", "User", send_reply=mock_send))
         assert isinstance(req, PairingRequest)
         assert len(sent) == 1
         assert req.code in sent[0]

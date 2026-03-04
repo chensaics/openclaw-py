@@ -56,17 +56,19 @@ class TlonChannel(ChannelPlugin):
             self._sse_task.cancel()
 
     async def _authenticate(self) -> None:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(
                 f"{self._ship_url}/~/login",
                 data={"password": self._ship_code},
-            ) as resp:
-                if resp.status == 204 or resp.status == 200:
-                    cookie = resp.cookies.get("urbauth-~" + self._ship_name)
-                    if cookie:
-                        self._cookie = f"urbauth-~{self._ship_name}={cookie.value}"
-                else:
-                    logger.error("Tlon auth failed: %d", resp.status)
+            ) as resp,
+        ):
+            if resp.status == 204 or resp.status == 200:
+                cookie = resp.cookies.get("urbauth-~" + self._ship_name)
+                if cookie:
+                    self._cookie = f"urbauth-~{self._ship_name}={cookie.value}"
+            else:
+                logger.error("Tlon auth failed: %d", resp.status)
 
     async def _sse_loop(self) -> None:
         channel_uid = f"pyclaw-{int(asyncio.get_event_loop().time() * 1000)}"
@@ -75,13 +77,17 @@ class TlonChannel(ChannelPlugin):
         while self._running:
             try:
                 self._event_id += 1
-                sub_body = json.dumps([{
-                    "id": self._event_id,
-                    "action": "subscribe",
-                    "ship": self._ship_name,
-                    "app": "chat-store",
-                    "path": self._channel_path,
-                }])
+                sub_body = json.dumps(
+                    [
+                        {
+                            "id": self._event_id,
+                            "action": "subscribe",
+                            "ship": self._ship_name,
+                            "app": "chat-store",
+                            "path": self._channel_path,
+                        }
+                    ]
+                )
 
                 headers = {"Cookie": self._cookie, "Content-Type": "application/json"}
                 async with aiohttp.ClientSession() as session:
@@ -137,36 +143,44 @@ class TlonChannel(ChannelPlugin):
         async with aiohttp.ClientSession() as session:
             await session.put(
                 f"{self._ship_url}/~/channel/pyclaw-ack",
-                data=ack_body, headers=headers,
+                data=ack_body,
+                headers=headers,
             )
 
     async def send_reply(self, reply: ChannelReply) -> None:
         self._event_id += 1
-        poke_body = json.dumps([{
-            "id": self._event_id,
-            "action": "poke",
-            "ship": self._ship_name,
-            "app": "chat-hook",
-            "mark": "chat-action",
-            "json": {
-                "message": {
-                    "path": self._channel_path,
-                    "envelope": {
-                        "uid": f"pyclaw-{self._event_id}",
-                        "number": 1,
-                        "author": f"~{self._ship_name}",
-                        "when": int(asyncio.get_event_loop().time() * 1000),
-                        "letter": {"text": reply.text},
+        poke_body = json.dumps(
+            [
+                {
+                    "id": self._event_id,
+                    "action": "poke",
+                    "ship": self._ship_name,
+                    "app": "chat-hook",
+                    "mark": "chat-action",
+                    "json": {
+                        "message": {
+                            "path": self._channel_path,
+                            "envelope": {
+                                "uid": f"pyclaw-{self._event_id}",
+                                "number": 1,
+                                "author": f"~{self._ship_name}",
+                                "when": int(asyncio.get_event_loop().time() * 1000),
+                                "letter": {"text": reply.text},
+                            },
+                        },
                     },
-                },
-            },
-        }])
+                }
+            ]
+        )
 
         headers = {"Cookie": self._cookie, "Content-Type": "application/json"}
-        async with aiohttp.ClientSession() as session:
-            async with session.put(
+        async with (
+            aiohttp.ClientSession() as session,
+            session.put(
                 f"{self._ship_url}/~/channel/pyclaw-send",
-                data=poke_body, headers=headers,
-            ) as resp:
-                if resp.status >= 400:
-                    logger.warning("Tlon send failed: %d", resp.status)
+                data=poke_body,
+                headers=headers,
+            ) as resp,
+        ):
+            if resp.status >= 400:
+                logger.warning("Tlon send failed: %d", resp.status)

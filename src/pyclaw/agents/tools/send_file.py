@@ -68,8 +68,7 @@ class SendFileTool(BaseTool):
         abs_path = os.path.abspath(file_path)
         size_bytes = os.path.getsize(abs_path)
         size_display = (
-            f"{size_bytes / 1024:.1f} KB" if size_bytes < 1024 * 1024
-            else f"{size_bytes / (1024 * 1024):.1f} MB"
+            f"{size_bytes / 1024:.1f} KB" if size_bytes < 1024 * 1024 else f"{size_bytes / (1024 * 1024):.1f} MB"
         )
 
         if file_type == "text":
@@ -78,9 +77,7 @@ class SendFileTool(BaseTool):
                     content = f.read()
                 if len(content) > 50000:
                     content = content[:50000] + "\n... (truncated)"
-                return ToolResult.text(
-                    f"[File: {os.path.basename(abs_path)} ({size_display})]\n\n{content}"
-                )
+                return ToolResult.text(f"[File: {os.path.basename(abs_path)} ({size_display})]\n\n{content}")
             except UnicodeDecodeError:
                 pass
 

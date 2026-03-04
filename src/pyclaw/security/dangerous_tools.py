@@ -16,7 +16,6 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +24,14 @@ logger = logging.getLogger(__name__)
 # Dangerous tool registry
 # ---------------------------------------------------------------------------
 
+
 class RiskCategory(str, Enum):
-    EXEC = "exec"            # Code/command execution
+    EXEC = "exec"  # Code/command execution
     FILE_WRITE = "file_write"  # File system writes
-    NETWORK = "network"      # Network access
+    NETWORK = "network"  # Network access
     CREDENTIAL = "credential"  # Credential access
     DESTRUCTIVE = "destructive"  # Irreversible destructive actions
-    PRIVACY = "privacy"      # Access to private/sensitive data
+    PRIVACY = "privacy"  # Access to private/sensitive data
 
 
 @dataclass
@@ -146,6 +146,7 @@ def filter_tools_by_risk(
 # Skill file scanner
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SkillScanFinding:
     """A finding from scanning a skill file."""
@@ -164,7 +165,11 @@ _UNSAFE_PATTERNS: list[tuple[re.Pattern[str], str, str]] = [
     (re.compile(r"__import__\s*\(", re.IGNORECASE), "warning", "dynamic import detected"),
     (re.compile(r"rm\s+-rf\s+/", re.IGNORECASE), "critical", "destructive rm -rf detected"),
     (re.compile(r"curl\s+.*\|\s*(?:bash|sh)", re.IGNORECASE), "critical", "pipe to shell detected"),
-    (re.compile(r"(?:api[_-]?key|secret|password|token)\s*[=:]\s*['\"][^'\"]+['\"]", re.IGNORECASE), "warning", "potential hardcoded secret"),
+    (
+        re.compile(r"(?:api[_-]?key|secret|password|token)\s*[=:]\s*['\"][^'\"]+['\"]", re.IGNORECASE),
+        "warning",
+        "potential hardcoded secret",
+    ),
 ]
 
 
@@ -187,13 +192,15 @@ def scan_skill_file(path: str | Path) -> list[SkillScanFinding]:
     for line_num, line in enumerate(content.splitlines(), 1):
         for pattern, severity, detail in _UNSAFE_PATTERNS:
             if pattern.search(line):
-                findings.append(SkillScanFinding(
-                    file_path=str(path),
-                    line_number=line_num,
-                    pattern=pattern.pattern,
-                    severity=severity,
-                    detail=detail,
-                ))
+                findings.append(
+                    SkillScanFinding(
+                        file_path=str(path),
+                        line_number=line_num,
+                        pattern=pattern.pattern,
+                        severity=severity,
+                        detail=detail,
+                    )
+                )
 
     return findings
 
@@ -218,6 +225,7 @@ def scan_skill_directory(directory: str | Path) -> list[SkillScanFinding]:
 # ---------------------------------------------------------------------------
 # External content policy
 # ---------------------------------------------------------------------------
+
 
 class ExternalContentAction(str, Enum):
     ALLOW = "allow"

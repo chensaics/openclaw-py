@@ -12,7 +12,6 @@ Provides:
 
 from __future__ import annotations
 
-import os
 import sys
 import time
 from dataclasses import dataclass, field
@@ -31,6 +30,7 @@ class StatusLevel(str, Enum):
 @dataclass
 class SubsystemStatus:
     """Status of a single subsystem."""
+
     name: str
     level: StatusLevel = StatusLevel.UNKNOWN
     message: str = ""
@@ -40,6 +40,7 @@ class SubsystemStatus:
 @dataclass
 class StatusReport:
     """Full status report."""
+
     subsystems: list[SubsystemStatus] = field(default_factory=list)
     mode: str = "summary"
     generated_at: float = 0.0
@@ -74,9 +75,11 @@ class StatusReport:
 # Status Collectors
 # ---------------------------------------------------------------------------
 
+
 def collect_gateway_status(*, deep: bool = False) -> SubsystemStatus:
     """Collect gateway status."""
     import socket
+
     port = 18789
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -85,17 +88,20 @@ def collect_gateway_status(*, deep: bool = False) -> SubsystemStatus:
         s.close()
         if result == 0:
             return SubsystemStatus(
-                name="Gateway", level=StatusLevel.OK,
+                name="Gateway",
+                level=StatusLevel.OK,
                 message=f"Running on port {port}",
                 details={"port": port, "host": "127.0.0.1"},
             )
         return SubsystemStatus(
-            name="Gateway", level=StatusLevel.WARN,
+            name="Gateway",
+            level=StatusLevel.WARN,
             message="Not running",
         )
     except Exception as e:
         return SubsystemStatus(
-            name="Gateway", level=StatusLevel.ERROR,
+            name="Gateway",
+            level=StatusLevel.ERROR,
             message=f"Check failed: {e}",
         )
 
@@ -106,12 +112,14 @@ def collect_config_status() -> SubsystemStatus:
     if config_path.exists():
         size = config_path.stat().st_size
         return SubsystemStatus(
-            name="Config", level=StatusLevel.OK,
+            name="Config",
+            level=StatusLevel.OK,
             message=f"Found ({size} bytes)",
             details={"path": str(config_path)},
         )
     return SubsystemStatus(
-        name="Config", level=StatusLevel.WARN,
+        name="Config",
+        level=StatusLevel.WARN,
         message="Not found",
     )
 
@@ -121,17 +129,20 @@ def collect_auth_status() -> SubsystemStatus:
     creds_dir = Path.home() / ".pyclaw" / "credentials"
     if not creds_dir.exists():
         return SubsystemStatus(
-            name="Auth", level=StatusLevel.WARN,
+            name="Auth",
+            level=StatusLevel.WARN,
             message="No credentials configured",
         )
     providers = [p.stem for p in creds_dir.glob("*.json")]
     if providers:
         return SubsystemStatus(
-            name="Auth", level=StatusLevel.OK,
+            name="Auth",
+            level=StatusLevel.OK,
             message=f"{len(providers)} provider(s): {', '.join(providers)}",
         )
     return SubsystemStatus(
-        name="Auth", level=StatusLevel.WARN,
+        name="Auth",
+        level=StatusLevel.WARN,
         message="No providers authenticated",
     )
 
@@ -140,18 +151,21 @@ def collect_daemon_status() -> SubsystemStatus:
     """Collect daemon/service status."""
     if sys.platform == "darwin":
         return SubsystemStatus(
-            name="Daemon", level=StatusLevel.UNKNOWN,
+            name="Daemon",
+            level=StatusLevel.UNKNOWN,
             message="macOS (launchd)",
             details={"platform": "darwin"},
         )
     elif sys.platform == "linux":
         return SubsystemStatus(
-            name="Daemon", level=StatusLevel.UNKNOWN,
+            name="Daemon",
+            level=StatusLevel.UNKNOWN,
             message="Linux (systemd)",
             details={"platform": "linux"},
         )
     return SubsystemStatus(
-        name="Daemon", level=StatusLevel.UNKNOWN,
+        name="Daemon",
+        level=StatusLevel.UNKNOWN,
         message=f"Platform: {sys.platform}",
     )
 
@@ -161,12 +175,14 @@ def collect_sessions_status() -> SubsystemStatus:
     sessions_dir = Path.home() / ".pyclaw" / "sessions"
     if not sessions_dir.exists():
         return SubsystemStatus(
-            name="Sessions", level=StatusLevel.OK,
+            name="Sessions",
+            level=StatusLevel.OK,
             message="No sessions (clean state)",
         )
     count = sum(1 for _ in sessions_dir.iterdir() if _.is_dir())
     return SubsystemStatus(
-        name="Sessions", level=StatusLevel.OK,
+        name="Sessions",
+        level=StatusLevel.OK,
         message=f"{count} session(s)",
         details={"count": count},
     )
@@ -177,13 +193,15 @@ def collect_memory_status() -> SubsystemStatus:
     mem_dir = Path.home() / ".pyclaw" / "memory"
     if not mem_dir.exists():
         return SubsystemStatus(
-            name="Memory", level=StatusLevel.OK,
+            name="Memory",
+            level=StatusLevel.OK,
             message="Not initialized",
         )
     dbs = list(mem_dir.glob("*.db")) + list(mem_dir.glob("*.sqlite"))
     total_size = sum(f.stat().st_size for f in dbs)
     return SubsystemStatus(
-        name="Memory", level=StatusLevel.OK,
+        name="Memory",
+        level=StatusLevel.OK,
         message=f"{len(dbs)} database(s), {total_size / 1024:.0f} KB",
     )
 
@@ -196,17 +214,20 @@ def collect_channels_status() -> SubsystemStatus:
 
     try:
         import json
+
         config = json.loads(config_path.read_text(encoding="utf-8"))
         channels = config.get("channels", {})
         enabled = [k for k, v in channels.items() if isinstance(v, dict) and v.get("enabled", True)]
         return SubsystemStatus(
-            name="Channels", level=StatusLevel.OK,
+            name="Channels",
+            level=StatusLevel.OK,
             message=f"{len(enabled)} channel(s) configured",
             details={"channels": enabled},
         )
     except Exception:
         return SubsystemStatus(
-            name="Channels", level=StatusLevel.WARN,
+            name="Channels",
+            level=StatusLevel.WARN,
             message="Could not parse channels from config",
         )
 
@@ -216,12 +237,14 @@ def collect_models_status() -> SubsystemStatus:
     creds_dir = Path.home() / ".pyclaw" / "credentials"
     if not creds_dir.exists():
         return SubsystemStatus(
-            name="Models", level=StatusLevel.WARN,
+            name="Models",
+            level=StatusLevel.WARN,
             message="No providers configured",
         )
     providers = [p.stem for p in creds_dir.glob("*.json")]
     return SubsystemStatus(
-        name="Models", level=StatusLevel.OK if providers else StatusLevel.WARN,
+        name="Models",
+        level=StatusLevel.OK if providers else StatusLevel.WARN,
         message=f"{len(providers)} provider(s) available",
     )
 
@@ -229,6 +252,7 @@ def collect_models_status() -> SubsystemStatus:
 # ---------------------------------------------------------------------------
 # Report Generation
 # ---------------------------------------------------------------------------
+
 
 def generate_status_report(*, mode: str = "summary", deep: bool = False) -> StatusReport:
     """Generate a full status report."""
@@ -248,9 +272,12 @@ def generate_status_report(*, mode: str = "summary", deep: bool = False) -> Stat
         try:
             report.subsystems.append(collector())
         except Exception as e:
-            report.subsystems.append(SubsystemStatus(
-                name="unknown", level=StatusLevel.ERROR,
-                message=f"Collector failed: {e}",
-            ))
+            report.subsystems.append(
+                SubsystemStatus(
+                    name="unknown",
+                    level=StatusLevel.ERROR,
+                    message=f"Collector failed: {e}",
+                )
+            )
 
     return report

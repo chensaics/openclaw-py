@@ -15,27 +15,28 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from .cn_providers import ALL_CN_PROVIDERS, build_cn_config
 from .openai_compat import (
     PRECONFIGURED_PROVIDERS,
-    OpenAICompatConfig,
     OpenAICompatProvider,
 )
-from .cn_providers import ALL_CN_PROVIDERS, build_cn_config
 
 logger = logging.getLogger(__name__)
 
 
 class ProviderBuilder(Protocol):
     """Protocol for constructing a provider from config."""
+
     def build(self, config: dict[str, Any]) -> OpenAICompatProvider: ...
 
 
 @dataclass
 class ProviderInfo:
     """Metadata about a registered provider."""
+
     name: str
     display_name: str = ""
-    category: str = "generic"    # "generic" | "cn" | "cloud" | "oauth"
+    category: str = "generic"  # "generic" | "cn" | "cloud" | "oauth"
     requires_api_key: bool = True
     requires_oauth: bool = False
     docs_url: str = ""

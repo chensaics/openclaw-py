@@ -4,8 +4,14 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
+from pyclaw.channels.feishu.messages import (
+    parse_feishu_message,
+    parse_merge_forward,
+    parse_rich_text,
+    parse_share_chat,
+    resolve_media_type,
+    resolve_send_msg_type,
+)
 from pyclaw.channels.feishu.reactions import (
     ReactionEvent,
     ReactionNotificationMode,
@@ -20,14 +26,6 @@ from pyclaw.channels.feishu.routing import (
     is_sender_allowed_in_group,
     resolve_feishu_session_key,
     resolve_reply_params,
-)
-from pyclaw.channels.feishu.messages import (
-    parse_feishu_message,
-    parse_merge_forward,
-    parse_rich_text,
-    parse_share_chat,
-    resolve_media_type,
-    resolve_send_msg_type,
 )
 from pyclaw.channels.feishu.runtime import (
     ProbeCache,
@@ -187,12 +185,14 @@ class TestFeishuMessages:
         assert "empty" in result.lower()
 
     def test_parse_merge_forward(self) -> None:
-        result = parse_merge_forward({
-            "messages": [
-                {"sender_name": "Alice", "message_type": "text", "content": {"text": "Hello"}},
-                {"sender_name": "Bob", "message_type": "text", "content": {"text": "Hi"}},
-            ]
-        })
+        result = parse_merge_forward(
+            {
+                "messages": [
+                    {"sender_name": "Alice", "message_type": "text", "content": {"text": "Hello"}},
+                    {"sender_name": "Bob", "message_type": "text", "content": {"text": "Hi"}},
+                ]
+            }
+        )
         assert "Alice" in result
         assert "Bob" in result
 
@@ -202,7 +202,10 @@ class TestFeishuMessages:
                 "zh_cn": {
                     "title": "Test Title",
                     "content": [
-                        [{"tag": "text", "text": "Hello "}, {"tag": "a", "text": "link", "href": "https://example.com"}],
+                        [
+                            {"tag": "text", "text": "Hello "},
+                            {"tag": "a", "text": "link", "href": "https://example.com"},
+                        ],
                         [{"tag": "code", "text": "x = 1"}],
                     ],
                 }
@@ -244,7 +247,6 @@ class TestProbeCache:
     def test_expired(self) -> None:
         cache = ProbeCache(ttl_s=0.01)
         cache.put("acc1", {"bot_name": "Test"})
-        import time
         time.sleep(0.02)
         assert cache.get("acc1") is None
 

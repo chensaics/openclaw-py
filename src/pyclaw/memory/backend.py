@@ -9,7 +9,6 @@ and extract them from conversations automatically.
 from __future__ import annotations
 
 import logging
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
@@ -101,6 +100,7 @@ class MemoryBackend(ABC):
 # ---------------------------------------------------------------------------
 # Auto-recall / auto-capture
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AutoRecallConfig:

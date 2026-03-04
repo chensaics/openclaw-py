@@ -49,9 +49,9 @@ class TestPlatformAllowlists:
         assert get_allowed_commands("IOS") == get_allowed_commands("ios")
 
     def test_commands_are_sorted(self) -> None:
-        assert ANDROID_ALL_COMMANDS == sorted(ANDROID_ALL_COMMANDS)
-        assert IOS_ALL_COMMANDS == sorted(IOS_ALL_COMMANDS)
-        assert MACOS_ALL_COMMANDS == sorted(MACOS_ALL_COMMANDS)
+        assert sorted(ANDROID_ALL_COMMANDS) == ANDROID_ALL_COMMANDS
+        assert sorted(IOS_ALL_COMMANDS) == IOS_ALL_COMMANDS
+        assert sorted(MACOS_ALL_COMMANDS) == MACOS_ALL_COMMANDS
 
 
 class TestIsCommandAllowed:
@@ -77,9 +77,7 @@ class TestIsCommandAllowed:
 class TestFilterByCapabilities:
     def test_filter_with_caps(self) -> None:
         caps = NodeCapabilities(commands=["system.run", "device.info"])
-        result = filter_commands_by_capabilities(
-            ["system.run", "device.info", "camera.snap"], caps
-        )
+        result = filter_commands_by_capabilities(["system.run", "device.info", "camera.snap"], caps)
         assert result == ["system.run", "device.info"]
 
     def test_filter_without_caps_returns_all(self) -> None:
@@ -123,17 +121,20 @@ class TestNodeTools:
     @pytest.mark.asyncio
     async def test_handle_nodes_list_no_context(self) -> None:
         from pyclaw.tools.nodes import handle_nodes_list
+
         result = await handle_nodes_list({})
         assert result == "No connected nodes."
 
     @pytest.mark.asyncio
     async def test_handle_nodes_invoke_missing_params(self) -> None:
         from pyclaw.tools.nodes import handle_nodes_invoke
+
         result = await handle_nodes_invoke({})
         assert "required" in result.lower()
 
     @pytest.mark.asyncio
     async def test_handle_nodes_invoke_no_context(self) -> None:
         from pyclaw.tools.nodes import handle_nodes_invoke
+
         result = await handle_nodes_invoke({"node_id": "n1", "command": "system.run"})
         assert "not connected" in result

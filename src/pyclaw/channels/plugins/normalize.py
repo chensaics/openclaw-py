@@ -185,14 +185,10 @@ def normalize_inbound(
     text = str(_resolve_nested(raw, spec.text_field) or "")
     sender_id = str(_resolve_nested(raw, spec.sender_field) or "")
     chat_id = str(_resolve_nested(raw, spec.chat_field) or "")
-    message_id = (
-        str(_resolve_nested(raw, spec.message_id_field) or "") if spec.message_id_field else ""
-    )
+    message_id = str(_resolve_nested(raw, spec.message_id_field) or "") if spec.message_id_field else ""
     thread_id = str(_resolve_nested(raw, spec.thread_field) or "") if spec.thread_field else ""
 
-    is_group = bool(
-        spec.group_indicator and spec.group_indicator in str(raw.get("chat", {}).get("type", ""))
-    )
+    is_group = bool(spec.group_indicator and spec.group_indicator in str(raw.get("chat", {}).get("type", "")))
     is_mention = bool(spec.mention_regex and re.search(spec.mention_regex, text))
 
     if spec.strip_bot_mention and spec.mention_regex and is_mention:

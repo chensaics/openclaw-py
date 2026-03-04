@@ -78,8 +78,6 @@ def mcp_list_tools_command(*, server: str | None = None) -> None:
 async def _get_mcp_statuses(
     mcp_servers: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    from typing import Any
-
     from pyclaw.mcp.registry import McpRegistry
 
     registry = McpRegistry()

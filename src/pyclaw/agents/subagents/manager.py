@@ -79,12 +79,14 @@ class SubagentManager:
                 entry.state = result.state
                 self._emit("subagent.completed", session_id=session_id, result=result)
 
-                self._completed.append({
-                    "session_id": session_id,
-                    "state": result.state.value,
-                    "label": config.label,
-                    "output_preview": (result.output or "")[:200],
-                })
+                self._completed.append(
+                    {
+                        "session_id": session_id,
+                        "state": result.state.value,
+                        "label": config.label,
+                        "output_preview": (result.output or "")[:200],
+                    }
+                )
                 if len(self._completed) > 100:
                     self._completed = self._completed[-100:]
 
@@ -159,10 +161,7 @@ class SubagentManager:
 
     def list_running(self) -> list[dict[str, Any]]:
         """Return info about currently running subagents only."""
-        return [
-            info for info in self.list_active()
-            if info["state"] == SubagentState.RUNNING.value
-        ]
+        return [info for info in self.list_active() if info["state"] == SubagentState.RUNNING.value]
 
     def list_completed(self, *, limit: int = 20) -> list[dict[str, Any]]:
         """Return recently completed subagent info."""

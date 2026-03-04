@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from typing import Any
@@ -26,6 +25,7 @@ async def run_node_host(
 
     if not node_id:
         import platform
+
         node_id = platform.node() or "node-1"
 
     logger.info("Node host starting: %s → %s", node_id, gateway_url)

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExtraProviderConfig:
     """Configuration for an OpenAI-compatible extra provider."""
+
     name: str
     display_name: str
     base_url: str
@@ -59,7 +60,6 @@ EXTRA_PROVIDERS: dict[str, ExtraProviderConfig] = {
         supports_tools=True,
         notes="Privacy-focused AI platform",
     ),
-
     "huggingface": ExtraProviderConfig(
         name="huggingface",
         display_name="Hugging Face Inference",
@@ -75,7 +75,6 @@ EXTRA_PROVIDERS: dict[str, ExtraProviderConfig] = {
         supports_tools=False,
         notes="Hugging Face Inference API (Pro subscription may be required)",
     ),
-
     "nvidia-nim": ExtraProviderConfig(
         name="nvidia-nim",
         display_name="NVIDIA NIM",
@@ -91,7 +90,6 @@ EXTRA_PROVIDERS: dict[str, ExtraProviderConfig] = {
         supports_tools=True,
         notes="NVIDIA AI Foundation Models",
     ),
-
     "vllm": ExtraProviderConfig(
         name="vllm",
         display_name="vLLM",
@@ -102,7 +100,6 @@ EXTRA_PROVIDERS: dict[str, ExtraProviderConfig] = {
         supports_tools=True,
         notes="Self-hosted vLLM instance (OpenAI-compatible)",
     ),
-
     "litellm": ExtraProviderConfig(
         name="litellm",
         display_name="LiteLLM Proxy",
@@ -113,7 +110,6 @@ EXTRA_PROVIDERS: dict[str, ExtraProviderConfig] = {
         supports_tools=True,
         notes="LiteLLM proxy for unified LLM access — model names depend on your LiteLLM config",
     ),
-
     "kimi-coding": ExtraProviderConfig(
         name="kimi-coding",
         display_name="Kimi (Moonshot)",
@@ -142,16 +138,13 @@ def list_extra_providers() -> list[ExtraProviderConfig]:
 
 def get_all_extra_models() -> dict[str, list[str]]:
     """Get all models grouped by provider."""
-    return {
-        name: config.models
-        for name, config in EXTRA_PROVIDERS.items()
-        if config.models
-    }
+    return {name: config.models for name, config in EXTRA_PROVIDERS.items() if config.models}
 
 
 def resolve_extra_provider_env(name: str) -> str:
     """Resolve the API key for an extra provider from environment."""
     import os
+
     config = EXTRA_PROVIDERS.get(name)
     if not config:
         return ""

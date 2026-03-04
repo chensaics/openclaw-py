@@ -83,11 +83,14 @@ class TestModelFallbackManager:
     @pytest.fixture
     def manager(self) -> ModelFallbackManager:
         mgr = ModelFallbackManager(default_cooldown_s=0.1)
-        mgr.register_chain("default", [
-            FallbackCandidate(model_id="gpt-4o", provider="openai", is_primary=True),
-            FallbackCandidate(model_id="gpt-4o-mini", provider="openai"),
-            FallbackCandidate(model_id="claude-sonnet", provider="anthropic"),
-        ])
+        mgr.register_chain(
+            "default",
+            [
+                FallbackCandidate(model_id="gpt-4o", provider="openai", is_primary=True),
+                FallbackCandidate(model_id="gpt-4o-mini", provider="openai"),
+                FallbackCandidate(model_id="claude-sonnet", provider="anthropic"),
+            ],
+        )
         return mgr
 
     def test_resolve_primary(self, manager: ModelFallbackManager) -> None:

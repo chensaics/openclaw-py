@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from pyclaw.agents.workspace_sync import diff_templates, sync_templates
 
 

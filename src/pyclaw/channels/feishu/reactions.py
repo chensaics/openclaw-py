@@ -12,7 +12,6 @@ Supports:
 from __future__ import annotations
 
 import logging
-import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -22,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 class ReactionNotificationMode(str, Enum):
     OFF = "off"
-    OWN = "own"      # Only reactions on bot-authored messages
-    ALL = "all"      # All verified reactions
+    OWN = "own"  # Only reactions on bot-authored messages
+    ALL = "all"  # All verified reactions
 
 
 @dataclass
@@ -129,7 +128,7 @@ def create_synthetic_turn(
     action_verb = "reacted with" if event.action == "created" else "removed reaction"
 
     if message_text:
-        text = f"[{action_verb} {emoji} on: \"{message_text[:100]}\"]"
+        text = f'[{action_verb} {emoji} on: "{message_text[:100]}"]'
     else:
         text = f"[{action_verb} {emoji} on message {event.message_id}]"
 

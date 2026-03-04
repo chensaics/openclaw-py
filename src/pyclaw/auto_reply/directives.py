@@ -14,7 +14,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,16 +26,18 @@ _DIRECTIVE_PATTERN = re.compile(
 @dataclass
 class ParsedDirective:
     """A single parsed inline directive."""
-    name: str          # "think" | "model" | "verbose" | "reasoning" | "elevated" | "exec"
-    value: str = ""    # e.g. "low", "gpt-4o", ""
+
+    name: str  # "think" | "model" | "verbose" | "reasoning" | "elevated" | "exec"
+    value: str = ""  # e.g. "low", "gpt-4o", ""
     raw: str = ""
 
 
 @dataclass
 class DirectiveSet:
     """Collection of directives parsed from a message."""
+
     directives: list[ParsedDirective] = field(default_factory=list)
-    cleaned_text: str = ""   # Text with directives removed
+    cleaned_text: str = ""  # Text with directives removed
 
     @property
     def has_directives(self) -> bool:
@@ -86,11 +87,13 @@ def parse_directives(text: str) -> DirectiveSet:
     for match in _DIRECTIVE_PATTERN.finditer(text):
         name = match.group(1).lower()
         value = match.group(2).strip()
-        directives.append(ParsedDirective(
-            name=name,
-            value=value,
-            raw=match.group(0),
-        ))
+        directives.append(
+            ParsedDirective(
+                name=name,
+                value=value,
+                raw=match.group(0),
+            )
+        )
 
     cleaned = _DIRECTIVE_PATTERN.sub("", text).strip()
     cleaned = re.sub(r"\s{2,}", " ", cleaned)
@@ -102,9 +105,11 @@ def parse_directives(text: str) -> DirectiveSet:
 # Directive application
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DirectiveOverrides:
     """Overrides to apply for the current agent turn."""
+
     model: str | None = None
     think_level: str | None = None
     verbose: bool = False
@@ -158,6 +163,7 @@ def is_fast_lane(directive_set: DirectiveSet) -> bool:
 # ---------------------------------------------------------------------------
 # Directive persistence
 # ---------------------------------------------------------------------------
+
 
 class DirectivePersistence:
     """Track sticky directives across turns."""

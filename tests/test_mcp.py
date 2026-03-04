@@ -2,24 +2,22 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from pyclaw.mcp.types import (
-    JsonRpcRequest,
-    JsonRpcResponse,
-    McpServerConfig,
-    McpToolInfo,
-)
 from pyclaw.mcp.registry import (
     McpRegistry,
     McpToolAdapter,
     _mcp_result_to_tool_result,
     _parse_server_config,
+)
+from pyclaw.mcp.types import (
+    JsonRpcRequest,
+    JsonRpcResponse,
+    McpServerConfig,
+    McpToolInfo,
 )
 
 

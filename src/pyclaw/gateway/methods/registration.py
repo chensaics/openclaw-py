@@ -8,28 +8,26 @@ if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayServer
 
 
-def register_core_handlers(
-    server: GatewayServer, *, config_path: str | None = None
-) -> None:
+def register_core_handlers(server: GatewayServer, *, config_path: str | None = None) -> None:
     """Register all built-in method handlers on the gateway server."""
-    from pyclaw.gateway.methods.connect import create_connect_handler
-    from pyclaw.gateway.methods.config_methods import create_config_handlers
-    from pyclaw.gateway.methods.health import create_health_handlers
-    from pyclaw.gateway.methods.sessions import create_session_handlers
-    from pyclaw.gateway.methods.chat import create_chat_handlers
-    from pyclaw.gateway.methods.models import create_models_handlers
     from pyclaw.gateway.methods.agents import create_agents_handlers
+    from pyclaw.gateway.methods.backup_methods import create_backup_handlers
+    from pyclaw.gateway.methods.browser_methods import create_browser_handlers
     from pyclaw.gateway.methods.channels import create_channels_handlers
-    from pyclaw.gateway.methods.tools_catalog import create_tools_handlers
+    from pyclaw.gateway.methods.chat import create_chat_handlers
+    from pyclaw.gateway.methods.config_methods import create_config_handlers
+    from pyclaw.gateway.methods.connect import create_connect_handler
+    from pyclaw.gateway.methods.cron_history_methods import create_cron_history_handlers
     from pyclaw.gateway.methods.cron_methods import create_cron_handlers
     from pyclaw.gateway.methods.device_pair import create_device_pair_handlers
-    from pyclaw.gateway.methods.browser_methods import create_browser_handlers
     from pyclaw.gateway.methods.exec_approvals import create_exec_approval_handlers
     from pyclaw.gateway.methods.extended import create_extended_handlers
+    from pyclaw.gateway.methods.health import create_health_handlers
     from pyclaw.gateway.methods.logs_methods import create_logs_handlers
+    from pyclaw.gateway.methods.models import create_models_handlers
     from pyclaw.gateway.methods.plan_methods import create_plan_handlers
-    from pyclaw.gateway.methods.cron_history_methods import create_cron_history_handlers
-    from pyclaw.gateway.methods.backup_methods import create_backup_handlers
+    from pyclaw.gateway.methods.sessions import create_session_handlers
+    from pyclaw.gateway.methods.tools_catalog import create_tools_handlers
 
     server.register_handler("connect", create_connect_handler(server))
     server.register_handlers(create_health_handlers())
@@ -39,6 +37,7 @@ def register_core_handlers(
     server.register_handlers(create_models_handlers())
     server.register_handlers(create_agents_handlers())
     from pyclaw.gateway.methods.channels import set_config_path as _set_channels_config
+
     _set_channels_config(config_path)
     server.register_handlers(create_channels_handlers())
     server.register_handlers(create_tools_handlers())

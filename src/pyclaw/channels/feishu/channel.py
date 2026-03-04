@@ -17,8 +17,8 @@ from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
 from pyclaw.channels.feishu.messages import parse_feishu_message
 from pyclaw.channels.feishu.routing import (
     FeishuRoutingConfig,
-    resolve_feishu_session_key,
     is_sender_allowed_in_group,
+    resolve_feishu_session_key,
     resolve_reply_params,
 )
 
@@ -57,9 +57,7 @@ class FeishuChannel(ChannelPlugin):
         self._server: Any = None
         self._access_token: str = ""
         self._token_expires: float = 0
-        self._routing_config = (
-            FeishuRoutingConfig.from_dict(routing) if routing else FeishuRoutingConfig()
-        )
+        self._routing_config = FeishuRoutingConfig.from_dict(routing) if routing else FeishuRoutingConfig()
         self._dedup_cache: dict[str, float] = {}
         self._dedup_lock = asyncio.Lock()
 
@@ -69,9 +67,7 @@ class FeishuChannel(ChannelPlugin):
 
     @property
     def _api_base(self) -> str:
-        return (
-            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
-        )
+        return "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
 
     async def start(self) -> None:
         await self._refresh_token()
@@ -82,9 +78,7 @@ class FeishuChannel(ChannelPlugin):
             logger.warning("Feishu WebSocket mode not yet implemented; falling back to webhook")
             await self._start_webhook()
 
-        logger.info(
-            "Feishu channel started (mode=%s, domain=%s)", self._connection_mode, self._domain
-        )
+        logger.info("Feishu channel started (mode=%s, domain=%s)", self._connection_mode, self._domain)
 
     async def _start_webhook(self) -> None:
         try:
@@ -137,7 +131,7 @@ class FeishuChannel(ChannelPlugin):
             return web.Response(status=200)
 
         message_id = message.get("message_id", "")
-        msg_type = message.get("message_type", "")
+        message.get("message_type", "")
 
         # Support all message types: text, post, share_chat, merge_forward, image, audio, file, sticker
         parsed = parse_feishu_message(body)
@@ -164,11 +158,10 @@ class FeishuChannel(ChannelPlugin):
             return web.Response(status=200)
 
         # Group sender filtering via routing config
-        if parsed.chat_type == "group":
-            if not is_sender_allowed_in_group(
-                parsed.sender_id, parsed.chat_id, self._routing_config
-            ):
-                return web.Response(status=200)
+        if parsed.chat_type == "group" and not is_sender_allowed_in_group(
+            parsed.sender_id, parsed.chat_id, self._routing_config
+        ):
+            return web.Response(status=200)
 
         session_key = resolve_feishu_session_key(
             chat_id=parsed.chat_id,
@@ -271,10 +264,7 @@ class FeishuChannel(ChannelPlugin):
 
         use_post = parse_mode == "markdown" and text
         msg_type = "post" if use_post else "text"
-        if use_post:
-            content = json.dumps(self._markdown_to_post_content(text))
-        else:
-            content = json.dumps({"text": text})
+        content = json.dumps(self._markdown_to_post_content(text)) if use_post else json.dumps({"text": text})
 
         headers = {
             "Authorization": f"Bearer {self._access_token}",
@@ -303,9 +293,7 @@ class FeishuChannel(ChannelPlugin):
                 if reply_params.get("reply_in_thread") and reply_params.get("root_id"):
                     payload["root_id"] = reply_params["root_id"]
                 params = {"receive_id_type": "chat_id"}
-                async with session.post(
-                    url, json=payload, headers=headers, params=params
-                ) as resp:
+                async with session.post(url, json=payload, headers=headers, params=params) as resp:
                     if resp.status >= 400:
                         err_text = await resp.text()
                         logger.error("Feishu send error: %d %s", resp.status, err_text)

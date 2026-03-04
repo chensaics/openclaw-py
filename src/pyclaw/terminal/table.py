@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
-from typing import Any, Literal
+from dataclasses import dataclass
+from typing import Literal
 
 from pyclaw.terminal.ansi import visible_width
 
@@ -85,7 +85,7 @@ def render_table(
 
     def _row_str(cells: list[str]) -> str:
         parts = []
-        for cell_text, r in zip(cells, resolved):
+        for cell_text, r in zip(cells, resolved, strict=False):
             aligned = _align(cell_text, r.width, r.col.align)
             parts.append(f"{pad}{aligned}{pad}")
         if border != "none":
@@ -99,7 +99,7 @@ def render_table(
         lines.append(_hline(tl, tj, tr))
 
     # Header
-    headers = [_truncate(col.header, r.width) for col, r in zip(columns, resolved)]
+    headers = [_truncate(col.header, r.width) for col, r in zip(columns, resolved, strict=False)]
     lines.append(_row_str(headers))
 
     # Header separator
@@ -147,6 +147,7 @@ def _truncate(text: str, width: int) -> str:
 
 def _is_wide(ch: str) -> bool:
     import unicodedata
+
     return unicodedata.east_asian_width(ch) in ("W", "F")
 
 

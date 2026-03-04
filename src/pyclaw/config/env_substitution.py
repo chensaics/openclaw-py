@@ -13,9 +13,9 @@ Provides:
 
 from __future__ import annotations
 
+import logging
 import os
 import re
-import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -123,13 +123,11 @@ def substitute_env_recursive(
         return substitute_env(data, env=env, strict=strict, context=context)
     if isinstance(data, dict):
         return {
-            k: substitute_env_recursive(v, env=env, strict=strict, context=f"{context}.{k}")
-            for k, v in data.items()
+            k: substitute_env_recursive(v, env=env, strict=strict, context=f"{context}.{k}") for k, v in data.items()
         }
     if isinstance(data, list):
         return [
-            substitute_env_recursive(v, env=env, strict=strict, context=f"{context}[{i}]")
-            for i, v in enumerate(data)
+            substitute_env_recursive(v, env=env, strict=strict, context=f"{context}[{i}]") for i, v in enumerate(data)
         ]
     return data
 

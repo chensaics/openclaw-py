@@ -91,9 +91,7 @@ def parse_ollama_model_info(raw: dict[str, Any]) -> OllamaModelInfo:
     supports_vision = "clip" in families or any("vision" in f.lower() for f in families)
 
     # Tool support heuristic
-    supports_tools = any(
-        f in families for f in ["llama", "qwen2", "mistral", "command-r"]
-    )
+    supports_tools = any(f in families for f in ["llama", "qwen2", "mistral", "command-r"])
 
     return OllamaModelInfo(
         name=name,

@@ -2,19 +2,8 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
-from pyclaw.gateway.openresponses_http import (
-    CreateResponseBody,
-    apply_tool_choice,
-    build_response_resource,
-    extract_messages_from_input,
-    format_sse_event,
-    stream_response_created,
-    stream_text_delta,
-)
 from pyclaw.agents.transports.codex import (
     inject_context_management,
     resolve_codex_transport,
@@ -23,11 +12,19 @@ from pyclaw.agents.transports.codex import (
     should_force_responses_store,
     wrap_codex_extra_params,
 )
-
+from pyclaw.gateway.openresponses_http import (
+    apply_tool_choice,
+    build_response_resource,
+    extract_messages_from_input,
+    format_sse_event,
+    stream_response_created,
+    stream_text_delta,
+)
 
 # ---------------------------------------------------------------------------
 # Input extraction
 # ---------------------------------------------------------------------------
+
 
 class TestExtractMessages:
     def test_string_input(self) -> None:
@@ -95,6 +92,7 @@ class TestExtractMessages:
 # Tool choice
 # ---------------------------------------------------------------------------
 
+
 class TestApplyToolChoice:
     def test_none(self) -> None:
         tools = [{"function": {"name": "test"}}]
@@ -123,9 +121,7 @@ class TestApplyToolChoice:
             {"function": {"name": "tool_a"}},
             {"function": {"name": "tool_b"}},
         ]
-        result_tools, extra = apply_tool_choice(
-            tools, {"type": "function", "function": {"name": "tool_b"}}
-        )
+        result_tools, extra = apply_tool_choice(tools, {"type": "function", "function": {"name": "tool_b"}})
         assert len(result_tools) == 1
         assert result_tools[0]["function"]["name"] == "tool_b"
 
@@ -138,6 +134,7 @@ class TestApplyToolChoice:
 # ---------------------------------------------------------------------------
 # Response building
 # ---------------------------------------------------------------------------
+
 
 class TestBuildResponse:
     def test_basic(self) -> None:
@@ -152,6 +149,7 @@ class TestBuildResponse:
 # ---------------------------------------------------------------------------
 # SSE events
 # ---------------------------------------------------------------------------
+
 
 class TestSseEvents:
     def test_format_sse(self) -> None:
@@ -173,6 +171,7 @@ class TestSseEvents:
 # Codex transport
 # ---------------------------------------------------------------------------
 
+
 class TestCodexTransport:
     def test_default_transport(self) -> None:
         assert resolve_codex_transport("openai") == "sse"
@@ -186,7 +185,9 @@ class TestContextManagement:
     def test_inject_for_openai(self) -> None:
         payload: dict = {}
         result = inject_context_management(
-            payload, provider="openai", responses_server_compaction=True,
+            payload,
+            provider="openai",
+            responses_server_compaction=True,
         )
         assert "context_management" in result
         assert result["context_management"][0]["type"] == "compaction"
@@ -194,14 +195,18 @@ class TestContextManagement:
     def test_skip_for_non_openai(self) -> None:
         payload: dict = {}
         result = inject_context_management(
-            payload, provider="anthropic", responses_server_compaction=True,
+            payload,
+            provider="anthropic",
+            responses_server_compaction=True,
         )
         assert "context_management" not in result
 
     def test_skip_if_already_present(self) -> None:
         payload = {"context_management": [{"type": "custom"}]}
         result = inject_context_management(
-            payload, provider="openai", responses_server_compaction=True,
+            payload,
+            provider="openai",
+            responses_server_compaction=True,
         )
         assert result["context_management"][0]["type"] == "custom"
 
@@ -222,9 +227,7 @@ class TestServerCompaction:
         assert should_enable_server_compaction("anthropic") is False
 
     def test_explicit_override(self) -> None:
-        assert should_enable_server_compaction(
-            "openai", model_config={"responsesServerCompaction": False}
-        ) is False
+        assert should_enable_server_compaction("openai", model_config={"responsesServerCompaction": False}) is False
 
 
 class TestResponsesStore:

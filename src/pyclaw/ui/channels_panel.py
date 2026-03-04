@@ -69,11 +69,16 @@ class ChannelStatusPanel(ft.Column):
         self._summary_row = ft.Row(spacing=16)
 
         header = page_header(
-            ft.Icons.LINK, t("channels.title"),
-            [ft.IconButton(
-                icon=ft.Icons.REFRESH, tooltip=t("channels.refresh"),
-                icon_size=20, on_click=self._handle_refresh,
-            )],
+            ft.Icons.LINK,
+            t("channels.title"),
+            [
+                ft.IconButton(
+                    icon=ft.Icons.REFRESH,
+                    tooltip=t("channels.refresh"),
+                    icon_size=20,
+                    on_click=self._handle_refresh,
+                )
+            ],
         )
 
         super().__init__(
@@ -104,6 +109,7 @@ class ChannelStatusPanel(ft.Column):
 
         if not channels:
             from pyclaw.ui.components import empty_state
+
             self._channel_list.controls.append(
                 empty_state(ft.Icons.LINK_OFF, t("channels.no_configured")),
             )
@@ -121,7 +127,9 @@ class ChannelStatusPanel(ft.Column):
                     ft.Text(value, size=18, weight=ft.FontWeight.BOLD, color=color),
                     ft.Text(label, size=10, color=ft.Colors.ON_SURFACE_VARIANT),
                 ],
-                spacing=0, horizontal_alignment=ft.CrossAxisAlignment.CENTER, tight=True,
+                spacing=0,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
             ),
             padding=ft.padding.symmetric(horizontal=12, vertical=4),
         )
@@ -167,7 +175,8 @@ class ChannelStatusPanel(ft.Column):
                         tight=True,
                     ),
                     ft.Container(
-                        width=10, height=10,
+                        width=10,
+                        height=10,
                         border_radius=ft.border_radius.all(5),
                         bgcolor=color,
                     ),
@@ -193,7 +202,9 @@ class ChannelStatusPanel(ft.Column):
                         message=tooltip_text,
                         content=ft.Container(
                             content=ft.Text(
-                                short, size=9, weight=ft.FontWeight.BOLD,
+                                short,
+                                size=9,
+                                weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.ON_PRIMARY,
                             ),
                             bgcolor=ft.Colors.PRIMARY,

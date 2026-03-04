@@ -3,10 +3,10 @@
 Ported from ``src/secrets/``.
 """
 
-from pyclaw.secrets.audit import run_secrets_audit, SecretsAuditReport
-from pyclaw.secrets.resolve import resolve_secret_ref_value, SecretRefResolveCache
-from pyclaw.secrets.plan import SecretsApplyPlan, SecretsPlanTarget
 from pyclaw.secrets.apply import run_secrets_apply
+from pyclaw.secrets.audit import SecretsAuditReport, run_secrets_audit
+from pyclaw.secrets.plan import SecretsApplyPlan, SecretsPlanTarget
+from pyclaw.secrets.resolve import SecretRefResolveCache, resolve_secret_ref_value
 from pyclaw.secrets.runtime import SecretsRuntime
 
 __all__ = [

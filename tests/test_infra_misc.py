@@ -5,12 +5,20 @@ from __future__ import annotations
 import asyncio
 import gzip
 import json
-import tempfile
 import time
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+
+# Phase 33c: Archive
+from pyclaw.infra.archive import (
+    ArchiveConfig,
+    archive_config,
+    archive_session,
+    list_archives,
+    prune_archives,
+)
 
 # Phase 33a: SSH/SCP
 from pyclaw.infra.ssh import (
@@ -31,50 +39,21 @@ from pyclaw.infra.system_events import (
     WakeManager,
 )
 
-# Phase 33c: Archive
-from pyclaw.infra.archive import (
-    ArchiveConfig,
-    archive_config,
-    archive_session,
-    list_archives,
-    prune_archives,
-)
-
 # Phase 33d: Misc extensions
 from pyclaw.plugins.contrib.misc_extensions import (
     CopilotProxyExtension,
     DiagnosticsOTELExtension,
-    LLMTaskExtension,
     LLMTaskConfig,
+    LLMTaskExtension,
     LobsterExtension,
     OTELConfig,
     OTELSpan,
-    Pipeline,
     PipelineState,
     PipelineStep,
 )
 
-# Phase 33e: Shared utils
-from pyclaw.shared.utils import (
-    CodeRegion,
-    UsageEntry,
-    aggregate_usage,
-    extract_reasoning,
-    find_code_regions,
-    has_reasoning_tags,
-    is_inside_code_block,
-    mask_api_key,
-    parse_frontmatter,
-    safe_json_dumps,
-    safe_json_parse,
-    strip_reasoning,
-    with_timeout,
-    run_with_concurrency,
-)
-
 # Phase 33f: Exec hardening
 from pyclaw.security.exec_hardening import (
-    ApprovalRequest,
     BinaryPolicy,
     build_approval_request,
     detect_obfuscation,
@@ -83,10 +62,27 @@ from pyclaw.security.exec_hardening import (
     validate_binary,
 )
 
+# Phase 33e: Shared utils
+from pyclaw.shared.utils import (
+    UsageEntry,
+    aggregate_usage,
+    extract_reasoning,
+    find_code_regions,
+    has_reasoning_tags,
+    is_inside_code_block,
+    mask_api_key,
+    parse_frontmatter,
+    run_with_concurrency,
+    safe_json_dumps,
+    safe_json_parse,
+    strip_reasoning,
+    with_timeout,
+)
 
 # =====================================================================
 # Phase 33a: SSH/SCP
 # =====================================================================
+
 
 class TestSSHConfig:
     def test_parse_config(self, tmp_path: Path) -> None:
@@ -159,8 +155,11 @@ class TestSCPTransfer:
 
     def test_download_command(self) -> None:
         scp = SCPTransfer(
-            source="/remote/file.txt", destination="/local/",
-            ssh_host="dev", ssh_user="admin", upload=False,
+            source="/remote/file.txt",
+            destination="/local/",
+            ssh_host="dev",
+            ssh_user="admin",
+            upload=False,
         )
         cmd = scp.build_command()
         assert "admin@dev:/remote/file.txt" in cmd
@@ -174,6 +173,7 @@ class TestSCPTransfer:
 # =====================================================================
 # Phase 33b: System Events
 # =====================================================================
+
 
 class TestEventBus:
     def test_emit_and_handle(self) -> None:
@@ -251,6 +251,7 @@ class TestWakeManager:
 # Phase 33c: Archive
 # =====================================================================
 
+
 class TestArchive:
     def test_archive_session(self, tmp_path: Path) -> None:
         session_dir = tmp_path / "session" / "s1"
@@ -308,14 +309,19 @@ class TestArchive:
 # Phase 33d: Misc Extensions
 # =====================================================================
 
+
 class TestLobster:
     def test_create_pipeline(self) -> None:
         ext = LobsterExtension()
-        pipeline = ext.create_pipeline("p1", "Deploy", [
-            PipelineStep(step_id="s1", name="Build"),
-            PipelineStep(step_id="s2", name="Test", requires_approval=True),
-            PipelineStep(step_id="s3", name="Deploy"),
-        ])
+        pipeline = ext.create_pipeline(
+            "p1",
+            "Deploy",
+            [
+                PipelineStep(step_id="s1", name="Build"),
+                PipelineStep(step_id="s2", name="Test", requires_approval=True),
+                PipelineStep(step_id="s3", name="Deploy"),
+            ],
+        )
         assert pipeline.progress_pct == 0
         assert not pipeline.is_complete
 
@@ -381,10 +387,15 @@ class TestDiagnosticsOTEL:
 
     def test_record_and_flush(self) -> None:
         ext = DiagnosticsOTELExtension(OTELConfig(endpoint="http://otel:4318", enabled=True))
-        ext.record_span(OTELSpan(
-            trace_id="t1", span_id="s1", name="agent.run",
-            start_time=1000.0, end_time=1005.0,
-        ))
+        ext.record_span(
+            OTELSpan(
+                trace_id="t1",
+                span_id="s1",
+                name="agent.run",
+                start_time=1000.0,
+                end_time=1005.0,
+            )
+        )
         assert ext.pending_count == 1
         payload = ext.build_export_payload()
         assert len(payload["spans"]) == 1
@@ -398,6 +409,7 @@ class TestDiagnosticsOTEL:
 # =====================================================================
 # Phase 33e: Shared Utils
 # =====================================================================
+
 
 class TestReasoningTags:
     def test_extract(self) -> None:
@@ -480,6 +492,7 @@ class TestConcurrency:
     async def test_with_timeout_success(self) -> None:
         async def fast():
             return 42
+
         result = await with_timeout(fast(), 1.0)
         assert result == 42
 
@@ -487,6 +500,7 @@ class TestConcurrency:
     async def test_with_timeout_expired(self) -> None:
         async def slow():
             await asyncio.sleep(10)
+
         result = await with_timeout(slow(), 0.01, default=-1)
         assert result == -1
 
@@ -494,6 +508,7 @@ class TestConcurrency:
     async def test_run_with_concurrency(self) -> None:
         async def task(n: int) -> int:
             return n * 2
+
         results = await run_with_concurrency([task(i) for i in range(5)], max_concurrent=2)
         assert len(results) == 5
         assert results[0] == 0
@@ -516,6 +531,7 @@ class TestUsageAggregation:
 # =====================================================================
 # Phase 33f: Exec Hardening
 # =====================================================================
+
 
 class TestObfuscation:
     def test_detect_base64(self) -> None:

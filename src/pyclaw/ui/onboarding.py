@@ -19,6 +19,7 @@ class OnboardingWizard(ft.Column):
         self._config: dict[str, Any] = {}
 
         from pyclaw.agents.model_catalog import ModelCatalog
+
         self._catalog = ModelCatalog()
 
         self._content = ft.Container(expand=True)
@@ -55,10 +56,7 @@ class OnboardingWizard(ft.Column):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        provider_options = [
-            ft.dropdown.Option(p["id"], p["name"])
-            for p in self._catalog.list_providers()
-        ]
+        provider_options = [ft.dropdown.Option(p["id"], p["name"]) for p in self._catalog.list_providers()]
 
         self._provider_dropdown = ft.Dropdown(
             label=t("onboarding.provider_label"),
@@ -103,8 +101,8 @@ class OnboardingWizard(ft.Column):
             # Change "Next" to "Finish" on last step
             finish_btn = nav_row.controls[-1]
             if isinstance(finish_btn, ft.Button):
-                finish_btn.content = (
-                    ft.Text(t("onboarding.finish") if self._step == total - 1 else t("onboarding.next"))
+                finish_btn.content = ft.Text(
+                    t("onboarding.finish") if self._step == total - 1 else t("onboarding.next")
                 )
 
         if self._step == 0:
@@ -184,9 +182,7 @@ class OnboardingWizard(ft.Column):
         elif self._step == 2:
             self._config["model"] = self._model_dropdown.value
         elif self._step == 3:
-            self._config["channels"] = [
-                name for name, cb in self._channel_checks.items() if cb.value
-            ]
+            self._config["channels"] = [name for name, cb in self._channel_checks.items() if cb.value]
             # Complete
             if self._on_complete:
                 await self._on_complete(self._config)
@@ -202,10 +198,7 @@ class OnboardingWizard(ft.Column):
 
     def _build_model_options(self, provider: str) -> list[Any]:
         models = self._catalog.list_models(provider)
-        return [
-            ft.dropdown.Option(m.model_id, m.display_name or m.model_id)
-            for m in models
-        ]
+        return [ft.dropdown.Option(m.model_id, m.display_name or m.model_id) for m in models]
 
     async def _handle_provider_change(self, e: Any) -> None:
         provider = self._provider_dropdown.value or "anthropic"

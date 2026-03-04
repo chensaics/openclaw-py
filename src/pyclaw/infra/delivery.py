@@ -15,9 +15,10 @@ import asyncio
 import logging
 import time
 import uuid
-from dataclasses import dataclass, field
+from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Coroutine, cast
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ def compute_backoff(
     """Compute exponential backoff delay with jitter."""
     import random
 
-    delay = min(base_delay * (2 ** attempt), max_delay)
+    delay = min(base_delay * (2**attempt), max_delay)
     jitter = delay * jitter_factor * (2 * random.random() - 1)
     return cast(float, max(0.1, delay + jitter))
 
@@ -164,10 +165,7 @@ class DeliveryQueue:
         return self._entries.get(entry_id)
 
     def get_pending_count(self) -> int:
-        return sum(
-            1 for e in self._entries.values()
-            if e.status in (DeliveryStatus.PENDING, DeliveryStatus.DEFERRED)
-        )
+        return sum(1 for e in self._entries.values() if e.status in (DeliveryStatus.PENDING, DeliveryStatus.DEFERRED))
 
     def get_stats(self) -> dict[str, int]:
         stats: dict[str, int] = {}
@@ -181,10 +179,8 @@ class DeliveryQueue:
         try:
             while not self._stopped or not self._queue.empty():
                 try:
-                    _, _, entry_id = await asyncio.wait_for(
-                        self._queue.get(), timeout=1.0
-                    )
-                except asyncio.TimeoutError:
+                    _, _, entry_id = await asyncio.wait_for(self._queue.get(), timeout=1.0)
+                except TimeoutError:
                     # Check deferred entries
                     await self._recover_deferred()
                     continue
@@ -232,7 +228,9 @@ class DeliveryQueue:
             entry.status = DeliveryStatus.FAILED
             logger.warning(
                 "Delivery %s failed after %d attempts: %s",
-                entry.id, entry.attempts, error,
+                entry.id,
+                entry.attempts,
+                error,
             )
             return
 
@@ -247,7 +245,9 @@ class DeliveryQueue:
 
         logger.debug(
             "Deferring delivery %s (attempt %d, retry in %.1fs)",
-            entry.id, entry.attempts, delay,
+            entry.id,
+            entry.attempts,
+            delay,
         )
 
         await self._queue.put((entry.priority.value, entry.created_at, entry.id))

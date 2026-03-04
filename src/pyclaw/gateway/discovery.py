@@ -31,6 +31,7 @@ class DiscoveryMethod(str, Enum):
 @dataclass
 class DiscoveryConfig:
     """Configuration for service discovery."""
+
     mdns_enabled: bool = True
     tailscale_enabled: bool = False
     service_name: str = "pyclaw-gateway"
@@ -43,6 +44,7 @@ class DiscoveryConfig:
 @dataclass
 class DiscoveredService:
     """A discovered gateway service."""
+
     name: str
     host: str
     port: int
@@ -61,6 +63,7 @@ class DiscoveredService:
 @dataclass
 class AdvertisementState:
     """State of the service advertisement."""
+
     advertising: bool = False
     method: DiscoveryMethod = DiscoveryMethod.LOCAL
     service_name: str = ""
@@ -202,6 +205,4 @@ class ServiceDiscoveryManager:
     def is_advertising(self) -> bool:
         if self._mdns and self._mdns.state.advertising:
             return True
-        if self._tailscale and self._tailscale.state.advertising:
-            return True
-        return False
+        return bool(self._tailscale and self._tailscale.state.advertising)

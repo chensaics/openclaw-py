@@ -15,18 +15,11 @@ import pytest
 from pyclaw.channels.plugins.catalog import (
     BUILTIN_CATALOG,
     ChannelCatalog,
-    CatalogEntry,
     ChannelCategory,
 )
 from pyclaw.config.schema import ChannelsConfig
 
-
-CHANNELS_ROOT = (
-    pathlib.Path(__file__).resolve().parent.parent
-    / "src"
-    / "pyclaw"
-    / "channels"
-)
+CHANNELS_ROOT = pathlib.Path(__file__).resolve().parent.parent / "src" / "pyclaw" / "channels"
 
 
 # ---------- Catalog <-> Schema ----------
@@ -35,17 +28,13 @@ CHANNELS_ROOT = (
 class TestCatalogSchemaAlignment:
     def _schema_channel_fields(self) -> set[str]:
         skip = {"defaults"}
-        return {
-            name for name in ChannelsConfig.model_fields if name not in skip
-        }
+        return {name for name in ChannelsConfig.model_fields if name not in skip}
 
     def test_catalog_entries_have_schema_fields(self):
         """Every catalog entry should have a corresponding ChannelsConfig field."""
         schema_fields = self._schema_channel_fields()
         missing = sorted(set(BUILTIN_CATALOG.keys()) - schema_fields)
-        assert missing == [], (
-            f"Catalog entries without ChannelsConfig fields: {missing}"
-        )
+        assert missing == [], f"Catalog entries without ChannelsConfig fields: {missing}"
 
     def test_schema_extra_allows_unknown_channels(self):
         """ChannelsConfig uses extra='allow', so unknown channels don't break parsing."""
@@ -80,9 +69,7 @@ class TestCatalogImplementationAlignment:
         implemented = self._implemented_channels()
         catalog_types = set(BUILTIN_CATALOG.keys())
         missing = sorted(implemented - catalog_types)
-        assert missing == [], (
-            f"Implemented channels without catalog entry: {missing}"
-        )
+        assert missing == [], f"Implemented channels without catalog entry: {missing}"
 
     # Catalog entries that intentionally have no standalone channel.py
     # (e.g. webchat is embedded in the UI, onebot is a reserved slot).
@@ -93,19 +80,14 @@ class TestCatalogImplementationAlignment:
         implemented = self._implemented_channels()
         catalog_types = set(BUILTIN_CATALOG.keys()) - self.CATALOG_ONLY
         orphan = sorted(catalog_types - implemented)
-        assert orphan == [], (
-            f"Catalog entries without implementation: {orphan}"
-        )
+        assert orphan == [], f"Catalog entries without implementation: {orphan}"
 
     def test_catalog_validate_against_implementations_method(self):
         catalog = ChannelCatalog()
         result = catalog.validate_against_implementations(
             str(CHANNELS_ROOT),
         )
-        unexpected = [
-            t for t in result["in_catalog_not_implemented"]
-            if t not in self.CATALOG_ONLY
-        ]
+        unexpected = [t for t in result["in_catalog_not_implemented"] if t not in self.CATALOG_ONLY]
         assert unexpected == []
         assert result["implemented_not_in_catalog"] == []
 
@@ -143,9 +125,7 @@ class TestChannelPluginMeta:
     def test_base_plugin_dod_report(self):
         from pyclaw.channels.base import (
             ChannelPlugin,
-            ChannelMeta,
             ChannelReply,
-            StabilityLevel,
         )
 
         class Dummy(ChannelPlugin):

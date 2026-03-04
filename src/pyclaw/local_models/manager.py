@@ -6,7 +6,6 @@ import json
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional
 
 from pyclaw.config.paths import resolve_state_dir
 
@@ -46,7 +45,7 @@ def _save_manifest(manifest: LocalModelsManifest) -> None:
     )
 
 
-def list_local_models(backend: Optional[BackendType] = None) -> list[LocalModelInfo]:
+def list_local_models(backend: BackendType | None = None) -> list[LocalModelInfo]:
     manifest = _load_manifest()
     models = list(manifest.models.values())
     if backend is not None:
@@ -54,12 +53,12 @@ def list_local_models(backend: Optional[BackendType] = None) -> list[LocalModelI
     return models
 
 
-def get_local_model(model_id: str) -> Optional[LocalModelInfo]:
+def get_local_model(model_id: str) -> LocalModelInfo | None:
     manifest = _load_manifest()
     return manifest.models.get(model_id)
 
 
-def get_active_model() -> Optional[LocalModelInfo]:
+def get_active_model() -> LocalModelInfo | None:
     manifest = _load_manifest()
     if manifest.active_model_id:
         return manifest.models.get(manifest.active_model_id)
@@ -101,7 +100,7 @@ class LocalModelManager:
     @staticmethod
     def download_model(
         repo_id: str,
-        filename: Optional[str] = None,
+        filename: str | None = None,
         backend: BackendType = BackendType.LLAMACPP,
         source: DownloadSource = DownloadSource.HUGGINGFACE,
     ) -> LocalModelInfo:
@@ -115,7 +114,7 @@ class LocalModelManager:
     @staticmethod
     def _download_from_huggingface(
         repo_id: str,
-        filename: Optional[str],
+        filename: str | None,
         backend: BackendType,
     ) -> LocalModelInfo:
         try:
@@ -135,50 +134,56 @@ class LocalModelManager:
             logger.info("Downloading full repo %s (MLX)...", repo_id)
             snapshot_dir = snapshot_download(repo_id=repo_id, local_dir=str(local_dir))
             return LocalModelManager._register_model(
-                repo_id, filename or "(full repo)", backend,
-                DownloadSource.HUGGINGFACE, snapshot_dir,
+                repo_id,
+                filename or "(full repo)",
+                backend,
+                DownloadSource.HUGGINGFACE,
+                snapshot_dir,
             )
 
         if filename is None:
             filename = LocalModelManager._auto_select_file(
-                list(list_repo_files(repo_id)), backend,
+                list(list_repo_files(repo_id)),
+                backend,
             )
 
         logger.info("Downloading %s/%s from Hugging Face...", repo_id, filename)
         downloaded_path = hf_hub_download(
-            repo_id=repo_id, filename=filename, local_dir=str(local_dir),
+            repo_id=repo_id,
+            filename=filename,
+            local_dir=str(local_dir),
         )
         return LocalModelManager._register_model(
-            repo_id, filename, backend, DownloadSource.HUGGINGFACE, downloaded_path,
+            repo_id,
+            filename,
+            backend,
+            DownloadSource.HUGGINGFACE,
+            downloaded_path,
         )
 
     @staticmethod
     def _download_from_modelscope(
         repo_id: str,
-        filename: Optional[str],
+        filename: str | None,
         backend: BackendType,
     ) -> LocalModelInfo:
         try:
             from modelscope.hub.file_download import model_file_download
         except ImportError as exc:
             raise ImportError(
-                "modelscope is required for ModelScope downloads. "
-                "Install with: pip install modelscope"
+                "modelscope is required for ModelScope downloads. Install with: pip install modelscope"
             ) from exc
 
         _ensure_models_dir()
         if filename is None:
             try:
                 from modelscope.hub.api import HubApi
+
                 api = HubApi()
-                files = [
-                    f["Path"] for f in api.get_model_files(repo_id)
-                    if isinstance(f, dict) and "Path" in f
-                ]
+                files = [f["Path"] for f in api.get_model_files(repo_id) if isinstance(f, dict) and "Path" in f]
             except Exception as exc:
                 raise ValueError(
-                    f"Cannot list files for {repo_id} on ModelScope. "
-                    "Please specify the filename explicitly."
+                    f"Cannot list files for {repo_id} on ModelScope. Please specify the filename explicitly."
                 ) from exc
             filename = LocalModelManager._auto_select_file(files, backend)
 
@@ -186,10 +191,16 @@ class LocalModelManager:
         local_dir.mkdir(parents=True, exist_ok=True)
         logger.info("Downloading %s/%s from ModelScope...", repo_id, filename)
         downloaded_path = model_file_download(
-            model_id=repo_id, file_path=filename, local_dir=str(local_dir),
+            model_id=repo_id,
+            file_path=filename,
+            local_dir=str(local_dir),
         )
         return LocalModelManager._register_model(
-            repo_id, filename, backend, DownloadSource.MODELSCOPE, downloaded_path,
+            repo_id,
+            filename,
+            backend,
+            DownloadSource.MODELSCOPE,
+            downloaded_path,
         )
 
     @staticmethod
@@ -197,9 +208,7 @@ class LocalModelManager:
         if backend == BackendType.LLAMACPP:
             gguf_files = [f for f in files if f.endswith(".gguf")]
             if not gguf_files:
-                raise ValueError(
-                    "No .gguf files found. This repo may not provide GGUF-format models."
-                )
+                raise ValueError("No .gguf files found. This repo may not provide GGUF-format models.")
             return next((f for f in gguf_files if "Q4_K_M" in f), gguf_files[0])
         elif backend == BackendType.MLX:
             st_files = [f for f in files if f.endswith(".safetensors")]
@@ -220,7 +229,8 @@ class LocalModelManager:
         resolved = Path(downloaded_path).resolve()
         if resolved.is_dir():
             file_size = sum(
-                f.stat().st_size for f in resolved.rglob("*")
+                f.stat().st_size
+                for f in resolved.rglob("*")
                 if f.is_file() and not any(p.name.startswith(".") for p in f.parents)
             )
             model_id = repo_id

@@ -1,18 +1,14 @@
 """Tests for agent tools — file operations, exec, web, and registry."""
 
-import os
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from pyclaw.agents.tools.base import BaseTool
 from pyclaw.agents.tools.exec_tool import ExecTool
 from pyclaw.agents.tools.file_tools import EditTool, ReadTool, WriteTool
 from pyclaw.agents.tools.registry import ToolRegistry, create_default_tools
-from pyclaw.agents.tools.web_tools import WebFetchTool, _extract_text_from_html, _is_url_safe
-from pyclaw.agents.types import AgentTool, ToolResult
-
+from pyclaw.agents.tools.web_tools import _extract_text_from_html, _is_url_safe
+from pyclaw.agents.types import AgentTool
 
 # ---------- Registry ----------
 
@@ -142,11 +138,14 @@ async def test_edit_single_replace(tmp_path: Path):
     test_file.write_text("def foo():\n    return 1\n")
 
     tool = EditTool(workspace_root=str(tmp_path))
-    result = await tool.execute("c1", {
-        "path": str(test_file),
-        "old_string": "return 1",
-        "new_string": "return 42",
-    })
+    result = await tool.execute(
+        "c1",
+        {
+            "path": str(test_file),
+            "old_string": "return 1",
+            "new_string": "return 42",
+        },
+    )
     assert not result.is_error
     assert "return 42" in test_file.read_text()
 
@@ -157,11 +156,14 @@ async def test_edit_not_found(tmp_path: Path):
     test_file.write_text("hello")
 
     tool = EditTool(workspace_root=str(tmp_path))
-    result = await tool.execute("c1", {
-        "path": str(test_file),
-        "old_string": "nonexistent",
-        "new_string": "x",
-    })
+    result = await tool.execute(
+        "c1",
+        {
+            "path": str(test_file),
+            "old_string": "nonexistent",
+            "new_string": "x",
+        },
+    )
     assert result.is_error
     assert "not found" in result.content[0]["text"].lower()
 
@@ -172,11 +174,14 @@ async def test_edit_ambiguous(tmp_path: Path):
     test_file.write_text("x = 1\ny = 1\n")
 
     tool = EditTool(workspace_root=str(tmp_path))
-    result = await tool.execute("c1", {
-        "path": str(test_file),
-        "old_string": "= 1",
-        "new_string": "= 2",
-    })
+    result = await tool.execute(
+        "c1",
+        {
+            "path": str(test_file),
+            "old_string": "= 1",
+            "new_string": "= 2",
+        },
+    )
     assert result.is_error
     assert "2 times" in result.content[0]["text"]
 
@@ -187,12 +192,15 @@ async def test_edit_replace_all(tmp_path: Path):
     test_file.write_text("x = 1\ny = 1\n")
 
     tool = EditTool(workspace_root=str(tmp_path))
-    result = await tool.execute("c1", {
-        "path": str(test_file),
-        "old_string": "= 1",
-        "new_string": "= 2",
-        "replace_all": True,
-    })
+    result = await tool.execute(
+        "c1",
+        {
+            "path": str(test_file),
+            "old_string": "= 1",
+            "new_string": "= 2",
+            "replace_all": True,
+        },
+    )
     assert not result.is_error
     assert test_file.read_text() == "x = 2\ny = 2\n"
 
@@ -228,10 +236,13 @@ async def test_exec_timeout():
 @pytest.mark.asyncio
 async def test_exec_working_directory(tmp_path: Path):
     tool = ExecTool()
-    result = await tool.execute("c1", {
-        "command": "pwd",
-        "working_directory": str(tmp_path),
-    })
+    result = await tool.execute(
+        "c1",
+        {
+            "command": "pwd",
+            "working_directory": str(tmp_path),
+        },
+    )
     assert not result.is_error
     assert str(tmp_path) in result.content[0]["text"]
 

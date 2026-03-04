@@ -59,12 +59,14 @@ class TestGatewayClient:
         fut = loop.create_future()
         client._pending["req-123"] = fut
 
-        client._handle_response({
-            "type": "res",
-            "id": "req-123",
-            "ok": True,
-            "payload": {"result": "hello"},
-        })
+        client._handle_response(
+            {
+                "type": "res",
+                "id": "req-123",
+                "ok": True,
+                "payload": {"result": "hello"},
+            }
+        )
 
         assert fut.done()
         assert fut.result() == {"result": "hello"}
@@ -76,12 +78,14 @@ class TestGatewayClient:
         fut = loop.create_future()
         client._pending["req-456"] = fut
 
-        client._handle_response({
-            "type": "res",
-            "id": "req-456",
-            "ok": False,
-            "error": {"code": "not_found", "message": "Not found"},
-        })
+        client._handle_response(
+            {
+                "type": "res",
+                "id": "req-456",
+                "ok": False,
+                "error": {"code": "not_found", "message": "Not found"},
+            }
+        )
 
         assert fut.done()
         with pytest.raises(GatewayError) as exc_info:
@@ -95,22 +99,26 @@ class TestGatewayClient:
         fut = loop.create_future()
         client._pending["req-789"] = fut
 
-        client._handle_response({
-            "type": "res",
-            "id": "req-789",
-            "ok": True,
-        })
+        client._handle_response(
+            {
+                "type": "res",
+                "id": "req-789",
+                "ok": True,
+            }
+        )
 
         assert fut.result() == {}
         loop.close()
 
     def test_handle_response_ignores_unknown_id(self) -> None:
         client = GatewayClient()
-        client._handle_response({
-            "type": "res",
-            "id": "unknown",
-            "ok": True,
-        })
+        client._handle_response(
+            {
+                "type": "res",
+                "id": "unknown",
+                "ok": True,
+            }
+        )
 
     def test_handle_event_fires_listeners(self) -> None:
         client = GatewayClient()
@@ -121,11 +129,13 @@ class TestGatewayClient:
 
         client.on_event("test.event", on_test)
         asyncio.get_event_loop().run_until_complete(
-            client._handle_event({
-                "type": "event",
-                "event": "test.event",
-                "payload": {"text": "hello"},
-            })
+            client._handle_event(
+                {
+                    "type": "event",
+                    "event": "test.event",
+                    "payload": {"text": "hello"},
+                }
+            )
         )
         assert received == ["hello"]
 
@@ -138,11 +148,13 @@ class TestGatewayClient:
 
         client.on_any_event(on_any)
         asyncio.get_event_loop().run_until_complete(
-            client._handle_event({
-                "type": "event",
-                "event": "test.global",
-                "payload": {"x": 1},
-            })
+            client._handle_event(
+                {
+                    "type": "event",
+                    "event": "test.global",
+                    "payload": {"x": 1},
+                }
+            )
         )
         assert len(received) == 1
         assert received[0] == ("test.global", {"x": 1})
@@ -177,16 +189,18 @@ class TestGatewayClient:
         fut = loop.create_future()
         client._pending["detail-req"] = fut
 
-        client._handle_response({
-            "type": "res",
-            "id": "detail-req",
-            "ok": False,
-            "error": {
-                "code": "rate_limit",
-                "message": "Too many requests",
-                "details": {"retryAfterMs": 5000},
-            },
-        })
+        client._handle_response(
+            {
+                "type": "res",
+                "id": "detail-req",
+                "ok": False,
+                "error": {
+                    "code": "rate_limit",
+                    "message": "Too many requests",
+                    "details": {"retryAfterMs": 5000},
+                },
+            }
+        )
 
         with pytest.raises(GatewayError) as exc_info:
             fut.result()
@@ -209,7 +223,7 @@ class TestGatewayError:
 
 class TestTheme:
     def test_theme_defaults(self) -> None:
-        from pyclaw.ui.theme import AppTheme, get_theme
+        from pyclaw.ui.theme import get_theme
 
         theme = get_theme()
         assert theme.colors.primary == "#6366f1"
@@ -218,14 +232,14 @@ class TestTheme:
         assert theme.nav_rail_width == 72
 
     def test_set_seed_color(self) -> None:
-        from pyclaw.ui.theme import set_seed_color, get_theme
+        from pyclaw.ui.theme import get_theme, set_seed_color
 
         set_seed_color("#ff0000")
         assert get_theme().colors.primary == "#ff0000"
         set_seed_color("#6366f1")
 
     def test_toggle_theme(self) -> None:
-        from pyclaw.ui.theme import toggle_theme, get_theme, set_theme, LIGHT_THEME
+        from pyclaw.ui.theme import LIGHT_THEME, set_theme, toggle_theme
 
         set_theme(LIGHT_THEME)
         dark = toggle_theme()

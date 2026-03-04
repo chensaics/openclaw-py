@@ -2,7 +2,7 @@
 
 import types
 
-from pyclaw.plugins.loader import PluginInfo, PluginLoader
+from pyclaw.plugins.loader import PluginLoader
 
 
 def test_loader_empty():

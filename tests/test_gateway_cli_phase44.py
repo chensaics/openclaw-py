@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # 44a: Gateway subcommand tree
 # ---------------------------------------------------------------------------
 
+
 class TestGatewaySubcommands:
     """Verify gateway subcommand surface exists and accepts correct args."""
 
@@ -70,6 +71,7 @@ class TestGatewaySubcommands:
 # 44b: Logs RPC method
 # ---------------------------------------------------------------------------
 
+
 class TestLogsRPC:
     """Verify logs.tail RPC handler registration and behavior."""
 
@@ -91,6 +93,7 @@ class TestLogsRPC:
         class FakeConn:
             async def send_ok(self, method: str, payload: dict) -> None:
                 responses.append((method, payload))
+
             async def send_error(self, method: str, code: str, msg: str) -> None:
                 responses.append((method, {"error": code, "message": msg}))
 
@@ -116,6 +119,7 @@ class TestLogsRPC:
         class FakeConn:
             async def send_ok(self, method: str, payload: dict) -> None:
                 responses.append((method, payload))
+
             async def send_error(self, method: str, code: str, msg: str) -> None:
                 responses.append((method, {"error": code, "message": msg}))
 
@@ -130,6 +134,7 @@ class TestLogsRPC:
 # 44c: Logs CLI remote + local fallback
 # ---------------------------------------------------------------------------
 
+
 class TestLogsCLI:
     """Verify logs command tries RPC then falls back to local file."""
 
@@ -140,8 +145,10 @@ class TestLogsCLI:
             assert flag in result.stdout
 
     def test_logs_fallback_local_no_crash(self, tmp_path: Path) -> None:
-        with patch("pyclaw.cli.commands.logs_cmd._try_rpc_tail", return_value=None), \
-             patch("pyclaw.cli.commands.logs_cmd.resolve_state_dir", return_value=tmp_path):
+        with (
+            patch("pyclaw.cli.commands.logs_cmd._try_rpc_tail", return_value=None),
+            patch("pyclaw.cli.commands.logs_cmd.resolve_state_dir", return_value=tmp_path),
+        ):
             result = runner.invoke(app, ["logs"])
         assert result.exit_code == 0
 
@@ -158,18 +165,22 @@ class TestLogsCLI:
 # 44d: pyclaw naming convergence
 # ---------------------------------------------------------------------------
 
+
 class TestPyclawNaming:
     """Ensure all user-facing text uses pyclaw, not openclaw."""
 
-    @pytest.mark.parametrize("filepath", [
-        "src/pyclaw/cli/commands/config_cmd.py",
-        "src/pyclaw/cli/commands/setup.py",
-        "src/pyclaw/cli/commands/auth_cmd.py",
-        "src/pyclaw/cli/commands/doctor.py",
-        "src/pyclaw/cli/commands/doctor_flows.py",
-        "src/pyclaw/cli/commands/onboarding_enhanced.py",
-        "src/pyclaw/cli/commands/message_cmd.py",
-    ])
+    @pytest.mark.parametrize(
+        "filepath",
+        [
+            "src/pyclaw/cli/commands/config_cmd.py",
+            "src/pyclaw/cli/commands/setup.py",
+            "src/pyclaw/cli/commands/auth_cmd.py",
+            "src/pyclaw/cli/commands/doctor.py",
+            "src/pyclaw/cli/commands/doctor_flows.py",
+            "src/pyclaw/cli/commands/onboarding_enhanced.py",
+            "src/pyclaw/cli/commands/message_cmd.py",
+        ],
+    )
     def test_no_openclaw_in_user_text(self, filepath: str) -> None:
         full = PROJECT_ROOT / filepath
         if not full.exists():
@@ -186,13 +197,14 @@ class TestPyclawNaming:
                     continue
                 # Check for quoted user-facing text containing 'openclaw' as a command
                 for quote_char in ("'", '"'):
-                    if f"{quote_char}openclaw " in stripped or f"'openclaw " in stripped:
+                    if f"{quote_char}openclaw " in stripped or "'openclaw " in stripped:
                         pytest.fail(f"{filepath}:{i} still references 'openclaw' in user text: {stripped}")
 
 
 # ---------------------------------------------------------------------------
 # 44e: extended.py browser placeholder removal
 # ---------------------------------------------------------------------------
+
 
 class TestExtendedBrowserDedup:
     """Verify browser.status/browser.navigate no longer in extended handlers."""
@@ -215,6 +227,7 @@ class TestExtendedBrowserDedup:
 # Registration ordering
 # ---------------------------------------------------------------------------
 
+
 class TestRegistrationOrder:
     """Verify logs.tail is registered and browser is authoritative."""
 
@@ -228,6 +241,7 @@ class TestRegistrationOrder:
 # ---------------------------------------------------------------------------
 # Regression: gateway help still shows in root
 # ---------------------------------------------------------------------------
+
 
 class TestRootRegression:
     """Phase 39+ regression: gateway subcommand visible in root help."""

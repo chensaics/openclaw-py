@@ -24,14 +24,16 @@ logger = logging.getLogger(__name__)
 
 class QueueMode(str, Enum):
     """How queued messages interact with an in-progress agent run."""
-    STEER = "steer"          # Inject into current run
+
+    STEER = "steer"  # Inject into current run
     INTERRUPT = "interrupt"  # Abort current run, start new
-    FOLLOWUP = "followup"    # Wait for current run, then process
-    COLLECT = "collect"      # Batch messages, process together
+    FOLLOWUP = "followup"  # Wait for current run, then process
+    COLLECT = "collect"  # Batch messages, process together
 
 
 class DropPolicy(str, Enum):
     """What to do when queue is at capacity."""
+
     DROP_OLDEST = "drop_oldest"
     DROP_NEWEST = "drop_newest"
     REJECT = "reject"
@@ -40,6 +42,7 @@ class DropPolicy(str, Enum):
 @dataclass
 class QueueSettings:
     """Configuration for the message queue."""
+
     mode: QueueMode = QueueMode.FOLLOWUP
     max_size: int = 50
     drop_policy: DropPolicy = DropPolicy.DROP_OLDEST
@@ -50,6 +53,7 @@ class QueueSettings:
 @dataclass
 class QueuedMessage:
     """A message waiting in the queue."""
+
     text: str
     sender_id: str = ""
     channel_id: str = ""
@@ -65,6 +69,7 @@ class QueuedMessage:
 @dataclass
 class DrainResult:
     """Result of draining the queue."""
+
     messages: list[QueuedMessage]
     mode: QueueMode
     dropped_count: int = 0
@@ -157,7 +162,7 @@ class MessageQueue:
         try:
             await asyncio.wait_for(self._drain_event.wait(), timeout=timeout)
             return True
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
 
     def normalize(self) -> None:

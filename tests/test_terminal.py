@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
-from pyclaw.terminal.table import TableColumn, render_table
 from pyclaw.terminal.palette import PALETTE, ColorPalette
+from pyclaw.terminal.table import TableColumn, render_table
 
 
 class TestRenderTable:

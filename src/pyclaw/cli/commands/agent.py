@@ -8,8 +8,6 @@ Phase 39 notes:
 
 from __future__ import annotations
 
-from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
-
 import asyncio
 import json
 import sys
@@ -19,6 +17,7 @@ import typer
 from pyclaw.agents.runner import run_agent
 from pyclaw.agents.session import SessionManager
 from pyclaw.agents.types import ModelConfig
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 from pyclaw.config.paths import resolve_sessions_dir
 
 

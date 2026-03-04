@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 @dataclass
 class RateLimitConfig:
     """Configuration for control plane rate limiting."""
+
     max_requests: int = 3
     window_s: float = 60.0
     enabled: bool = True
@@ -26,6 +27,7 @@ class RateLimitConfig:
 @dataclass
 class RateLimitEntry:
     """Timestamps of recent requests for a single key."""
+
     timestamps: list[float] = field(default_factory=list)
 
     def prune(self, window_s: float, now: float | None = None) -> None:
@@ -36,6 +38,7 @@ class RateLimitEntry:
 @dataclass
 class RateLimitResult:
     """Result of a rate limit check."""
+
     allowed: bool
     remaining: int
     retry_after_s: float = 0.0
@@ -56,7 +59,9 @@ class ControlPlaneRateLimiter:
     def check(self, device_id: str, ip: str) -> RateLimitResult:
         """Check if a request is allowed (does not consume)."""
         if not self._config.enabled:
-            return RateLimitResult(allowed=True, remaining=self._config.max_requests, total_limit=self._config.max_requests)
+            return RateLimitResult(
+                allowed=True, remaining=self._config.max_requests, total_limit=self._config.max_requests
+            )
 
         key = self._make_key(device_id, ip)
         entry = self._entries.get(key)

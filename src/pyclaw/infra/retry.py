@@ -6,10 +6,10 @@ Ported from ``src/infra/retry-policy.ts``.
 from __future__ import annotations
 
 import asyncio
-import math
 import random
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, TypeVar, cast
+from typing import TypeVar, cast
 
 T = TypeVar("T")
 
@@ -17,6 +17,7 @@ T = TypeVar("T")
 @dataclass
 class RetryConfig:
     """Configuration for retry behavior."""
+
     max_attempts: int = 3
     min_delay_ms: float = 500.0
     max_delay_ms: float = 30_000.0
@@ -38,14 +39,14 @@ class RetryError(Exception):
 
 def _compute_delay(attempt: int, config: RetryConfig) -> float:
     """Compute delay in seconds using exponential backoff + jitter."""
-    base = config.min_delay_ms * (2 ** attempt)
+    base = config.min_delay_ms * (2**attempt)
     capped = min(base, config.max_delay_ms)
     jitter_range = capped * config.jitter
     jittered = capped + random.uniform(-jitter_range, jitter_range)
     return cast(float, max(0.0, jittered) / 1000.0)
 
 
-async def retry_async(
+async def retry_async[T](
     fn: Callable[[], Awaitable[T]],
     *,
     config: RetryConfig | None = None,
@@ -83,6 +84,7 @@ async def retry_async(
 # ---------------------------------------------------------------------------
 # Provider error classification
 # ---------------------------------------------------------------------------
+
 
 class ProviderErrorKind:
     RATE_LIMIT = "rate_limit"
@@ -127,6 +129,7 @@ def extract_retry_after(exc: Exception) -> float | None:
     """Try to extract a Retry-After value (in seconds) from the exception."""
     msg = str(exc)
     import re
+
     m = re.search(r"retry[- _]after[:\s]+(\d+(?:\.\d+)?)", msg, re.IGNORECASE)
     if m:
         return float(m.group(1))

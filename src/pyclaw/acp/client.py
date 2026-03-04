@@ -162,7 +162,7 @@ def _build_server_command(
     no_prefix_cwd: bool,
     server_verbose: bool,
 ) -> list[str]:
-    if server in {"pyclaw", "pyclaw"}:
+    if server in {"pyclaw"}:
         cmd = [sys.executable, "-m", "pyclaw.acp.server", "--gateway-url", gateway_url]
         if auth_token:
             cmd.extend(["--auth-token", auth_token])

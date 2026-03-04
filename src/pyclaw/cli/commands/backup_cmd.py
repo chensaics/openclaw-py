@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +27,8 @@ backup_app = typer.Typer(name="backup", help="Export and import pyclaw data.")
 def backup_export(
     output: str = typer.Option(
         "",
-        "--output", "-o",
+        "--output",
+        "-o",
         help="Output zip file path. Defaults to pyclaw-backup-<date>.zip",
     ),
 ) -> None:
@@ -40,7 +41,7 @@ def backup_export(
         raise typer.Exit(1)
 
     if not output:
-        datestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        datestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         output = f"pyclaw-backup-{datestamp}.zip"
 
     output_path = Path(output)
@@ -75,7 +76,7 @@ def backup_export(
 
         manifest: dict[str, Any] = {
             "version": 1,
-            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "createdAt": datetime.now(UTC).isoformat(),
             "files": included_count,
         }
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))
@@ -113,11 +114,11 @@ def backup_import(
                 continue
 
             if info.filename.startswith("config/"):
-                target = state_dir / info.filename[len("config/"):]
+                target = state_dir / info.filename[len("config/") :]
             elif info.filename.startswith("sessions/"):
-                target = state_dir / "sessions" / info.filename[len("sessions/"):]
+                target = state_dir / "sessions" / info.filename[len("sessions/") :]
             elif info.filename.startswith("summaries/"):
-                target = state_dir / "summaries" / info.filename[len("summaries/"):]
+                target = state_dir / "summaries" / info.filename[len("summaries/") :]
             elif info.filename == "memory.db":
                 target = state_dir / "memory.db"
             else:
@@ -139,6 +140,4 @@ def backup_import(
 def _is_safe_to_backup(path: Path) -> bool:
     """Exclude files that might contain raw secrets."""
     name = path.name.lower()
-    if "credential" in name or "secret" in name:
-        return False
-    return True
+    return not ("credential" in name or "secret" in name)

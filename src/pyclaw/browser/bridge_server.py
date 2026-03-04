@@ -15,14 +15,13 @@ import hmac
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from pyclaw.browser.relay import (
     BrowserRelayManager,
     RelayConfig,
     RelayMessage,
-    RelaySession,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,6 +30,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BridgeConfig:
     """Configuration for the bridge server."""
+
     host: str = "127.0.0.1"
     port: int = 9222
     auth_token: str = ""
@@ -43,6 +43,7 @@ class BridgeConfig:
 @dataclass
 class TabInfo:
     """Information about a browser tab from the extension."""
+
     tab_id: str
     title: str = ""
     url: str = ""
@@ -59,6 +60,7 @@ class TabInfo:
 @dataclass
 class DOMSnapshot:
     """A DOM snapshot received from the extension."""
+
     tab_id: str
     html: str = ""
     text: str = ""
@@ -173,7 +175,8 @@ class BridgeServer:
         if snapshot.size_bytes > self._config.max_snapshot_size:
             logger.warning(
                 "Snapshot too large: %d bytes (max %d)",
-                snapshot.size_bytes, self._config.max_snapshot_size,
+                snapshot.size_bytes,
+                self._config.max_snapshot_size,
             )
             return False
         self._snapshots[snapshot.tab_id] = snapshot

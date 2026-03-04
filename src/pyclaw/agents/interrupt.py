@@ -14,9 +14,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +55,7 @@ class InterruptibleContext:
         """Request a cancel-mode interruption."""
         import time
 
-        req = InterruptRequest(
-            message=message, mode=InterruptMode.CANCEL, timestamp=time.time()
-        )
+        req = InterruptRequest(message=message, mode=InterruptMode.CANCEL, timestamp=time.time())
         self._interrupt_log.append(req)
         self._cancel_event.set()
         logger.info("Interrupt: cancel requested")
@@ -67,9 +64,7 @@ class InterruptibleContext:
         """Request an append-mode interruption (additional context)."""
         import time
 
-        req = InterruptRequest(
-            message=message, mode=InterruptMode.APPEND, timestamp=time.time()
-        )
+        req = InterruptRequest(message=message, mode=InterruptMode.APPEND, timestamp=time.time())
         self._interrupt_log.append(req)
         self._append_queue.put_nowait(message)
         logger.info("Interrupt: append requested")

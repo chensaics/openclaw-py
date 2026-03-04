@@ -9,7 +9,6 @@ from typer.testing import CliRunner
 
 from pyclaw.cli.app import app
 
-
 runner = CliRunner()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DOCS_DIR = PROJECT_ROOT / "docs" / "reference"

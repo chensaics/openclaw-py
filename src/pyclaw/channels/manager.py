@@ -15,6 +15,7 @@ def _record_metric(channel_id: str, event: str) -> None:
     """Record a metric event if the gateway channels module is loaded."""
     try:
         from pyclaw.gateway.methods.channels import record_channel_metric
+
         record_channel_metric(channel_id, event)
     except Exception:
         pass
@@ -75,10 +76,7 @@ class ChannelManager:
         return self._channels.get(channel_id)
 
     def list_channels(self) -> list[dict[str, Any]]:
-        return [
-            {"id": ch.id, "name": ch.name, "running": ch.is_running}
-            for ch in self._channels.values()
-        ]
+        return [{"id": ch.id, "name": ch.name, "running": ch.is_running} for ch in self._channels.values()]
 
     async def _dispatch_message(self, msg: ChannelMessage) -> None:
         """Route an incoming message to the handler and send back a reply."""

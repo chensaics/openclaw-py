@@ -30,6 +30,7 @@ class MediaInputType(str, Enum):
 @dataclass
 class UnderstandingRequest:
     """Request for media understanding."""
+
     input_type: MediaInputType
     url: str = ""
     data: bytes = b""
@@ -42,6 +43,7 @@ class UnderstandingRequest:
 @dataclass
 class UnderstandingResult:
     """Result from media understanding."""
+
     text: str
     provider: str
     model: str = ""
@@ -53,6 +55,7 @@ class UnderstandingResult:
 
 class UnderstandingProvider(Protocol):
     """Protocol for media understanding providers."""
+
     @property
     def name(self) -> str: ...
     @property
@@ -64,6 +67,7 @@ class UnderstandingProvider(Protocol):
 # ---------------------------------------------------------------------------
 # Groq Provider
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GroqConfig:
@@ -105,13 +109,15 @@ class GroqUnderstandingProvider:
             },
             "body": {
                 "model": self._config.vision_model,
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": req.prompt or "Describe this image."},
-                        {"type": "image_url", "image_url": {"url": req.url}},
-                    ],
-                }],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": req.prompt or "Describe this image."},
+                            {"type": "image_url", "image_url": {"url": req.url}},
+                        ],
+                    }
+                ],
                 "max_tokens": req.max_tokens,
             },
         }
@@ -129,6 +135,7 @@ class GroqUnderstandingProvider:
 # ---------------------------------------------------------------------------
 # Mistral Provider
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MistralConfig:
@@ -161,13 +168,15 @@ class MistralUnderstandingProvider:
             },
             "body": {
                 "model": self._config.model,
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": req.prompt or "Describe this image."},
-                        {"type": "image_url", "image_url": {"url": req.url}},
-                    ],
-                }],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": req.prompt or "Describe this image."},
+                            {"type": "image_url", "image_url": {"url": req.url}},
+                        ],
+                    }
+                ],
                 "max_tokens": req.max_tokens,
             },
         }
@@ -187,6 +196,7 @@ class MistralUnderstandingProvider:
 # ---------------------------------------------------------------------------
 # Deepgram Provider
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DeepgramConfig:
@@ -243,6 +253,7 @@ class DeepgramUnderstandingProvider:
 # xAI (Zai) Provider
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class XAIConfig:
     api_key: str = ""
@@ -274,13 +285,15 @@ class XAIUnderstandingProvider:
             },
             "body": {
                 "model": self._config.model,
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": req.prompt or "Describe this image."},
-                        {"type": "image_url", "image_url": {"url": req.url}},
-                    ],
-                }],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": req.prompt or "Describe this image."},
+                            {"type": "image_url", "image_url": {"url": req.url}},
+                        ],
+                    }
+                ],
                 "max_tokens": req.max_tokens,
             },
         }

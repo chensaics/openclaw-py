@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Any
 
@@ -38,7 +37,7 @@ class McpToolAdapter(BaseTool):
         try:
             result = await self._client.call_tool(self._info.name, arguments)
             return _mcp_result_to_tool_result(result)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return ToolResult.text(
                 f"MCP tool '{self._info.name}' timed out after {self._client._config.tool_timeout}s",
                 is_error=True,
@@ -82,12 +81,14 @@ class McpRegistry:
     def get_status(self) -> list[dict[str, Any]]:
         statuses: list[dict[str, Any]] = []
         for name, client in self._clients.items():
-            statuses.append({
-                "name": name,
-                "connected": client.is_connected,
-                "tools": [t.name for t in client.tools],
-                "transport": "stdio" if client._config.is_stdio else "http",
-            })
+            statuses.append(
+                {
+                    "name": name,
+                    "connected": client.is_connected,
+                    "tools": [t.name for t in client.tools],
+                    "transport": "stdio" if client._config.is_stdio else "http",
+                }
+            )
         return statuses
 
     @property

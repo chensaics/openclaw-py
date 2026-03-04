@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
+from pyclaw.auto_reply.commands_core import (
+    handle_help,
+    handle_status,
+    handle_whoami,
+    register_core_commands,
+)
+from pyclaw.auto_reply.commands_model import (
+    handle_model,
+    handle_think,
+)
 from pyclaw.auto_reply.commands_registry import (
     BUILTIN_COMMANDS,
-    CommandArg,
     CommandContext,
     CommandDef,
     CommandRegistry,
@@ -17,26 +24,12 @@ from pyclaw.auto_reply.commands_registry import (
     ParsedCommand,
     create_default_registry,
 )
-from pyclaw.auto_reply.commands_core import (
-    handle_help,
-    handle_status,
-    handle_whoami,
-    register_core_commands,
-)
 from pyclaw.auto_reply.commands_session import (
     handle_session,
     handle_stop,
-    handle_compact,
-    register_session_commands,
-)
-from pyclaw.auto_reply.commands_model import (
-    handle_model,
-    handle_think,
-    register_model_commands,
 )
 from pyclaw.auto_reply.directives import (
     DirectivePersistence,
-    DirectiveSet,
     apply_directives,
     is_fast_lane,
     parse_directives,
@@ -44,21 +37,21 @@ from pyclaw.auto_reply.directives import (
 from pyclaw.auto_reply.message_queue import (
     DropPolicy,
     MessageQueue,
+    QueuedMessage,
     QueueMode,
     QueueSettings,
-    QueuedMessage,
 )
 from pyclaw.auto_reply.reply_dispatcher import (
+    DispatcherRegistry,
     DispatchResult,
     DispatchRoute,
-    DispatcherRegistry,
     InboundDeduplicator,
     InboundMessage,
     ReplyDispatcher,
 )
 
-
 # ===== Command Registry =====
+
 
 class TestCommandRegistry:
     def test_register_and_parse(self) -> None:
@@ -180,6 +173,7 @@ class TestCommandRegistry:
 
 # ===== Core Commands =====
 
+
 class TestCoreCommands:
     @pytest.mark.asyncio
     async def test_help(self) -> None:
@@ -216,6 +210,7 @@ class TestCoreCommands:
 
 # ===== Session Commands =====
 
+
 class TestSessionCommands:
     @pytest.mark.asyncio
     async def test_session_new(self) -> None:
@@ -236,13 +231,16 @@ class TestSessionCommands:
 
     @pytest.mark.asyncio
     async def test_stop(self) -> None:
-        result = await handle_stop(CommandContext(
-            command=ParsedCommand(name="stop", args=[], raw_args=""),
-        ))
+        result = await handle_stop(
+            CommandContext(
+                command=ParsedCommand(name="stop", args=[], raw_args=""),
+            )
+        )
         assert result.stop_processing is True
 
 
 # ===== Model Commands =====
+
 
 class TestModelCommands:
     @pytest.mark.asyncio
@@ -280,6 +278,7 @@ class TestModelCommands:
 
 
 # ===== Directives =====
+
 
 class TestDirectives:
     def test_parse_think(self) -> None:
@@ -345,6 +344,7 @@ class TestDirectives:
 
 # ===== Message Queue =====
 
+
 class TestMessageQueue:
     def test_enqueue_dequeue(self) -> None:
         q = MessageQueue()
@@ -395,6 +395,7 @@ class TestMessageQueue:
 
 
 # ===== Reply Dispatcher =====
+
 
 class TestInboundDeduplicator:
     def test_not_duplicate(self) -> None:

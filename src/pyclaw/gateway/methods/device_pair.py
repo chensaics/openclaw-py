@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection
 
+from pyclaw.pairing.setup_code import PairingSetup, encode_pairing_setup_code
 from pyclaw.pairing.store import approve_pairing_code, read_allow_from_store
-from pyclaw.pairing.setup_code import encode_pairing_setup_code, PairingSetup
 
 
 async def _handle_device_pair_code(

@@ -5,9 +5,7 @@ Ported from ``src/gateway/`` control-ui handling.
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -96,7 +94,8 @@ def create_control_ui_routes(
         if path == CONTROL_UI_BOOTSTRAP_CONFIG_PATH.lstrip("/"):
             return await handle_bootstrap_config(request)
 
-        from pyclaw.canvas.handler import resolve_file_within_root, guess_content_type
+        from pyclaw.canvas.handler import guess_content_type, resolve_file_within_root
+
         file = resolve_file_within_root(ui_root, path or "index.html")
 
         if not file:

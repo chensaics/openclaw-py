@@ -185,9 +185,7 @@ class ChannelAuthGuard:
         if decision == DmGroupAccessDecision.ALLOW:
             return AuthResponse(decision=AuthDecision.ALLOW, request=request)
         elif decision == DmGroupAccessDecision.PAIRING:
-            return AuthResponse(
-                decision=AuthDecision.PAIRING, reason="pairing required", request=request
-            )
+            return AuthResponse(decision=AuthDecision.PAIRING, reason="pairing required", request=request)
         else:
             return self._deny(request, "message denied by policy")
 

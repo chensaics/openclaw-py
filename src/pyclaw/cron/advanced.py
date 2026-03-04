@@ -17,9 +17,10 @@ import asyncio
 import hashlib
 import logging
 import time
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class TaskState(str, Enum):
 @dataclass
 class TimeoutPolicy:
     """Per-task timeout configuration."""
+
     default_timeout_s: float = 300.0
     max_timeout_s: float = 3600.0
     kill_grace_s: float = 10.0
@@ -44,6 +46,7 @@ class TimeoutPolicy:
 @dataclass
 class CronTaskConfig:
     """Configuration for a single cron task."""
+
     task_id: str
     schedule: str  # cron expression
     command: str = ""
@@ -59,6 +62,7 @@ class CronTaskConfig:
 @dataclass
 class TaskExecution:
     """Record of a single task execution."""
+
     task_id: str
     state: TaskState = TaskState.PENDING
     started_at: float = 0.0
@@ -79,9 +83,11 @@ class TaskExecution:
 # Skill Snapshot
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SkillSnapshot:
     """Frozen snapshot of skills for a cron agent."""
+
     task_id: str
     skills: list[str]
     captured_at: float = 0.0
@@ -91,9 +97,7 @@ class SkillSnapshot:
         if self.captured_at == 0:
             self.captured_at = time.time()
         if not self.checksum:
-            self.checksum = hashlib.sha256(
-                ",".join(sorted(self.skills)).encode()
-            ).hexdigest()[:12]
+            self.checksum = hashlib.sha256(",".join(sorted(self.skills)).encode()).hexdigest()[:12]
 
 
 def capture_skill_snapshot(task_id: str, skills: list[str]) -> SkillSnapshot:
@@ -103,6 +107,7 @@ def capture_skill_snapshot(task_id: str, skills: list[str]) -> SkillSnapshot:
 # ---------------------------------------------------------------------------
 # Task Staggering
 # ---------------------------------------------------------------------------
+
 
 def compute_stagger_offsets(
     tasks: list[CronTaskConfig],
@@ -121,7 +126,7 @@ def compute_stagger_offsets(
 def apply_stagger(tasks: list[CronTaskConfig], *, window_s: float = 3600.0) -> None:
     """Apply stagger offsets to a list of tasks in-place."""
     offsets = compute_stagger_offsets(tasks, window_s=window_s)
-    for task, offset in zip(tasks, offsets):
+    for task, offset in zip(tasks, offsets, strict=False):
         task.stagger_offset_s = offset
 
 
@@ -158,7 +163,7 @@ class IsolatedAgentRunner:
             result = await asyncio.wait_for(handler(task), timeout=timeout)
             execution.state = TaskState.COMPLETED
             execution.result = result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             execution.state = TaskState.TIMEOUT
             execution.error = f"Task timed out after {timeout}s"
         except Exception as e:
@@ -182,9 +187,11 @@ class IsolatedAgentRunner:
 # Session Reaper
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ReaperConfig:
     """Configuration for the session reaper."""
+
     max_idle_s: float = 3600.0
     max_age_s: float = 86400.0
     check_interval_s: float = 300.0
@@ -193,6 +200,7 @@ class ReaperConfig:
 @dataclass
 class SessionEntry:
     """A session tracked by the reaper."""
+
     session_id: str
     created_at: float
     last_active_at: float
@@ -241,9 +249,11 @@ class SessionReaper:
 # Webhook Trigger
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class WebhookTriggerResult:
     """Result of a webhook trigger."""
+
     task_id: str
     url: str
     success: bool

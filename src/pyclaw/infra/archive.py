@@ -14,7 +14,6 @@ from __future__ import annotations
 import gzip
 import json
 import logging
-import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -26,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ArchiveConfig:
     """Configuration for archive management."""
+
     base_dir: str = ""
     compress: bool = True
     max_archives: int = 50
@@ -35,6 +35,7 @@ class ArchiveConfig:
 @dataclass
 class ArchiveEntry:
     """Metadata for an archive entry."""
+
     archive_id: str
     archive_type: str  # "session" | "config" | "logs"
     source_path: str
@@ -141,25 +142,24 @@ def list_archives(base_dir: str | Path, archive_type: str = "") -> list[ArchiveE
     base = Path(base_dir)
     entries: list[ArchiveEntry] = []
 
-    if archive_type:
-        dirs = [base / archive_type]
-    else:
-        dirs = [d for d in base.iterdir() if d.is_dir()] if base.exists() else []
+    dirs = [base / archive_type] if archive_type else [d for d in base.iterdir() if d.is_dir()] if base.exists() else []
 
     for d in dirs:
         if not d.exists():
             continue
         for f in sorted(d.iterdir()):
             if f.is_file() and (f.suffix in (".gz", ".json")):
-                entries.append(ArchiveEntry(
-                    archive_id=f.stem.replace(".json", ""),
-                    archive_type=d.name,
-                    source_path="",
-                    archive_path=str(f),
-                    size_bytes=f.stat().st_size,
-                    compressed=f.suffix == ".gz",
-                    created_at=f.stat().st_mtime,
-                ))
+                entries.append(
+                    ArchiveEntry(
+                        archive_id=f.stem.replace(".json", ""),
+                        archive_type=d.name,
+                        source_path="",
+                        archive_path=str(f),
+                        size_bytes=f.stat().st_size,
+                        compressed=f.suffix == ".gz",
+                        created_at=f.stat().st_mtime,
+                    )
+                )
 
     return entries
 

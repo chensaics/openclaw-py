@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
 
 
 def create_session_handlers() -> dict[str, MethodHandler]:
-    async def handle_sessions_list(
-        params: dict[str, Any] | None, conn: GatewayConnection
-    ) -> None:
+    async def handle_sessions_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         from pyclaw.config.paths import resolve_agents_dir
 
         agents_dir = resolve_agents_dir()
@@ -27,29 +25,25 @@ def create_session_handlers() -> dict[str, MethodHandler]:
                 if not sessions_dir.exists():
                     continue
                 for sf in sorted(sessions_dir.glob("*.jsonl")):
-                    sessions.append({
-                        "agentId": agent_dir.name,
-                        "file": sf.name,
-                        "path": str(sf),
-                        "size": sf.stat().st_size,
-                    })
+                    sessions.append(
+                        {
+                            "agentId": agent_dir.name,
+                            "file": sf.name,
+                            "path": str(sf),
+                            "size": sf.stat().st_size,
+                        }
+                    )
 
         await conn.send_ok("sessions.list", {"sessions": sessions})
 
-    async def handle_sessions_preview(
-        params: dict[str, Any] | None, conn: GatewayConnection
-    ) -> None:
+    async def handle_sessions_preview(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params or "path" not in params:
-            await conn.send_error(
-                "sessions.preview", "invalid_params", "Missing 'path'."
-            )
+            await conn.send_error("sessions.preview", "invalid_params", "Missing 'path'.")
             return
 
         path = Path(params["path"])
         if not path.exists():
-            await conn.send_error(
-                "sessions.preview", "not_found", f"Session file not found: {path}"
-            )
+            await conn.send_error("sessions.preview", "not_found", f"Session file not found: {path}")
             return
 
         limit = params.get("limit", 50)
@@ -73,20 +67,14 @@ def create_session_handlers() -> dict[str, MethodHandler]:
                         if len(messages) >= limit:
                             break
         except Exception as e:
-            await conn.send_error(
-                "sessions.preview", "read_error", str(e)
-            )
+            await conn.send_error("sessions.preview", "read_error", str(e))
             return
 
         await conn.send_ok("sessions.preview", {"messages": messages})
 
-    async def handle_sessions_delete(
-        params: dict[str, Any] | None, conn: GatewayConnection
-    ) -> None:
+    async def handle_sessions_delete(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not params or "path" not in params:
-            await conn.send_error(
-                "sessions.delete", "invalid_params", "Missing 'path'."
-            )
+            await conn.send_error("sessions.delete", "invalid_params", "Missing 'path'.")
             return
 
         path = Path(params["path"])
@@ -103,14 +91,10 @@ def create_session_handlers() -> dict[str, MethodHandler]:
         except Exception as e:
             await conn.send_error("sessions.delete", "delete_error", str(e))
 
-    async def handle_sessions_reset(
-        params: dict[str, Any] | None, conn: GatewayConnection
-    ) -> None:
+    async def handle_sessions_reset(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         """Reset a session (clear its contents but keep the file)."""
         if not params or "path" not in params:
-            await conn.send_error(
-                "sessions.reset", "invalid_params", "Missing 'path'."
-            )
+            await conn.send_error("sessions.reset", "invalid_params", "Missing 'path'.")
             return
 
         path = Path(params["path"])

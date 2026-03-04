@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class PresenceState(str, Enum):
 @dataclass
 class SystemEvent:
     """A system-level event."""
+
     event_type: EventType
     source: str = ""
     data: dict[str, Any] = field(default_factory=dict)
@@ -111,9 +113,11 @@ class EventBus:
 # Presence Manager
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PresenceInfo:
     """Presence information for a component."""
+
     component_id: str
     state: PresenceState = PresenceState.OFFLINE
     last_seen_at: float = 0.0
@@ -145,10 +149,9 @@ class PresenceManager:
         now = time.time()
         idle: list[str] = []
         for cid, info in self._entries.items():
-            if info.state == PresenceState.ONLINE:
-                if now - info.last_seen_at > self._idle_timeout:
-                    info.state = PresenceState.IDLE
-                    idle.append(cid)
+            if info.state == PresenceState.ONLINE and now - info.last_seen_at > self._idle_timeout:
+                info.state = PresenceState.IDLE
+                idle.append(cid)
         return idle
 
     def all_online(self) -> list[str]:
@@ -163,6 +166,7 @@ class PresenceManager:
 # Wake Manager
 # ---------------------------------------------------------------------------
 
+
 class WakeManager:
     """Handle sleep/wake transitions."""
 
@@ -174,20 +178,24 @@ class WakeManager:
 
     def on_sleep(self) -> None:
         self._sleep_at = time.time()
-        self._bus.emit(SystemEvent(
-            event_type=EventType.SYSTEM_SLEEP,
-            source="wake-manager",
-        ))
+        self._bus.emit(
+            SystemEvent(
+                event_type=EventType.SYSTEM_SLEEP,
+                source="wake-manager",
+            )
+        )
 
     def on_wake(self) -> None:
         self._last_wake = time.time()
         self._wake_count += 1
         sleep_duration = (self._last_wake - self._sleep_at) if self._sleep_at else 0
-        self._bus.emit(SystemEvent(
-            event_type=EventType.SYSTEM_WAKE,
-            source="wake-manager",
-            data={"sleep_duration_s": sleep_duration, "wake_count": self._wake_count},
-        ))
+        self._bus.emit(
+            SystemEvent(
+                event_type=EventType.SYSTEM_WAKE,
+                source="wake-manager",
+                data={"sleep_duration_s": sleep_duration, "wake_count": self._wake_count},
+            )
+        )
 
     @property
     def last_wake(self) -> float:

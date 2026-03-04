@@ -47,9 +47,13 @@ def local_models_list(*, output_json: bool = False) -> None:
     active_id = active.id if active else ""
 
     if output_json:
-        typer.echo(json.dumps(
-            [m.summary() for m in models], indent=2, ensure_ascii=False,
-        ))
+        typer.echo(
+            json.dumps(
+                [m.summary() for m in models],
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
         return
 
     if not models:

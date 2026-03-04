@@ -68,9 +68,7 @@ class AzureOpenAIProvider:
 
     def __init__(self, config: AzureOpenAIConfig) -> None:
         self._config = config
-        self._deployment_map: dict[str, AzureDeployment] = {
-            d.model_id: d for d in config.deployments
-        }
+        self._deployment_map: dict[str, AzureDeployment] = {d.model_id: d for d in config.deployments}
         self._aad_token: str = ""
 
     @property
@@ -92,10 +90,7 @@ class AzureOpenAIProvider:
 
     def _endpoint(self, deployment_name: str) -> str:
         base = self._config.resource_url.rstrip("/")
-        return (
-            f"{base}/openai/deployments/{deployment_name}"
-            f"/chat/completions?api-version={self._config.api_version}"
-        )
+        return f"{base}/openai/deployments/{deployment_name}/chat/completions?api-version={self._config.api_version}"
 
     async def _get_auth_headers(self) -> dict[str, str]:
         if self._config.use_aad:
@@ -117,9 +112,7 @@ class AzureOpenAIProvider:
             client_secret = os.environ.get("AZURE_CLIENT_SECRET", "")
 
             if not all([tenant, client_id, client_secret]):
-                raise ValueError(
-                    "Azure AD requires AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET"
-                )
+                raise ValueError("Azure AD requires AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET")
 
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.post(

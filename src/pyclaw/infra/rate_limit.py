@@ -7,12 +7,13 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
 class RateLimitConfig:
     """Sliding-window rate limit configuration."""
+
     max_requests: int = 3
     window_seconds: float = 60.0
 

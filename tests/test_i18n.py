@@ -64,10 +64,13 @@ class TestI18n:
     def test_load_translations_file_with_locale(self) -> None:
         i18n = I18n("ko")
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump({
-                "locale": "ko",
-                "translations": {"chat.send": "보내기"},
-            }, f)
+            json.dump(
+                {
+                    "locale": "ko",
+                    "translations": {"chat.send": "보내기"},
+                },
+                f,
+            )
             f.flush()
             i18n.load_translations_file(Path(f.name))
 

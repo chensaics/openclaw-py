@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
-
-from pyclaw.logging.subsystem import SubsystemLogger, create_subsystem_logger, CHANNEL_SUBSYSTEM_PREFIXES
-from pyclaw.logging.redact import redact_sensitive_text, redact_tool_detail, set_custom_redact_patterns
+from pyclaw.logging.redact import (
+    redact_sensitive_text,
+    redact_tool_detail,
+    set_custom_redact_patterns,
+)
+from pyclaw.logging.subsystem import (
+    CHANNEL_SUBSYSTEM_PREFIXES,
+    SubsystemLogger,
+    create_subsystem_logger,
+)
 
 
 class TestSubsystemLogger:

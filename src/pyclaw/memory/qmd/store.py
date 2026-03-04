@@ -77,6 +77,7 @@ class QmdStore:
         entry.updated_at = now
         if not entry.id:
             import uuid
+
             entry.id = str(uuid.uuid4())
 
         self._conn.execute(
@@ -84,10 +85,15 @@ class QmdStore:
                (id, question, answer, tags, embedding, created_at, updated_at, source, metadata)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                entry.id, entry.question, entry.answer,
-                json.dumps(entry.tags), json.dumps(entry.embedding),
-                entry.created_at, entry.updated_at,
-                entry.source, json.dumps(entry.metadata),
+                entry.id,
+                entry.question,
+                entry.answer,
+                json.dumps(entry.tags),
+                json.dumps(entry.embedding),
+                entry.created_at,
+                entry.updated_at,
+                entry.source,
+                json.dumps(entry.metadata),
             ),
         )
         self._conn.commit()
@@ -98,7 +104,8 @@ class QmdStore:
         assert self._conn
 
         row = self._conn.execute(
-            "SELECT * FROM qmd_entries WHERE id = ?", (entry_id,),
+            "SELECT * FROM qmd_entries WHERE id = ?",
+            (entry_id,),
         ).fetchone()
         if not row:
             return None
@@ -132,7 +139,10 @@ class QmdStore:
         return results
 
     def search_semantic(
-        self, query_embedding: list[float], limit: int = 10, threshold: float = 0.5,
+        self,
+        query_embedding: list[float],
+        limit: int = 10,
+        threshold: float = 0.5,
     ) -> list[tuple[QmdEntry, float]]:
         """Search by cosine similarity against stored embeddings."""
         if not self._conn:
@@ -160,7 +170,8 @@ class QmdStore:
             self.open()
         assert self._conn
         rows = self._conn.execute(
-            "SELECT * FROM qmd_entries ORDER BY updated_at DESC LIMIT ?", (limit,),
+            "SELECT * FROM qmd_entries ORDER BY updated_at DESC LIMIT ?",
+            (limit,),
         ).fetchall()
         return [self._row_to_entry(r) for r in rows]
 
@@ -189,7 +200,7 @@ class QmdStore:
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
     if len(a) != len(b) or not a:
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = sum(x * x for x in a) ** 0.5
     norm_b = sum(x * x for x in b) ** 0.5
     if norm_a == 0 or norm_b == 0:

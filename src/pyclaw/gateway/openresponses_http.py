@@ -9,8 +9,8 @@ See: https://www.open-responses.com/
 from __future__ import annotations
 
 import logging
-import uuid
 import time
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -72,6 +72,7 @@ class CreateResponseBody(BaseModel):
 # Response types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OutputItem:
     type: str = "message"
@@ -95,6 +96,7 @@ class ResponseResource:
 # ---------------------------------------------------------------------------
 # Input extraction
 # ---------------------------------------------------------------------------
+
 
 def extract_messages_from_input(
     input_data: str | list[dict[str, Any]],
@@ -125,31 +127,35 @@ def extract_messages_from_input(
                     text_parts = []
                     for part in content:
                         if isinstance(part, dict):
-                            if part.get("type") in ("input_text", "text"):
-                                text_parts.append(part.get("text", ""))
-                            elif part.get("type") == "output_text":
+                            if part.get("type") in ("input_text", "text") or part.get("type") == "output_text":
                                 text_parts.append(part.get("text", ""))
                     messages.append({"role": role, "content": "\n".join(text_parts)})
 
             elif item_type == "function_call":
-                messages.append({
-                    "role": "assistant",
-                    "tool_calls": [{
-                        "id": item.get("call_id", item.get("id", "")),
-                        "type": "function",
-                        "function": {
-                            "name": item.get("name", ""),
-                            "arguments": item.get("arguments", "{}"),
-                        },
-                    }],
-                })
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "id": item.get("call_id", item.get("id", "")),
+                                "type": "function",
+                                "function": {
+                                    "name": item.get("name", ""),
+                                    "arguments": item.get("arguments", "{}"),
+                                },
+                            }
+                        ],
+                    }
+                )
 
             elif item_type == "function_call_output":
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": item.get("call_id", ""),
-                    "content": item.get("output", ""),
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": item.get("call_id", ""),
+                        "content": item.get("output", ""),
+                    }
+                )
 
     return messages
 
@@ -162,6 +168,7 @@ def extract_client_tools(body: CreateResponseBody) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Tool choice
 # ---------------------------------------------------------------------------
+
 
 def apply_tool_choice(
     tools: list[dict[str, Any]],
@@ -196,6 +203,7 @@ def apply_tool_choice(
 # Response builder
 # ---------------------------------------------------------------------------
 
+
 def build_response_resource(
     response_id: str,
     model: str,
@@ -227,37 +235,48 @@ def build_response_resource(
 # SSE streaming events
 # ---------------------------------------------------------------------------
 
+
 def format_sse_event(event_type: str, data: dict[str, Any]) -> str:
     """Format an SSE event string."""
     import json
+
     payload = {"type": event_type, **data}
     return f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
 
 
 def stream_response_created(response_id: str, model: str) -> str:
-    return format_sse_event("response.created", {
-        "response": {
-            "id": response_id,
-            "object": "response",
-            "created_at": int(time.time()),
-            "model": model,
-            "output": [],
-            "status": "in_progress",
+    return format_sse_event(
+        "response.created",
+        {
+            "response": {
+                "id": response_id,
+                "object": "response",
+                "created_at": int(time.time()),
+                "model": model,
+                "output": [],
+                "status": "in_progress",
+            },
         },
-    })
+    )
 
 
 def stream_text_delta(response_id: str, delta: str, item_id: str) -> str:
-    return format_sse_event("response.output_text.delta", {
-        "response_id": response_id,
-        "item_id": item_id,
-        "output_index": 0,
-        "content_index": 0,
-        "delta": delta,
-    })
+    return format_sse_event(
+        "response.output_text.delta",
+        {
+            "response_id": response_id,
+            "item_id": item_id,
+            "output_index": 0,
+            "content_index": 0,
+            "delta": delta,
+        },
+    )
 
 
 def stream_response_completed(response_id: str, model: str, text: str) -> str:
-    return format_sse_event("response.completed", {
-        "response": build_response_resource(response_id, model, text),
-    })
+    return format_sse_event(
+        "response.completed",
+        {
+            "response": build_response_resource(response_id, model, text),
+        },
+    )

@@ -41,9 +41,7 @@ class OutboundConfig:
     channel_type: str
     max_message_length: int = 4096
     preferred_format: MessageFormat = MessageFormat.MARKDOWN
-    fallback_formats: list[MessageFormat] = field(
-        default_factory=lambda: [MessageFormat.HTML, MessageFormat.PLAIN]
-    )
+    fallback_formats: list[MessageFormat] = field(default_factory=lambda: [MessageFormat.HTML, MessageFormat.PLAIN])
     retry_strategy: RetryStrategy = RetryStrategy.EXPONENTIAL
     max_retries: int = 3
     supports_media: bool = True

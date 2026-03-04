@@ -9,11 +9,10 @@ Ported from various security-related modules in the TypeScript codebase:
 from __future__ import annotations
 
 import hashlib
-import hmac
 import logging
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -61,6 +60,7 @@ def compute_env_fingerprint(env: dict[str, str], keys: list[str] | None = None) 
 # ---------------------------------------------------------------------------
 # HTTP auth canonicalization
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CanonicalAuthHeader:
@@ -112,7 +112,7 @@ def canonicalize_auth_header(value: str) -> CanonicalAuthHeader | None:
 
     if lower.startswith("api-key ") or lower.startswith("apikey "):
         sep = value.index(" ")
-        key = value[sep + 1:].strip()
+        key = value[sep + 1 :].strip()
         return CanonicalAuthHeader(scheme="api-key", credential=key, raw=value)
 
     # Raw token — treat as Bearer
@@ -132,6 +132,7 @@ def _looks_like_token(value: str) -> bool:
 # ---------------------------------------------------------------------------
 # Pairing metadata pinning
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PairingMetadata:
@@ -197,6 +198,7 @@ class PairingMetadata:
 # ---------------------------------------------------------------------------
 # Webhook replay protection
 # ---------------------------------------------------------------------------
+
 
 class WebhookReplayGuard:
     """Protects webhook endpoints from replay attacks using nonces and timestamps."""

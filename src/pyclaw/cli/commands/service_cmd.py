@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from typing import Any
 
 import typer
 
@@ -15,7 +14,7 @@ def service_install(
     bind: str = "127.0.0.1",
 ) -> None:
     """Install the gateway as a system service."""
-    from pyclaw.daemon.service import resolve_gateway_service, GatewayServiceInstallArgs
+    from pyclaw.daemon.service import GatewayServiceInstallArgs, resolve_gateway_service
 
     svc = resolve_gateway_service()
     args = GatewayServiceInstallArgs(

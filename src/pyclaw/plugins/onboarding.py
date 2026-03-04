@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OnboardingStatusContext:
     """Context passed to ``get_status``."""
@@ -73,6 +74,7 @@ OnboardingConfiguredResult = OnboardingResult | Literal["skip"]
 # Adapter protocol
 # ---------------------------------------------------------------------------
 
+
 @runtime_checkable
 class ChannelOnboardingAdapter(Protocol):
     """Protocol for channel onboarding plugins."""
@@ -83,15 +85,11 @@ class ChannelOnboardingAdapter(Protocol):
 
     async def configure(self, ctx: OnboardingConfigureContext) -> OnboardingResult: ...
 
-    async def configure_interactive(
-        self, ctx: OnboardingInteractiveContext
-    ) -> OnboardingConfiguredResult:
+    async def configure_interactive(self, ctx: OnboardingInteractiveContext) -> OnboardingConfiguredResult:
         """Optional: handles both unconfigured and configured states interactively."""
         ...
 
-    async def configure_when_configured(
-        self, ctx: OnboardingInteractiveContext
-    ) -> OnboardingConfiguredResult:
+    async def configure_when_configured(self, ctx: OnboardingInteractiveContext) -> OnboardingConfiguredResult:
         """Optional: called only when the channel is already configured."""
         ...
 
@@ -99,6 +97,7 @@ class ChannelOnboardingAdapter(Protocol):
 # ---------------------------------------------------------------------------
 # Onboarding runner
 # ---------------------------------------------------------------------------
+
 
 class OnboardingRunner:
     """Runs onboarding for channels using plugin adapters."""
@@ -165,9 +164,7 @@ class OnboardingRunner:
         # Priority 3: standard configure
         return await adapter.configure(base_ctx)
 
-    async def get_all_statuses(
-        self, config: dict[str, Any]
-    ) -> dict[str, OnboardingStatus]:
+    async def get_all_statuses(self, config: dict[str, Any]) -> dict[str, OnboardingStatus]:
         """Get onboarding status for all registered channels."""
         statuses: dict[str, OnboardingStatus] = {}
         for channel, adapter in self._adapters.items():

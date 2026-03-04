@@ -2,31 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
-
-# Phase 34a: Session Manager
-from pyclaw.browser.session_manager import (
-    BrowserConfig,
-    BrowserSessionManager,
-    BrowserType,
-    LaunchOptions,
-    ProfileConfig,
-    SessionInfo,
-    SessionState,
-    list_profiles,
-    profile_path,
-)
-
-# Phase 34b: Navigation Guard
-from pyclaw.browser.navigation_guard import (
-    NavigationGuard,
-    NavigationPolicy,
-)
 
 # Phase 34c: Agent Tools
 from pyclaw.browser.agent_tools import (
@@ -44,9 +24,14 @@ from pyclaw.browser.bridge_server import (
     BridgeConfig,
     BridgeServer,
     DOMSnapshot,
-    TabInfo,
     generate_csrf_token,
     validate_csrf_token,
+)
+
+# Phase 34b: Navigation Guard
+from pyclaw.browser.navigation_guard import (
+    NavigationGuard,
+    NavigationPolicy,
 )
 
 # Phase 34e: Screenshot
@@ -59,10 +44,20 @@ from pyclaw.browser.screenshot import (
     decode_cdp_screenshot,
 )
 
+# Phase 34a: Session Manager
+from pyclaw.browser.session_manager import (
+    BrowserConfig,
+    BrowserSessionManager,
+    LaunchOptions,
+    SessionState,
+    list_profiles,
+    profile_path,
+)
 
 # =====================================================================
 # Phase 34a: Session Manager
 # =====================================================================
+
 
 class TestBrowserSessionManager:
     @pytest.mark.asyncio
@@ -154,6 +149,7 @@ class TestProfiles:
 # Phase 34b: Navigation Guard
 # =====================================================================
 
+
 class TestNavigationGuard:
     def test_allow_safe_url(self) -> None:
         guard = NavigationGuard()
@@ -200,19 +196,23 @@ class TestNavigationGuard:
 
     def test_redirect_chain(self) -> None:
         guard = NavigationGuard()
-        result = guard.check_redirect_chain([
-            "https://example.com",
-            "https://www.example.com",
-        ])
+        result = guard.check_redirect_chain(
+            [
+                "https://example.com",
+                "https://www.example.com",
+            ]
+        )
         assert result.allowed
         assert result.redirect_count == 2
 
     def test_redirect_chain_with_private(self) -> None:
         guard = NavigationGuard()
-        result = guard.check_redirect_chain([
-            "https://example.com",
-            "http://192.168.1.1/internal",
-        ])
+        result = guard.check_redirect_chain(
+            [
+                "https://example.com",
+                "http://192.168.1.1/internal",
+            ]
+        )
         assert not result.allowed
 
     def test_too_many_redirects(self) -> None:
@@ -243,8 +243,10 @@ class TestNavigationGuard:
 # Phase 34c: Agent Tools
 # =====================================================================
 
+
 class MockPage:
     """Minimal mock Playwright page."""
+
     def __init__(self) -> None:
         self._url = "https://example.com"
         self._title = "Example"
@@ -293,69 +295,99 @@ class TestBrowserToolExecutor:
     async def test_navigate(self) -> None:
         executor = BrowserToolExecutor()
         page = MockPage()
-        result = await executor.execute(page, BrowserAction(
-            action_type=BrowserActionType.NAVIGATE, url="https://test.com",
-        ))
+        result = await executor.execute(
+            page,
+            BrowserAction(
+                action_type=BrowserActionType.NAVIGATE,
+                url="https://test.com",
+            ),
+        )
         assert result.success
         assert page.url == "https://test.com"
 
     @pytest.mark.asyncio
     async def test_click(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.CLICK, selector="#btn",
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.CLICK,
+                selector="#btn",
+            ),
+        )
         assert result.success
 
     @pytest.mark.asyncio
     async def test_type(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.TYPE, selector="#input", value="hello",
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.TYPE,
+                selector="#input",
+                value="hello",
+            ),
+        )
         assert result.success
 
     @pytest.mark.asyncio
     async def test_screenshot(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.SCREENSHOT,
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.SCREENSHOT,
+            ),
+        )
         assert result.success
         assert result.screenshot_b64
 
     @pytest.mark.asyncio
     async def test_evaluate(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.EVALUATE, value="1+1",
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.EVALUATE,
+                value="1+1",
+            ),
+        )
         assert result.success
         assert "eval" in str(result.data)
 
     @pytest.mark.asyncio
     async def test_snapshot(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.SNAPSHOT,
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.SNAPSHOT,
+            ),
+        )
         assert result.success
         assert "html_length" in result.data
 
     @pytest.mark.asyncio
     async def test_go_back(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.GO_BACK,
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.GO_BACK,
+            ),
+        )
         assert result.success
 
     @pytest.mark.asyncio
     async def test_wait(self) -> None:
         executor = BrowserToolExecutor()
-        result = await executor.execute(MockPage(), BrowserAction(
-            action_type=BrowserActionType.WAIT, options={"ms": 10},
-        ))
+        result = await executor.execute(
+            MockPage(),
+            BrowserAction(
+                action_type=BrowserActionType.WAIT,
+                options={"ms": 10},
+            ),
+        )
         assert result.success
 
     @pytest.mark.asyncio
@@ -363,9 +395,13 @@ class TestBrowserToolExecutor:
         executor = BrowserToolExecutor()
         page = MockPage()
         page.click = AsyncMock(side_effect=RuntimeError("element not found"))
-        result = await executor.execute(page, BrowserAction(
-            action_type=BrowserActionType.CLICK, selector="#missing",
-        ))
+        result = await executor.execute(
+            page,
+            BrowserAction(
+                action_type=BrowserActionType.CLICK,
+                selector="#missing",
+            ),
+        )
         assert not result.success
         assert "element not found" in result.error
 
@@ -373,15 +409,18 @@ class TestBrowserToolExecutor:
 class TestToolResult:
     def test_format_success(self) -> None:
         r = BrowserActionResult(
-            success=True, action_type=BrowserActionType.NAVIGATE,
-            url="https://example.com", title="Example",
+            success=True,
+            action_type=BrowserActionType.NAVIGATE,
+            url="https://example.com",
+            title="Example",
         )
         text = r.to_tool_result()
         assert "example.com" in text
 
     def test_format_error(self) -> None:
         r = BrowserActionResult(
-            success=False, action_type=BrowserActionType.CLICK,
+            success=False,
+            action_type=BrowserActionType.CLICK,
             error="timeout",
         )
         assert "Error" in r.to_tool_result()
@@ -409,6 +448,7 @@ class TestParseToolCall:
 # =====================================================================
 # Phase 34d: Bridge Server
 # =====================================================================
+
 
 class TestAuthTokenRegistry:
     def test_generate_and_validate(self) -> None:
@@ -449,10 +489,12 @@ class TestBridgeServer:
 
     def test_update_tabs(self) -> None:
         bridge = BridgeServer()
-        count = bridge.update_tabs([
-            {"id": "1", "title": "Google", "url": "https://google.com", "active": True},
-            {"id": "2", "title": "GitHub", "url": "https://github.com"},
-        ])
+        count = bridge.update_tabs(
+            [
+                {"id": "1", "title": "Google", "url": "https://google.com", "active": True},
+                {"id": "2", "title": "GitHub", "url": "https://github.com"},
+            ]
+        )
         assert count == 2
         tabs = bridge.get_tabs()
         assert len(tabs) >= 2
@@ -463,8 +505,11 @@ class TestBridgeServer:
     def test_store_snapshot(self) -> None:
         bridge = BridgeServer()
         snapshot = DOMSnapshot(
-            tab_id="1", html="<html>test</html>", text="test",
-            url="https://example.com", title="Test",
+            tab_id="1",
+            html="<html>test</html>",
+            text="test",
+            url="https://example.com",
+            title="Test",
         )
         assert bridge.store_snapshot(snapshot)
         retrieved = bridge.get_snapshot("1")
@@ -486,6 +531,7 @@ class TestBridgeServer:
     async def test_handle_tabs_update(self) -> None:
         bridge = BridgeServer()
         from pyclaw.browser.relay import RelayMessage
+
         msg = RelayMessage(
             type="action",
             payload={"type": "tabs_update", "tabs": [{"id": "1", "title": "Tab"}]},
@@ -498,6 +544,7 @@ class TestBridgeServer:
     async def test_handle_snapshot(self) -> None:
         bridge = BridgeServer()
         from pyclaw.browser.relay import RelayMessage
+
         msg = RelayMessage(
             type="action",
             payload={
@@ -516,6 +563,7 @@ class TestBridgeServer:
 # Phase 34e: Screenshot
 # =====================================================================
 
+
 class TestScreenshotService:
     @pytest.mark.asyncio
     async def test_capture(self) -> None:
@@ -529,9 +577,13 @@ class TestScreenshotService:
     @pytest.mark.asyncio
     async def test_capture_jpeg(self) -> None:
         service = ScreenshotService()
-        result = await service.capture(MockPage(), ScreenshotOptions(
-            format=ScreenshotFormat.JPEG, quality=90,
-        ))
+        result = await service.capture(
+            MockPage(),
+            ScreenshotOptions(
+                format=ScreenshotFormat.JPEG,
+                quality=90,
+            ),
+        )
         assert result.success
 
     @pytest.mark.asyncio
@@ -550,6 +602,7 @@ class TestScreenshotResult:
         b64 = result.to_base64()
         assert b64  # Non-empty
         import base64
+
         assert base64.b64decode(b64) == b"hello"
 
     def test_to_data_url(self) -> None:
@@ -572,6 +625,7 @@ class TestCDPScreenshot:
 
     def test_decode(self) -> None:
         import base64
+
         b64 = base64.b64encode(b"png_data").decode()
         result = decode_cdp_screenshot(b64)
         assert result.success

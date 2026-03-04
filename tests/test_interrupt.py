@@ -1,7 +1,5 @@
 """Tests for pyclaw.agents.interrupt — cancel/append interrupt system."""
 
-import pytest
-
 from pyclaw.agents.interrupt import InterruptibleContext, InterruptMode
 
 

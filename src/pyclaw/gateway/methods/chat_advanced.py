@@ -13,13 +13,13 @@ Provides:
 from __future__ import annotations
 
 import logging
-
-from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
+
+from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ChatAttachment:
     """An attachment in a chat message."""
+
     filename: str = ""
     mime_type: str = ""
     size_bytes: int = 0
@@ -46,6 +47,7 @@ class ChatAttachment:
 @dataclass
 class ChatParams:
     """Validated chat parameters."""
+
     message: str
     agent_id: str = "main"
     provider: str = DEFAULT_PROVIDER
@@ -78,14 +80,16 @@ def validate_chat_params(params: dict[str, Any]) -> tuple[ChatParams | None, str
     attachments: list[ChatAttachment] = []
     for att in params.get("attachments", []):
         if isinstance(att, dict):
-            attachments.append(ChatAttachment(
-                filename=str(att.get("filename") or att.get("filename", "") or ""),
-                mime_type=str(att.get("mimeType") or att.get("mime_type", "") or ""),
-                size_bytes=int(att.get("size") or att.get("size_bytes", 0) or 0),
-                url=str(att.get("url", "") or ""),
-                base64_data=str(att.get("base64") or att.get("base64_data", "") or ""),
-                attachment_type=str(att.get("type", "file") or "file"),
-            ))
+            attachments.append(
+                ChatAttachment(
+                    filename=str(att.get("filename") or att.get("filename", "") or ""),
+                    mime_type=str(att.get("mimeType") or att.get("mime_type", "") or ""),
+                    size_bytes=int(att.get("size") or att.get("size_bytes", 0) or 0),
+                    url=str(att.get("url", "") or ""),
+                    base64_data=str(att.get("base64") or att.get("base64_data", "") or ""),
+                    attachment_type=str(att.get("type", "file") or "file"),
+                )
+            )
 
     temperature = params.get("temperature")
     if temperature is not None:
@@ -119,6 +123,7 @@ _SCRIPT_TAG_RE = re.compile(r"<script[^>]*>[\s\S]*?</script>", re.I)
 _HTML_COMMENT_RE = re.compile(r"<!--[\s\S]*?-->")
 _NULL_BYTES_RE = re.compile(r"\x00")
 
+
 def sanitize_content(text: str) -> str:
     """Sanitize user input before sending to LLM."""
     text = _NULL_BYTES_RE.sub("", text)
@@ -131,9 +136,10 @@ def sanitize_content(text: str) -> str:
 # Time injection
 # ---------------------------------------------------------------------------
 
+
 def inject_time_context(system_prompt: str) -> str:
     """Inject current time context into the system prompt."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     time_str = now.strftime("%Y-%m-%d %H:%M UTC (%A)")
     if "Current date" not in system_prompt and "current date" not in system_prompt:
         return f"{system_prompt}\n\nCurrent date and time: {time_str}"
@@ -143,6 +149,7 @@ def inject_time_context(system_prompt: str) -> str:
 # ---------------------------------------------------------------------------
 # Abort tracking
 # ---------------------------------------------------------------------------
+
 
 class ChatAbortManager:
     """Track active chat runs and support abort."""
@@ -172,7 +179,4 @@ class ChatAbortManager:
         return len(self._active)
 
     def list_active(self) -> list[dict[str, Any]]:
-        return [
-            {"sessionId": sid, "startedAt": ts}
-            for sid, ts in self._active.items()
-        ]
+        return [{"sessionId": sid, "startedAt": ts} for sid, ts in self._active.items()]

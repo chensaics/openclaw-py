@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator, cast
+from collections.abc import AsyncIterator
+from typing import Any, cast
 
 from .manager import get_active_model, get_local_model
 from .schema import BackendType
@@ -19,9 +20,7 @@ def _load_backend(model_id: str | None = None) -> Any:
 
     info = get_local_model(model_id) if model_id else get_active_model()
     if info is None:
-        raise RuntimeError(
-            "No local model available. Download one first: pyclaw models download <repo>"
-        )
+        raise RuntimeError("No local model available. Download one first: pyclaw models download <repo>")
 
     if _active_model_id == info.id and _active_backend is not None:
         return _active_backend
@@ -34,11 +33,14 @@ def _load_backend(model_id: str | None = None) -> Any:
 
     if info.backend == BackendType.LLAMACPP:
         from .backends.llamacpp import LlamaCppBackend
+
         _active_backend = LlamaCppBackend(
-            info.local_path, n_ctx=info.context_length,
+            info.local_path,
+            n_ctx=info.context_length,
         )
     elif info.backend == BackendType.MLX:
         from .backends.mlx_backend import MLXBackend
+
         _active_backend = MLXBackend(info.local_path)
     else:
         raise ValueError(f"Backend '{info.backend}' does not support direct local inference")
@@ -67,6 +69,8 @@ async def local_chat_stream(
 ) -> AsyncIterator[str]:
     backend = _load_backend(model_id)
     async for token in backend.stream(
-        messages, max_tokens=max_tokens, temperature=temperature,
+        messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
     ):
         yield token

@@ -53,7 +53,10 @@ async def run_agent(
     - ``runtime_context``: A :class:`RuntimeContext` to inject into tools.
     - ``session_key``: Session key for message bus peek.
     """
-    from pyclaw.agents.tools.runtime_context import RuntimeContext, set_runtime_context, reset_runtime_context
+    from pyclaw.agents.tools.runtime_context import (
+        reset_runtime_context,
+        set_runtime_context,
+    )
 
     ctx_token = None
     if runtime_context:
@@ -62,14 +65,14 @@ async def run_agent(
     interrupt_task: asyncio.Task[None] | None = None
     if interrupt_ctx and session_key:
         from pyclaw.agents.interrupt import check_incoming_messages
-        interrupt_task = asyncio.create_task(
-            check_incoming_messages(session_key, interrupt_ctx)
-        )
+
+        interrupt_task = asyncio.create_task(check_incoming_messages(session_key, interrupt_ctx))
 
     # Lazy-import planner components
     step_detector = None
     if plan:
         from pyclaw.agents.planner import StepDetector
+
         step_detector = StepDetector()
 
     try:
@@ -179,9 +182,7 @@ async def _agent_loop(
             yield AgentEvent(type="error", error="interrupted")
             break
 
-        assistant_msg_obj = AgentMessage.from_dict(
-            _build_assistant_message(completion_text, completion_tool_calls)
-        )
+        assistant_msg_obj = AgentMessage.from_dict(_build_assistant_message(completion_text, completion_tool_calls))
 
         if plan and step_detector:
             plan.iteration_count += 1
@@ -191,10 +192,14 @@ async def _agent_loop(
                     TimelineKind.PLAN,
                     f"Step advanced to {plan.current_step_index + 1}/{len(plan.steps)}",
                 )
-                yield AgentEvent(type="tool_end", name="plan_step", result={
-                    "step": plan.current_step_index,
-                    "progress": plan.generate_progress_summary(),
-                })
+                yield AgentEvent(
+                    type="tool_end",
+                    name="plan_step",
+                    result={
+                        "step": plan.current_step_index,
+                        "progress": plan.generate_progress_summary(),
+                    },
+                )
 
         messages.append(assistant_msg_obj.to_dict())
         session.append_message(assistant_msg_obj)
@@ -250,6 +255,7 @@ async def _agent_loop(
 
     if plan and not plan.is_complete:
         from pyclaw.agents.planner import PlanStatus
+
         if all(s.status.value == "completed" for s in plan.steps):
             plan.status = PlanStatus.COMPLETED
 
@@ -281,9 +287,7 @@ def _build_assistant_message(text: str, tool_calls: list[ToolCall]) -> dict[str,
 
 def _build_tool_result_message(tool_call_id: str, result: ToolResult) -> dict[str, Any]:
     """Build a tool result message dict."""
-    content_text = "\n".join(
-        block.get("text", "") for block in result.content if block.get("type") == "text"
-    )
+    content_text = "\n".join(block.get("text", "") for block in result.content if block.get("type") == "text")
     return {
         "role": "tool",
         "tool_call_id": tool_call_id,

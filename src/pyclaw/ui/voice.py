@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from pyclaw.ui.i18n import t
 
@@ -91,7 +91,10 @@ def build_voice_panel(
 
     status_text = ft.Text(t("voice.ready"), size=14)
     text_input = ft.TextField(
-        label=t("voice.text_label"), multiline=True, min_lines=2, expand=True,
+        label=t("voice.text_label"),
+        multiline=True,
+        min_lines=2,
+        expand=True,
         border_radius=12,
     )
 
@@ -112,18 +115,17 @@ def build_voice_panel(
                 locale_prefix = tts_voice.split("-")[0]
             voices = await list_voices(locale_prefix)
             if voices:
-                voice_dropdown.options = [
-                    ft.dropdown.Option(v["name"], f"{v['name']} ({v['gender']})")
-                    for v in voices
-                ]
+                voice_dropdown.options = [ft.dropdown.Option(v["name"], f"{v['name']} ({v['gender']})") for v in voices]
                 if voice_dropdown.page:
                     voice_dropdown.update()
         except Exception:
             pass
 
     load_voices_btn = ft.IconButton(
-        icon=ft.Icons.REFRESH, tooltip=t("voice.refresh_voices", default="Refresh voices"),
-        on_click=_load_voices, icon_size=18,
+        icon=ft.Icons.REFRESH,
+        tooltip=t("voice.refresh_voices", default="Refresh voices"),
+        on_click=_load_voices,
+        icon_size=18,
     )
 
     async def handle_tts(e: Any) -> None:
@@ -179,9 +181,7 @@ def build_voice_panel(
         try:
             text_result = await transcribe_audio(picked.path, api_key=api_key)
             transcription_result.value = text_result
-            status_text.value = t(
-                "voice.transcribed", default="Transcribed ({n} chars)", n=len(text_result)
-            )
+            status_text.value = t("voice.transcribed", default="Transcribed ({n} chars)", n=len(text_result))
             if on_transcribed:
                 await on_transcribed(text_result)
         except Exception as exc:
@@ -194,26 +194,24 @@ def build_voice_panel(
             page.update()
 
     tts_btn = ft.Button(t("voice.speak"), icon=ft.Icons.VOLUME_UP, on_click=handle_tts)
-    stt_btn = ft.Button(
-        t("voice.transcribe"), icon=ft.Icons.MIC, on_click=handle_transcribe
-    )
+    stt_btn = ft.Button(t("voice.transcribe"), icon=ft.Icons.MIC, on_click=handle_transcribe)
 
     return ft.Column(
         controls=[
-            ft.Row([
-                ft.Icon(ft.Icons.MIC, size=20, color=ft.Colors.PRIMARY),
-                ft.Container(width=8),
-                ft.Text(t("voice.title"), size=20, weight=ft.FontWeight.BOLD),
-            ]),
+            ft.Row(
+                [
+                    ft.Icon(ft.Icons.MIC, size=20, color=ft.Colors.PRIMARY),
+                    ft.Container(width=8),
+                    ft.Text(t("voice.title"), size=20, weight=ft.FontWeight.BOLD),
+                ]
+            ),
             ft.Divider(height=1),
-            ft.Text(t("voice.tts_section", default="Text-to-Speech"), size=16,
-                    weight=ft.FontWeight.W_500),
+            ft.Text(t("voice.tts_section", default="Text-to-Speech"), size=16, weight=ft.FontWeight.W_500),
             text_input,
             ft.Row([voice_dropdown, load_voices_btn], spacing=8),
             ft.Row([tts_btn], spacing=8),
             ft.Container(height=8),
-            ft.Text(t("voice.stt_section", default="Speech-to-Text"), size=16,
-                    weight=ft.FontWeight.W_500),
+            ft.Text(t("voice.stt_section", default="Speech-to-Text"), size=16, weight=ft.FontWeight.W_500),
             ft.Row([stt_btn]),
             transcription_result,
             ft.Container(height=4),

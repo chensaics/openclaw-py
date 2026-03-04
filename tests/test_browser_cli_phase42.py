@@ -12,7 +12,6 @@ from pyclaw.cli.app import app
 from pyclaw.gateway.methods.browser_methods import create_browser_handlers
 from pyclaw.gateway.server import create_gateway_app
 
-
 runner = CliRunner()
 
 
@@ -138,9 +137,7 @@ def test_browser_cli_status_routes_to_rpc(monkeypatch: pytest.MonkeyPatch) -> No
     assert captured["timeout_ms"] == 5000
 
 
-def test_browser_cli_screenshot_writes_output(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_browser_cli_screenshot_writes_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     payload = {"screenshotB64": "aGVsbG8="}  # "hello"
 
     def fake_browser_rpc_sync(

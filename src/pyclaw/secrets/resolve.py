@@ -5,14 +5,18 @@ Ported from ``src/secrets/resolve.ts``.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
 
-from pyclaw.config.secrets import SecretRef, SecretProviderConfig, EnvSecretProvider, FileSecretProvider, ExecSecretProvider
+from pyclaw.config.secrets import (
+    EnvSecretProvider,
+    ExecSecretProvider,
+    FileSecretProvider,
+    SecretProviderConfig,
+    SecretRef,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +79,8 @@ def resolve_secret_ref_value(
 
 
 def _resolve_env(ref: SecretRef, cfg: SecretProviderConfig | None, env: dict[str, str]) -> str | None:
-    if cfg and isinstance(cfg, EnvSecretProvider) and cfg.allowlist:
-        if ref.id not in cfg.allowlist:
-            return None
+    if cfg and isinstance(cfg, EnvSecretProvider) and cfg.allowlist and ref.id not in cfg.allowlist:
+        return None
     return env.get(ref.id, "").strip() or None
 
 
@@ -100,6 +103,7 @@ def _resolve_file(ref: SecretRef, cfg: SecretProviderConfig | None) -> str | Non
 
         if isinstance(cfg, FileSecretProvider) and cfg.mode == "json":
             import json
+
             data = json.loads(text)
             parts = ref.id.strip("/").split("/")
             for part in parts:

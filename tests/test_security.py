@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
+from pyclaw.security.audit import run_security_audit
 from pyclaw.security.dm_policy import (
     DmGroupAccessDecision,
     resolve_dm_group_access,
     resolve_effective_allow_from,
 )
-from pyclaw.security.audit import AuditSeverity, run_security_audit
 
 
 class TestResolveEffectiveAllowFrom:
@@ -51,13 +49,17 @@ class TestResolveDmGroupAccess:
 
     def test_allowlist_allowed(self):
         decision = resolve_dm_group_access(
-            "alice", dm_policy="allowlist", config_allow_list=["alice"],
+            "alice",
+            dm_policy="allowlist",
+            config_allow_list=["alice"],
         )
         assert decision == DmGroupAccessDecision.ALLOW
 
     def test_allowlist_blocked(self):
         decision = resolve_dm_group_access(
-            "stranger", dm_policy="allowlist", config_allow_list=["alice"],
+            "stranger",
+            dm_policy="allowlist",
+            config_allow_list=["alice"],
         )
         assert decision == DmGroupAccessDecision.BLOCK
 
@@ -67,14 +69,18 @@ class TestResolveDmGroupAccess:
 
     def test_group_allowlist_allowed(self):
         decision = resolve_dm_group_access(
-            "alice", is_group=True, group_policy="allowlist",
+            "alice",
+            is_group=True,
+            group_policy="allowlist",
             config_allow_list=["alice"],
         )
         assert decision == DmGroupAccessDecision.ALLOW
 
     def test_group_disabled(self):
         decision = resolve_dm_group_access(
-            "alice", is_group=True, group_policy="disabled",
+            "alice",
+            is_group=True,
+            group_policy="disabled",
         )
         assert decision == DmGroupAccessDecision.BLOCK
 

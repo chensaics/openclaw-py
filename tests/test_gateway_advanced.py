@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import time
-import tempfile
 from pathlib import Path
 
-import pytest
-
+from pyclaw.gateway.channel_health import (
+    ChannelHealthMonitor,
+    HealthCheckConfig,
+    HealthCheckResult,
+    HealthStatus,
+)
 from pyclaw.gateway.config_reload import (
     ChangeType,
     ConfigDiff,
@@ -20,23 +22,9 @@ from pyclaw.gateway.config_reload import (
     file_hash,
     flatten_dict,
 )
-from pyclaw.gateway.channel_health import (
-    ChannelHealthMonitor,
-    HealthCheckConfig,
-    HealthCheckResult,
-    HealthStatus,
-)
 from pyclaw.gateway.control_plane_rate_limit import (
     ControlPlaneRateLimiter,
     RateLimitConfig,
-)
-from pyclaw.gateway.hooks_mapping import (
-    BUILTIN_PRESETS,
-    HookMapping,
-    apply_hook_mappings,
-    resolve_hook_mappings,
-    substitute_config,
-    substitute_template,
 )
 from pyclaw.gateway.discovery import (
     DiscoveredService,
@@ -47,9 +35,16 @@ from pyclaw.gateway.discovery import (
     TailscaleDiscovery,
     resolve_gateway_url,
 )
-
+from pyclaw.gateway.hooks_mapping import (
+    HookMapping,
+    apply_hook_mappings,
+    resolve_hook_mappings,
+    substitute_config,
+    substitute_template,
+)
 
 # ===== Config Reload =====
+
 
 class TestFlattenDict:
     def test_simple(self) -> None:
@@ -95,11 +90,13 @@ class TestDetermineStrategy:
 
     def test_restart_key(self) -> None:
         from pyclaw.gateway.config_reload import ConfigChange
+
         changes = [ConfigChange(key="gateway.port", change_type=ChangeType.MODIFIED)]
         assert determine_strategy(changes) == ReloadStrategy.RESTART
 
     def test_hot_reload_key(self) -> None:
         from pyclaw.gateway.config_reload import ConfigChange
+
         changes = [ConfigChange(key="channels.telegram.token", change_type=ChangeType.MODIFIED)]
         assert determine_strategy(changes) == ReloadStrategy.HOT
 
@@ -159,6 +156,7 @@ class TestFileHash:
 
 # ===== Channel Health =====
 
+
 class TestChannelHealthMonitor:
     def test_register(self) -> None:
         mon = ChannelHealthMonitor()
@@ -196,9 +194,13 @@ class TestChannelHealthMonitor:
         assert not decision.should_restart
 
     def test_max_restarts(self) -> None:
-        mon = ChannelHealthMonitor(HealthCheckConfig(
-            unhealthy_threshold=1, cooldown_s=0, max_restarts_per_hour=1,
-        ))
+        mon = ChannelHealthMonitor(
+            HealthCheckConfig(
+                unhealthy_threshold=1,
+                cooldown_s=0,
+                max_restarts_per_hour=1,
+            )
+        )
         mon.register_channel("tg")
 
         # First failure → unhealthy → restart allowed
@@ -215,7 +217,7 @@ class TestChannelHealthMonitor:
     def test_history(self) -> None:
         mon = ChannelHealthMonitor()
         mon.register_channel("tg")
-        for i in range(5):
+        for _i in range(5):
             mon.record_check(HealthCheckResult(channel_id="tg", healthy=True))
         history = mon.get_history("tg", limit=3)
         assert len(history) == 3
@@ -230,6 +232,7 @@ class TestChannelHealthMonitor:
 
 
 # ===== Control Plane Rate Limit =====
+
 
 class TestControlPlaneRateLimiter:
     def test_allow(self) -> None:
@@ -272,6 +275,7 @@ class TestControlPlaneRateLimiter:
 
 
 # ===== Hooks Mapping =====
+
 
 class TestSubstituteTemplate:
     def test_basic(self) -> None:
@@ -338,6 +342,7 @@ class TestApplyHookMappings:
 
 
 # ===== Discovery =====
+
 
 class TestResolveGatewayUrl:
     def test_config_priority(self) -> None:

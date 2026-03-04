@@ -6,14 +6,14 @@ Ported from ``src/media/`` image handling. Uses Pillow.
 from __future__ import annotations
 
 import io
-from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 
 def get_image_dimensions(data: bytes) -> tuple[int, int] | None:
     """Get (width, height) from image data without loading full image."""
     try:
         from PIL import Image
+
         with Image.open(io.BytesIO(data)) as img:
             return img.size
     except Exception:
@@ -28,7 +28,7 @@ def fix_exif_orientation(data: bytes) -> bytes:
     image so the pixel data matches the intended orientation.
     """
     try:
-        from PIL import Image, ExifTags
+        from PIL import ExifTags, Image
     except ImportError:
         return data
 

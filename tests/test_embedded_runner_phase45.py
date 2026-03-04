@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # 45a: Runner config switch
 # ---------------------------------------------------------------------------
+
 
 class TestRunnerConfigSwitch:
     """Verify _use_embedded_runner reads config correctly."""
@@ -45,6 +45,7 @@ class TestRunnerConfigSwitch:
 # 45b: Embedded runner used by default in chat.send
 # ---------------------------------------------------------------------------
 
+
 class TestChatSendRunnerDispatch:
     """Verify chat.send dispatches to embedded or legacy based on config."""
 
@@ -60,9 +61,11 @@ class TestChatSendRunnerDispatch:
         conn.send_event = AsyncMock()
         conn.send_error = AsyncMock()
 
-        with patch("pyclaw.gateway.methods.chat._use_embedded_runner", return_value=True), \
-             patch("pyclaw.gateway.methods.chat._run_embedded", new_callable=AsyncMock) as mock_embedded, \
-             patch("pyclaw.gateway.methods.chat._run_legacy", new_callable=AsyncMock) as mock_legacy:
+        with (
+            patch("pyclaw.gateway.methods.chat._use_embedded_runner", return_value=True),
+            patch("pyclaw.gateway.methods.chat._run_embedded", new_callable=AsyncMock) as mock_embedded,
+            patch("pyclaw.gateway.methods.chat._run_legacy", new_callable=AsyncMock) as mock_legacy,
+        ):
             await handler({"message": "hi", "provider": "test", "model": "test-model"}, conn)
             mock_embedded.assert_awaited_once()
             mock_legacy.assert_not_awaited()
@@ -79,9 +82,11 @@ class TestChatSendRunnerDispatch:
         conn.send_event = AsyncMock()
         conn.send_error = AsyncMock()
 
-        with patch("pyclaw.gateway.methods.chat._use_embedded_runner", return_value=False), \
-             patch("pyclaw.gateway.methods.chat._run_embedded", new_callable=AsyncMock) as mock_embedded, \
-             patch("pyclaw.gateway.methods.chat._run_legacy", new_callable=AsyncMock) as mock_legacy:
+        with (
+            patch("pyclaw.gateway.methods.chat._use_embedded_runner", return_value=False),
+            patch("pyclaw.gateway.methods.chat._run_embedded", new_callable=AsyncMock) as mock_embedded,
+            patch("pyclaw.gateway.methods.chat._run_legacy", new_callable=AsyncMock) as mock_legacy,
+        ):
             await handler({"message": "hi", "provider": "test", "model": "test-model"}, conn)
             mock_legacy.assert_awaited_once()
             mock_embedded.assert_not_awaited()
@@ -90,6 +95,7 @@ class TestChatSendRunnerDispatch:
 # ---------------------------------------------------------------------------
 # 45c: Abort consistency
 # ---------------------------------------------------------------------------
+
 
 class TestChatAbortConsistency:
     """Verify abort sets the event and is reported."""
@@ -113,6 +119,7 @@ class TestChatAbortConsistency:
 # 45d: Usage tracking in embedded path
 # ---------------------------------------------------------------------------
 
+
 class TestUsageTracking:
     """Verify usage recording is called in embedded runner path."""
 
@@ -125,6 +132,7 @@ class TestUsageTracking:
         conn.send_ok = AsyncMock()
 
         import asyncio
+
         abort = asyncio.Event()
 
         mock_event = MagicMock()
@@ -145,8 +153,10 @@ class TestUsageTracking:
 
         mock_session = MagicMock()
 
-        with patch("pyclaw.agents.runner.run_agent", side_effect=fake_run_agent), \
-             patch("pyclaw.infra.session_cost.record_usage") as mock_record:
+        with (
+            patch("pyclaw.agents.runner.run_agent", side_effect=fake_run_agent),
+            patch("pyclaw.infra.session_cost.record_usage") as mock_record,
+        ):
             await _run_embedded(
                 message="hello",
                 session=mock_session,
@@ -166,6 +176,7 @@ class TestUsageTracking:
 # ---------------------------------------------------------------------------
 # 45e: chat.history still works
 # ---------------------------------------------------------------------------
+
 
 class TestChatHistoryRegression:
     """Chat history handler still returns messages."""

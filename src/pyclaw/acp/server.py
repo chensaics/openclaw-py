@@ -14,11 +14,8 @@ from typing import Any
 
 from pyclaw.acp.event_mapper import extract_text_from_prompt
 from pyclaw.acp.session import create_in_memory_session_store
-from pyclaw.acp.session_mapper import parse_session_meta
-from pyclaw.acp.session_mapper import resolve_session_key
-from pyclaw.acp.session_mapper import SessionLabelMap
-from pyclaw.acp.types import AcpAgentInfo
-from pyclaw.acp.types import AcpSessionMeta
+from pyclaw.acp.session_mapper import SessionLabelMap, parse_session_meta, resolve_session_key
+from pyclaw.acp.types import AcpAgentInfo, AcpSessionMeta
 from pyclaw.config.paths import resolve_state_dir
 
 logger = logging.getLogger(__name__)
@@ -77,8 +74,7 @@ class AcpGatewayAgent:
         agent_id = params.get("agentId", "main")
         if not re.match(r"^[a-zA-Z0-9_-]+$", agent_id):
             raise ValueError(
-                f"Invalid agentId format: {agent_id!r}. "
-                "Must match ^[a-zA-Z0-9_-]+$ (alphanumeric, dash, underscore)."
+                f"Invalid agentId format: {agent_id!r}. Must match ^[a-zA-Z0-9_-]+$ (alphanumeric, dash, underscore)."
             )
 
         session_id = params.get("sessionId", str(uuid.uuid4()))
@@ -159,9 +155,7 @@ class AcpGatewayAgent:
         _meta = params.get("_meta")
         meta: dict[str, Any] = _meta if isinstance(_meta, dict) else {}
         prefix_override = meta.get("prefixCwd")
-        prefix_enabled = (
-            bool(prefix_override) if isinstance(prefix_override, bool) else self._prefix_cwd
-        )
+        prefix_enabled = bool(prefix_override) if isinstance(prefix_override, bool) else self._prefix_cwd
         cwd = str(meta.get("cwd") or session.meta.cwd or "").strip()
         if prefix_enabled and cwd:
             text = f"[cwd:{cwd}] {text}"

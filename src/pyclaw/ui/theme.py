@@ -12,7 +12,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Accent seed colors (synced from Flutter AppColors)
 # ---------------------------------------------------------------------------
@@ -37,6 +36,7 @@ PRESET_SEED_COLORS: dict[str, str] = {
 # Status & role colors (synced from Flutter AppColors)
 # ---------------------------------------------------------------------------
 
+
 class StatusColors:
     SUCCESS = "#22c55e"
     WARNING = "#f59e0b"
@@ -60,10 +60,11 @@ class CodeBlockColors:
 # Color schemes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ColorScheme:
     primary: str = SEED_INDIGO
-    secondary: str = "#8b5cf6"     # violet-500
+    secondary: str = "#8b5cf6"  # violet-500
     surface: str = "#ffffff"
     background: str = "#f8fafc"
     error: str = StatusColors.ERROR
@@ -102,10 +103,10 @@ class DarkColorScheme(ColorScheme):
 # ---------------------------------------------------------------------------
 
 CJK_FALLBACK = (
-    "Noto Sans SC, Noto Sans CJK SC, "      # Linux / Google Fonts
-    "Microsoft YaHei, "                       # Windows
-    "PingFang SC, Hiragino Sans GB, "         # macOS
-    "WenQuanYi Micro Hei, "                   # Linux fallback
+    "Noto Sans SC, Noto Sans CJK SC, "  # Linux / Google Fonts
+    "Microsoft YaHei, "  # Windows
+    "PingFang SC, Hiragino Sans GB, "  # macOS
+    "WenQuanYi Micro Hei, "  # Linux fallback
     "sans-serif"
 )
 
@@ -129,6 +130,7 @@ class Typography:
 # Spacing & layout
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Spacing:
     xs: int = 4
@@ -142,6 +144,7 @@ class Spacing:
 # ---------------------------------------------------------------------------
 # AppTheme
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AppTheme:

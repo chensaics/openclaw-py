@@ -1,10 +1,6 @@
 """Tests for pyclaw.agents.planner — task plan management."""
 
-import json
-import tempfile
 from pathlib import Path
-
-import pytest
 
 from pyclaw.agents.planner import (
     Plan,

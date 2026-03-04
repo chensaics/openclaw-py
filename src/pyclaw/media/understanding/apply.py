@@ -9,8 +9,11 @@ import logging
 import mimetypes
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
+from pyclaw.media.understanding.registry import (
+    build_media_understanding_registry,
+    resolve_provider_for_capability,
+)
 from pyclaw.media.understanding.types import (
     AudioTranscriptionRequest,
     ImageDescriptionRequest,
@@ -19,10 +22,6 @@ from pyclaw.media.understanding.types import (
     MediaUnderstandingOutput,
     MediaUnderstandingProvider,
     VideoDescriptionRequest,
-)
-from pyclaw.media.understanding.registry import (
-    build_media_understanding_registry,
-    resolve_provider_for_capability,
 )
 
 logger = logging.getLogger(__name__)

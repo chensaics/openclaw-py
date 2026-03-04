@@ -111,7 +111,7 @@ def resolve_agent_max_concurrent(cfg: dict[str, Any] | None = None) -> int:
     """Return the effective agent max-concurrent limit from config."""
     if cfg:
         raw = (cfg.get("agents") or {}).get("defaults", {}).get("maxConcurrent")
-        if isinstance(raw, (int, float)) and raw > 0:
+        if isinstance(raw, int | float) and raw > 0:
             return max(1, int(raw))
     return DEFAULT_AGENT_MAX_CONCURRENT
 
@@ -121,7 +121,7 @@ def resolve_subagent_max_concurrent(cfg: dict[str, Any] | None = None) -> int:
     if cfg:
         sub = (cfg.get("agents") or {}).get("defaults", {}).get("subagents", {})
         raw = sub.get("maxConcurrent")
-        if isinstance(raw, (int, float)) and raw > 0:
+        if isinstance(raw, int | float) and raw > 0:
             return max(1, int(raw))
     return DEFAULT_SUBAGENT_MAX_CONCURRENT
 
@@ -131,11 +131,7 @@ def resolve_model_max_tokens(
     context_window: int | None,
 ) -> int:
     """Compute effective max_tokens capped to context window."""
-    ctx = (
-        context_window
-        if isinstance(context_window, int) and context_window > 0
-        else DEFAULT_CONTEXT_TOKENS
-    )
+    ctx = context_window if isinstance(context_window, int) and context_window > 0 else DEFAULT_CONTEXT_TOKENS
     default = min(DEFAULT_MODEL_MAX_TOKENS, ctx)
     if isinstance(raw_max_tokens, int) and raw_max_tokens > 0:
         return min(raw_max_tokens, ctx)

@@ -6,9 +6,7 @@ import json
 
 import typer
 
-from pyclaw.config.io import load_config
-from pyclaw.config.io import load_config_raw
-from pyclaw.config.io import save_config
+from pyclaw.config.io import load_config, load_config_raw, save_config
 from pyclaw.config.paths import resolve_config_path
 from pyclaw.config.schema import PyClawConfig
 from pyclaw.terminal.palette import PALETTE
@@ -44,7 +42,6 @@ def channels_list() -> None:
     for channel_id, channel_cfg in channel_checks:
         if channel_cfg:
             enabled = getattr(channel_cfg, "enabled", True) if channel_cfg else False
-            status = f"{p.success}enabled{p.reset}" if enabled else f"{p.muted}disabled{p.reset}"
             rows.append({"channel": channel_id, "status": "enabled" if enabled else "disabled"})
 
     if not rows:
@@ -74,8 +71,9 @@ def channels_status() -> None:
             pass
 
     import urllib.request
+
     try:
-        resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
+        urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
         typer.echo(f"  {p.success}Gateway running on port {port}{p.reset}")
         typer.echo(f"  {p.muted}Use the gateway WebSocket API for detailed channel status.{p.reset}")
     except Exception:

@@ -36,6 +36,7 @@ class ChannelCapability(str, Enum):
 @dataclass
 class ChannelSpec:
     """Specification for a channel type."""
+
     channel_id: str
     display_name: str
     capabilities: list[ChannelCapability] = field(default_factory=list)
@@ -48,6 +49,7 @@ class ChannelSpec:
 @dataclass
 class ChannelConfigValidation:
     """Result of validating a channel configuration."""
+
     valid: bool
     missing_fields: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -60,67 +62,127 @@ class ChannelConfigValidation:
 
 CHANNEL_SPECS: dict[str, ChannelSpec] = {
     "telegram": ChannelSpec(
-        channel_id="telegram", display_name="Telegram",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.GROUPS, ChannelCapability.DM, ChannelCapability.TYPING,
-                      ChannelCapability.BUTTONS, ChannelCapability.MENTIONS, ChannelCapability.SLASH_COMMANDS],
+        channel_id="telegram",
+        display_name="Telegram",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+            ChannelCapability.TYPING,
+            ChannelCapability.BUTTONS,
+            ChannelCapability.MENTIONS,
+            ChannelCapability.SLASH_COMMANDS,
+        ],
         required_config=["token"],
         docs_url="https://docs.openclaw.ai/channels/telegram",
     ),
     "discord": ChannelSpec(
-        channel_id="discord", display_name="Discord",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.THREADS, ChannelCapability.GROUPS, ChannelCapability.DM,
-                      ChannelCapability.TYPING, ChannelCapability.MENTIONS, ChannelCapability.SLASH_COMMANDS],
+        channel_id="discord",
+        display_name="Discord",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.THREADS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+            ChannelCapability.TYPING,
+            ChannelCapability.MENTIONS,
+            ChannelCapability.SLASH_COMMANDS,
+        ],
         required_config=["token"],
         docs_url="https://docs.openclaw.ai/channels/discord",
     ),
     "slack": ChannelSpec(
-        channel_id="slack", display_name="Slack",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.THREADS, ChannelCapability.GROUPS, ChannelCapability.DM,
-                      ChannelCapability.TYPING, ChannelCapability.MENTIONS, ChannelCapability.SLASH_COMMANDS],
+        channel_id="slack",
+        display_name="Slack",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.THREADS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+            ChannelCapability.TYPING,
+            ChannelCapability.MENTIONS,
+            ChannelCapability.SLASH_COMMANDS,
+        ],
         required_config=["bot_token", "app_token"],
         docs_url="https://docs.openclaw.ai/channels/slack",
     ),
     "whatsapp": ChannelSpec(
-        channel_id="whatsapp", display_name="WhatsApp",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.GROUPS, ChannelCapability.DM],
+        channel_id="whatsapp",
+        display_name="WhatsApp",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+        ],
         required_config=[],
         docs_url="https://docs.openclaw.ai/channels/whatsapp",
     ),
     "signal": ChannelSpec(
-        channel_id="signal", display_name="Signal",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.GROUPS, ChannelCapability.DM],
+        channel_id="signal",
+        display_name="Signal",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+        ],
         required_config=["phone_number"],
         docs_url="https://docs.openclaw.ai/channels/signal",
     ),
     "imessage": ChannelSpec(
-        channel_id="imessage", display_name="iMessage",
+        channel_id="imessage",
+        display_name="iMessage",
         capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.DM],
         required_config=[],
         category="core",
     ),
     "feishu": ChannelSpec(
-        channel_id="feishu", display_name="Feishu / Lark",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.GROUPS, ChannelCapability.THREADS, ChannelCapability.MENTIONS],
+        channel_id="feishu",
+        display_name="Feishu / Lark",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.THREADS,
+            ChannelCapability.MENTIONS,
+        ],
         required_config=["app_id", "app_secret"],
         category="extension",
     ),
     "matrix": ChannelSpec(
-        channel_id="matrix", display_name="Matrix",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.REACTIONS,
-                      ChannelCapability.GROUPS, ChannelCapability.DM, ChannelCapability.THREADS],
+        channel_id="matrix",
+        display_name="Matrix",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.REACTIONS,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+            ChannelCapability.THREADS,
+        ],
         required_config=["homeserver", "user_id", "access_token"],
         category="extension",
     ),
     "msteams": ChannelSpec(
-        channel_id="msteams", display_name="Microsoft Teams",
-        capabilities=[ChannelCapability.TEXT, ChannelCapability.MEDIA, ChannelCapability.GROUPS,
-                      ChannelCapability.DM, ChannelCapability.TYPING],
+        channel_id="msteams",
+        display_name="Microsoft Teams",
+        capabilities=[
+            ChannelCapability.TEXT,
+            ChannelCapability.MEDIA,
+            ChannelCapability.GROUPS,
+            ChannelCapability.DM,
+            ChannelCapability.TYPING,
+        ],
         required_config=["app_id", "app_password"],
         category="extension",
     ),
@@ -169,12 +231,8 @@ def transform_channel_config(channel_id: str, config: dict[str, Any]) -> dict[st
 
     result.setdefault("enabled", True)
 
-    if channel_id == "telegram":
-        if "bot_token" in result and "token" not in result:
-            result["token"] = result.pop("bot_token")
-    elif channel_id == "discord":
-        if "bot_token" in result and "token" not in result:
-            result["token"] = result.pop("bot_token")
+    if (channel_id == "telegram" or channel_id == "discord") and "bot_token" in result and "token" not in result:
+        result["token"] = result.pop("bot_token")
 
     return result
 

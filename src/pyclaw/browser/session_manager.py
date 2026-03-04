@@ -202,9 +202,7 @@ class BrowserSessionManager:
         """Find sessions that have been idle longer than the timeout."""
         now = time.time()
         return [
-            sid
-            for sid, info in self._sessions.items()
-            if (now - info.last_active_at) > self._config.idle_timeout_s
+            sid for sid, info in self._sessions.items() if (now - info.last_active_at) > self._config.idle_timeout_s
         ]
 
     async def cleanup_idle(self) -> int:

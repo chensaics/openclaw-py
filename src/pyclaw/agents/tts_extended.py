@@ -14,7 +14,7 @@ Provides:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol, cast
 
@@ -24,13 +24,14 @@ logger = logging.getLogger(__name__)
 class TTSAutoMode(str, Enum):
     OFF = "off"
     ALWAYS = "always"
-    INBOUND = "inbound"       # Only when user sent audio
-    TAGGED = "tagged"         # Only with /tts or @tts directive
+    INBOUND = "inbound"  # Only when user sent audio
+    TAGGED = "tagged"  # Only with /tts or @tts directive
 
 
 @dataclass
 class TTSConfig:
     """Global TTS configuration."""
+
     auto_mode: TTSAutoMode = TTSAutoMode.OFF
     default_provider: str = "edge-tts"
     default_voice: str = ""
@@ -42,6 +43,7 @@ class TTSConfig:
 @dataclass
 class TTSRequest:
     """Request for text-to-speech synthesis."""
+
     text: str
     voice: str = ""
     provider: str = ""
@@ -52,6 +54,7 @@ class TTSRequest:
 @dataclass
 class TTSResult:
     """Result from TTS synthesis."""
+
     audio_data: bytes = b""
     audio_url: str = ""
     mime_type: str = "audio/mpeg"
@@ -67,6 +70,7 @@ class TTSResult:
 
 class TTSProvider(Protocol):
     """Protocol for TTS providers."""
+
     @property
     def name(self) -> str: ...
     @property
@@ -78,6 +82,7 @@ class TTSProvider(Protocol):
 # ---------------------------------------------------------------------------
 # ElevenLabs Provider
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ElevenLabsConfig:
@@ -143,6 +148,7 @@ class ElevenLabsTTSProvider:
 # OpenAI TTS Provider
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OpenAITTSConfig:
     api_key: str = ""
@@ -193,6 +199,7 @@ class OpenAITTSProvider:
 # TTS Helpers
 # ---------------------------------------------------------------------------
 
+
 def should_synthesize(
     config: TTSConfig,
     *,
@@ -224,7 +231,7 @@ def prepare_text_for_tts(
     if config.summarize_long_text and summarize_fn:
         return cast(str, summarize_fn(text, config.summary_max_length))
 
-    return text[:config.max_text_length]
+    return text[: config.max_text_length]
 
 
 def parse_tts_directive(text: str) -> tuple[bool, str, str]:

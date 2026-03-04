@@ -130,9 +130,7 @@ class QQChannel(ChannelPlugin):
 
             hello = json.loads(await ws.recv())
             if hello.get("op") == 10:
-                self._heartbeat_interval = (
-                    hello.get("d", {}).get("heartbeat_interval", 40000) // 1000
-                )
+                self._heartbeat_interval = hello.get("d", {}).get("heartbeat_interval", 40000) // 1000
 
             identify = {
                 "op": 2,

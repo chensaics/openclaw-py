@@ -15,7 +15,9 @@ from pyclaw.plugins.extensions import (
 class DummyExtension(Extension):
     """Simple test extension."""
 
-    def __init__(self, name: str = "dummy", provides: list[str] | None = None, requires: list[str] | None = None) -> None:
+    def __init__(
+        self, name: str = "dummy", provides: list[str] | None = None, requires: list[str] | None = None
+    ) -> None:
         self._manifest = ExtensionManifest(
             name=name,
             version="1.0.0",

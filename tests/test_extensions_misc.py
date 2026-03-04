@@ -8,31 +8,29 @@ from pathlib import Path
 
 import pytest
 
-from pyclaw.plugins.contrib.memory_core import (
-    MemoryCoreExtension,
-    MemoryEntry,
-    MemoryToolConfig,
-)
-from pyclaw.plugins.contrib.gemini_cli_auth import (
-    GeminiAuthConfig,
-    GeminiCliAuthExtension,
-    OAuthTokens,
-    PKCEChallenge,
-    build_auth_url,
-    build_refresh_request,
-    build_token_request,
-    generate_pkce_challenge,
-    parse_token_response,
-)
 from pyclaw.agents.providers.ollama_enhanced import (
     OllamaDiscovery,
     OllamaModelInfo,
     parse_ollama_model_info,
     resolve_context_window,
 )
-
+from pyclaw.plugins.contrib.gemini_cli_auth import (
+    GeminiAuthConfig,
+    GeminiCliAuthExtension,
+    OAuthTokens,
+    build_auth_url,
+    build_refresh_request,
+    build_token_request,
+    generate_pkce_challenge,
+    parse_token_response,
+)
+from pyclaw.plugins.contrib.memory_core import (
+    MemoryCoreExtension,
+    MemoryToolConfig,
+)
 
 # ===== Memory Core Extension =====
+
 
 class TestMemoryCoreExtension:
     @pytest.fixture
@@ -108,6 +106,7 @@ class TestMemoryCoreExtension:
 
 # ===== Gemini CLI Auth =====
 
+
 class TestPKCE:
     def test_generate(self) -> None:
         pkce = generate_pkce_challenge()
@@ -118,7 +117,9 @@ class TestPKCE:
 
     def test_deterministic_challenge(self) -> None:
         # Same verifier should produce same challenge
-        import base64, hashlib
+        import base64
+        import hashlib
+
         verifier = "test_verifier_12345"
         digest = hashlib.sha256(verifier.encode("ascii")).digest()
         challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
@@ -199,15 +200,18 @@ class TestGeminiExtension:
 
     def test_needs_refresh(self) -> None:
         ext = GeminiCliAuthExtension()
-        ext.set_tokens(OAuthTokens(
-            access_token="at",
-            refresh_token="rt",
-            expires_at=time.time() - 100,
-        ))
+        ext.set_tokens(
+            OAuthTokens(
+                access_token="at",
+                refresh_token="rt",
+                expires_at=time.time() - 100,
+            )
+        )
         assert ext.needs_refresh is True
 
 
 # ===== Ollama Enhanced =====
+
 
 class TestParseOllamaModelInfo:
     def test_basic(self) -> None:
@@ -274,12 +278,14 @@ class TestOllamaDiscovery:
 
     def test_successful_discovery(self) -> None:
         disc = OllamaDiscovery()
-        models = disc.process_discovery_response({
-            "models": [
-                {"name": "llama3", "details": {"family": "llama"}},
-                {"name": "mistral", "details": {"family": "mistral"}},
-            ]
-        })
+        models = disc.process_discovery_response(
+            {
+                "models": [
+                    {"name": "llama3", "details": {"family": "llama"}},
+                    {"name": "mistral", "details": {"family": "mistral"}},
+                ]
+            }
+        )
         assert len(models) == 2
         assert disc.state.is_healthy is True
 
@@ -292,9 +298,7 @@ class TestOllamaDiscovery:
     def test_error_recovery(self) -> None:
         disc = OllamaDiscovery()
         # First success
-        disc.process_discovery_response({
-            "models": [{"name": "llama3", "details": {}}]
-        })
+        disc.process_discovery_response({"models": [{"name": "llama3", "details": {}}]})
         # Then error — should keep old models
         disc.process_discovery_response(None, error="connection refused")
         assert len(disc.models) == 1
@@ -308,11 +312,13 @@ class TestOllamaDiscovery:
 
     def test_get_model(self) -> None:
         disc = OllamaDiscovery()
-        disc.process_discovery_response({
-            "models": [
-                {"name": "llama3:latest", "details": {"family": "llama"}},
-            ]
-        })
+        disc.process_discovery_response(
+            {
+                "models": [
+                    {"name": "llama3:latest", "details": {"family": "llama"}},
+                ]
+            }
+        )
         assert disc.get_model("llama3:latest") is not None
         assert disc.get_model("LLAMA3:LATEST") is not None
         assert disc.get_model("nonexistent") is None

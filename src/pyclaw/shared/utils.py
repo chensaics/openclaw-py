@@ -18,9 +18,9 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-import time
+from collections.abc import Coroutine
 from dataclasses import dataclass
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -56,6 +56,7 @@ _CODE_FENCE_RE = re.compile(r"```(\w*)\n(.*?)```", re.DOTALL)
 @dataclass
 class CodeRegion:
     """A detected code region."""
+
     language: str
     code: str
     start_pos: int
@@ -66,21 +67,20 @@ def find_code_regions(text: str) -> list[CodeRegion]:
     """Find all fenced code regions in text."""
     regions: list[CodeRegion] = []
     for m in _CODE_FENCE_RE.finditer(text):
-        regions.append(CodeRegion(
-            language=m.group(1) or "",
-            code=m.group(2),
-            start_pos=m.start(),
-            end_pos=m.end(),
-        ))
+        regions.append(
+            CodeRegion(
+                language=m.group(1) or "",
+                code=m.group(2),
+                start_pos=m.start(),
+                end_pos=m.end(),
+            )
+        )
     return regions
 
 
 def is_inside_code_block(text: str, position: int) -> bool:
     """Check if a position is inside a code fence."""
-    for region in find_code_regions(text):
-        if region.start_pos <= position <= region.end_pos:
-            return True
-    return False
+    return any(region.start_pos <= position <= region.end_pos for region in find_code_regions(text))
 
 
 # ---------------------------------------------------------------------------
@@ -105,13 +105,14 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
             key, _, value = line.partition(":")
             fm[key.strip()] = value.strip()
 
-    body = text[m.end():]
+    body = text[m.end() :]
     return fm, body
 
 
 # ---------------------------------------------------------------------------
 # API Key Masking
 # ---------------------------------------------------------------------------
+
 
 def mask_api_key(key: str, *, visible_chars: int = 4) -> str:
     """Mask an API key, showing only the last N chars."""
@@ -125,6 +126,7 @@ def mask_api_key(key: str, *, visible_chars: int = 4) -> str:
 # ---------------------------------------------------------------------------
 # Safe JSON
 # ---------------------------------------------------------------------------
+
 
 def safe_json_parse(text: str, default: Any = None) -> Any:
     """Parse JSON without raising exceptions."""
@@ -146,7 +148,8 @@ def safe_json_dumps(obj: Any, **kwargs: Any) -> str:
 # Timeout Wrapper
 # ---------------------------------------------------------------------------
 
-async def with_timeout(
+
+async def with_timeout[T](
     coro: Coroutine[Any, Any, T],
     timeout_s: float,
     *,
@@ -155,7 +158,7 @@ async def with_timeout(
     """Run a coroutine with a timeout, returning default on timeout."""
     try:
         return await asyncio.wait_for(coro, timeout=timeout_s)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return default
 
 
@@ -163,14 +166,14 @@ async def with_timeout(
 # Concurrency Control
 # ---------------------------------------------------------------------------
 
-async def run_with_concurrency(
+
+async def run_with_concurrency[T](
     tasks: list[Coroutine[Any, Any, T]],
     *,
     max_concurrent: int = 5,
 ) -> list[T | Exception]:
     """Run coroutines with bounded concurrency."""
     semaphore = asyncio.Semaphore(max_concurrent)
-    results: list[T | Exception] = []
 
     async def sem_task(coro: Coroutine[Any, Any, T]) -> T | Exception:
         async with semaphore:
@@ -187,9 +190,11 @@ async def run_with_concurrency(
 # Usage Aggregation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class UsageEntry:
     """A single usage entry."""
+
     model: str
     input_tokens: int = 0
     output_tokens: int = 0

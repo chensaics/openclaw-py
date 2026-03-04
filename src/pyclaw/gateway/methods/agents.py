@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -31,11 +30,13 @@ async def handle_agents_list(conn: GatewayConnection, params: dict[str, Any]) ->
                 except (json.JSONDecodeError, OSError):
                     pass
 
-            agents.append({
-                "id": d.name,
-                "session_count": session_count,
-                "config": agent_config,
-            })
+            agents.append(
+                {
+                    "id": d.name,
+                    "session_count": session_count,
+                    "config": agent_config,
+                }
+            )
 
     return {"agents": agents}
 
@@ -58,9 +59,7 @@ async def handle_agents_add(conn: GatewayConnection, params: dict[str, Any]) -> 
 
     config = params.get("config", {})
     if config:
-        (agent_dir / "config.json").write_text(
-            json.dumps(config, indent=2) + "\n", encoding="utf-8"
-        )
+        (agent_dir / "config.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
     return {"agent_id": agent_id, "created": True}
 
@@ -68,6 +67,7 @@ async def handle_agents_add(conn: GatewayConnection, params: dict[str, Any]) -> 
 async def handle_agents_remove(conn: GatewayConnection, params: dict[str, Any]) -> dict[str, Any]:
     """Remove an agent directory."""
     import shutil
+
     from pyclaw.config.paths import resolve_agents_dir
 
     agent_id = params.get("agent_id", "").strip()

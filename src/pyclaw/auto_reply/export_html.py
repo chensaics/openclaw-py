@@ -14,14 +14,14 @@ from __future__ import annotations
 import html
 import re
 import time
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 
 @dataclass
 class ExportEntry:
     """A single conversation entry for export."""
-    role: str            # "user" | "assistant" | "system" | "tool"
+
+    role: str  # "user" | "assistant" | "system" | "tool"
     content: str
     timestamp: float = 0.0
     tool_name: str = ""
@@ -33,11 +33,12 @@ class ExportEntry:
 @dataclass
 class ExportOptions:
     """Options for HTML export."""
+
     title: str = "pyclaw Session Export"
     include_system: bool = False
     include_tools: bool = True
     include_timestamps: bool = True
-    theme: str = "light"         # "light" | "dark"
+    theme: str = "light"  # "light" | "dark"
 
 
 _EXPORT_CSS = """
@@ -121,9 +122,13 @@ def _render_entry(entry: ExportEntry, options: ExportOptions) -> str:
     if entry.role == "tool":
         parts.append(f'<div class="tool-name">{html.escape(entry.tool_name)}</div>')
         if entry.tool_input:
-            parts.append(f'<div class="tool-io"><strong>Input:</strong><pre>{html.escape(entry.tool_input)}</pre></div>')
+            parts.append(
+                f'<div class="tool-io"><strong>Input:</strong><pre>{html.escape(entry.tool_input)}</pre></div>'
+            )
         if entry.tool_output:
-            parts.append(f'<div class="tool-io"><strong>Output:</strong><pre>{html.escape(entry.tool_output[:2000])}</pre></div>')
+            parts.append(
+                f'<div class="tool-io"><strong>Output:</strong><pre>{html.escape(entry.tool_output[:2000])}</pre></div>'
+            )
     else:
         parts.append(f'<div class="content">{markdown_to_html(entry.content)}</div>')
 

@@ -43,14 +43,16 @@ class AgentBinding:
 def binding_match_identity_key(match: AgentBindingMatch) -> str:
     """Build a stable identity key for a binding match (excluding account)."""
     roles = sorted(set(r.strip() for r in (match.roles or []) if r.strip()))
-    return "|".join([
-        match.channel,
-        (match.peer.kind if match.peer else ""),
-        (match.peer.id if match.peer else ""),
-        match.guild_id or "",
-        match.team_id or "",
-        ",".join(roles),
-    ])
+    return "|".join(
+        [
+            match.channel,
+            (match.peer.kind if match.peer else ""),
+            (match.peer.id if match.peer else ""),
+            match.guild_id or "",
+            match.team_id or "",
+            ",".join(roles),
+        ]
+    )
 
 
 def binding_match_key(match: AgentBindingMatch) -> str:
@@ -76,6 +78,7 @@ def describe_binding(binding: AgentBinding) -> str:
 # ---------------------------------------------------------------------------
 # Apply / manage bindings
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ApplyBindingsResult:
@@ -109,10 +112,12 @@ def apply_agent_bindings(
             if existing_agent == agent_id:
                 result.skipped.append(binding)
             else:
-                result.conflicts.append({
-                    "binding": binding,
-                    "existingAgentId": existing_agent,
-                })
+                result.conflicts.append(
+                    {
+                        "binding": binding,
+                        "existingAgentId": existing_agent,
+                    }
+                )
             continue
 
         # Check for account-scope upgrade
@@ -199,6 +204,7 @@ def _find_upgrade_candidate(
 # Route resolution with 7-tier priority
 # ---------------------------------------------------------------------------
 
+
 def resolve_agent_route(
     bindings: list[AgentBinding],
     channel: str,
@@ -227,10 +233,7 @@ def resolve_agent_route(
 
     # Filter by account if provided
     if account_id:
-        account_candidates = [
-            b for b in candidates
-            if _matches_account(b.match.account_id, account_id)
-        ]
+        account_candidates = [b for b in candidates if _matches_account(b.match.account_id, account_id)]
         if account_candidates:
             candidates = account_candidates
 
@@ -261,31 +264,26 @@ def _binding_tier(
     roles: list[str] | None,
 ) -> int:
     # Tier 1: peer-specific
-    if match.peer and peer_kind and peer_id:
-        if match.peer.kind == peer_kind and match.peer.id == peer_id:
-            return 1
+    if match.peer and peer_kind and peer_id and match.peer.kind == peer_kind and match.peer.id == peer_id:
+        return 1
 
     # Tier 3: guild+roles
-    if match.guild_id and match.roles and guild_id and roles:
-        if match.guild_id == guild_id:
-            match_roles = set(match.roles)
-            if match_roles.issubset(set(roles)):
-                return 3
+    if match.guild_id and match.roles and guild_id and roles and match.guild_id == guild_id:
+        match_roles = set(match.roles)
+        if match_roles.issubset(set(roles)):
+            return 3
 
     # Tier 4: guild-only
-    if match.guild_id and not match.roles and guild_id:
-        if match.guild_id == guild_id:
-            return 4
+    if match.guild_id and not match.roles and guild_id and match.guild_id == guild_id:
+        return 4
 
     # Tier 5: team-only
-    if match.team_id and team_id:
-        if match.team_id == team_id:
-            return 5
+    if match.team_id and team_id and match.team_id == team_id:
+        return 5
 
     # Tier 6: account-scoped
-    if match.account_id and match.account_id != "*":
-        if not match.peer and not match.guild_id and not match.team_id:
-            return 6
+    if match.account_id and match.account_id != "*" and not match.peer and not match.guild_id and not match.team_id:
+        return 6
 
     # Tier 7: channel-only
     if not match.peer and not match.guild_id and not match.team_id:
@@ -298,6 +296,7 @@ def _binding_tier(
 # ---------------------------------------------------------------------------
 # Binding spec parsing (CLI)
 # ---------------------------------------------------------------------------
+
 
 def parse_binding_spec(spec: str) -> AgentBindingMatch:
     """Parse a binding spec string like ``channel[:accountId]``.
@@ -313,6 +312,7 @@ def parse_binding_spec(spec: str) -> AgentBindingMatch:
 # ---------------------------------------------------------------------------
 # Serialization
 # ---------------------------------------------------------------------------
+
 
 def binding_to_dict(binding: AgentBinding) -> dict[str, Any]:
     result: dict[str, Any] = {

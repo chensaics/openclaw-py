@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SessionConfig:
     """Configuration for the session manager."""
+
     max_history_messages: int = 100
     max_history_tokens: int = 100000
     max_cached_sessions: int = 20
@@ -37,6 +38,7 @@ class SessionConfig:
 
 class SessionLane(str, Enum):
     """Session lane types for multi-agent routing."""
+
     DEFAULT = "default"
     PRIORITY = "priority"
     BACKGROUND = "background"
@@ -46,6 +48,7 @@ class SessionLane(str, Enum):
 @dataclass
 class SessionState:
     """State of an embedded runner session."""
+
     session_id: str
     agent_id: str = ""
     model: str = ""
@@ -170,10 +173,7 @@ class EmbeddedSessionManager:
         now = time.time()
 
         # First evict expired sessions
-        expired = [
-            sid for sid, s in self._sessions.items()
-            if (now - s.last_active_at) > self._config.session_ttl_s
-        ]
+        expired = [sid for sid, s in self._sessions.items() if (now - s.last_active_at) > self._config.session_ttl_s]
         for sid in expired:
             self._sessions.pop(sid, None)
 
@@ -193,6 +193,7 @@ class EmbeddedSessionManager:
 # ---------------------------------------------------------------------------
 # Lane Resolution
 # ---------------------------------------------------------------------------
+
 
 def resolve_lane(
     *,

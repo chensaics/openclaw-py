@@ -110,9 +110,7 @@ def decode_handle_state(runtime_session_name: str) -> AcpxHandleState | None:
     )
 
 
-def resolve_acpx_config(
-    raw_config: dict[str, Any] | None = None, workspace_dir: str = ""
-) -> AcpxConfig:
+def resolve_acpx_config(raw_config: dict[str, Any] | None = None, workspace_dir: str = "") -> AcpxConfig:
     """Resolve acpx plugin config, finding the acpx binary."""
     cfg = raw_config or {}
     command = shutil.which("acpx") or "acpx"

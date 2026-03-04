@@ -6,35 +6,8 @@ import pytest
 
 from pyclaw.auto_reply.block_streaming import (
     BlockCoalescer,
-    StreamBlock,
     StreamingConfig,
     get_streaming_config,
-)
-from pyclaw.infra.outbound.target_resolver import (
-    DeliveryTarget,
-    TargetResolutionContext,
-    TargetResolver,
-)
-from pyclaw.infra.outbound.send_service import (
-    MessageEnvelope,
-    MessageFormat,
-    OutboundSendService,
-    SendResult,
-    SenderIdentity,
-    generate_conversation_id,
-)
-from pyclaw.infra.outbound.message_actions import (
-    ActionResult,
-    ActionSpec,
-    ActionType,
-    MessageActionRunner,
-)
-from pyclaw.infra.outbound.channel_adapters import (
-    ChannelAdapterRegistry,
-    ChannelCapabilities,
-    MediaType,
-    OutboundPayload,
-    OutboundResult,
 )
 from pyclaw.auto_reply.export_html import (
     ExportEntry,
@@ -42,9 +15,30 @@ from pyclaw.auto_reply.export_html import (
     export_session_html,
     markdown_to_html,
 )
-
+from pyclaw.infra.outbound.channel_adapters import (
+    ChannelAdapterRegistry,
+)
+from pyclaw.infra.outbound.message_actions import (
+    ActionResult,
+    ActionSpec,
+    ActionType,
+    MessageActionRunner,
+)
+from pyclaw.infra.outbound.send_service import (
+    MessageEnvelope,
+    MessageFormat,
+    OutboundSendService,
+    SendResult,
+    generate_conversation_id,
+)
+from pyclaw.infra.outbound.target_resolver import (
+    DeliveryTarget,
+    TargetResolutionContext,
+    TargetResolver,
+)
 
 # ===== Block Streaming =====
+
 
 class TestStreamingConfig:
     def test_defaults(self) -> None:
@@ -115,6 +109,7 @@ class TestBlockCoalescer:
 
 # ===== Target Resolver =====
 
+
 class TestTargetResolver:
     def test_resolve_from_bindings(self) -> None:
         resolver = TargetResolver()
@@ -167,6 +162,7 @@ class TestTargetResolver:
 
 # ===== Send Service =====
 
+
 class TestOutboundSendService:
     @pytest.mark.asyncio
     async def test_send_success(self) -> None:
@@ -211,6 +207,7 @@ class TestOutboundSendService:
 
 
 # ===== Message Actions =====
+
 
 class TestMessageActions:
     @pytest.mark.asyncio
@@ -267,6 +264,7 @@ class TestMessageActions:
 
 # ===== Channel Adapters =====
 
+
 class TestChannelAdapterRegistry:
     def test_list_channels(self) -> None:
         registry = ChannelAdapterRegistry()
@@ -278,6 +276,7 @@ class TestChannelAdapterRegistry:
 
 
 # ===== HTML Export =====
+
 
 class TestMarkdownToHtml:
     def test_bold(self) -> None:

@@ -123,9 +123,7 @@ class FeishuDocxClient:
         total_rows = 1 + len(rows)
         cols = len(header)
 
-        table_result = await self.create_table(
-            document_id, total_rows, cols, block_id=block_id, index=index
-        )
+        table_result = await self.create_table(document_id, total_rows, cols, block_id=block_id, index=index)
         table_id = table_result.get("block_id", "")
         if not table_id:
             return table_result

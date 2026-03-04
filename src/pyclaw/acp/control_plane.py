@@ -142,9 +142,7 @@ class AcpSessionManager:
             raise ValueError(f"ACP runtime not found: {backend_id}")
 
         sandbox_config = sandbox if sandbox is not None else self._default_sandbox_config
-        resolution = await runtime.ensure_session(
-            session_key, agent, cwd, mode, sandbox_config=sandbox_config
-        )
+        resolution = await runtime.ensure_session(session_key, agent, cwd, mode, sandbox_config=sandbox_config)
         self._sessions[session_key] = resolution
         self._session_status[session_key] = AcpSessionStatus(
             session_key=session_key,

@@ -7,8 +7,6 @@ to call ``shell.apply(width)`` on resize.  Follows the Flutter
 
 from __future__ import annotations
 
-from typing import Any
-
 import flet as ft
 
 from pyclaw.ui.theme import get_theme
