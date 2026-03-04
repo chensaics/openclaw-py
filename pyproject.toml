@@ -102,6 +102,10 @@ office = [
 all = [
     "pyclaw[ui,matrix,voice,whatsapp,llamacpp,mlx,office]",
 ]
+# Docker image: same as all but without llamacpp/mlx (need compilers/special libs)
+docker = [
+    "pyclaw[ui,matrix,voice,whatsapp,office]",
+]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.25",

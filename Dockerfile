@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md ./
 COPY src/ src/
 
-RUN pip install --no-cache-dir ".[all]"
+# Use [docker] extra to avoid llamacpp/mlx build failures (need CMake/Apple libs)
+RUN pip install --no-cache-dir ".[docker]"
 
 # ── Runtime ──────────────────────────────────────────────────────────
 FROM python:3.12-slim
