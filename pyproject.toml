@@ -27,6 +27,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Framework :: FastAPI",
     "Typing :: Typed",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Environment :: Web Environment",
 ]
 dependencies = [
     # HTTP / WebSocket / async
@@ -45,23 +48,9 @@ dependencies = [
     "aiofiles>=24",
     # Scheduling
     "apscheduler>=3.10",
-    # Media
-    "Pillow>=11",
-    # AI / LLM
+    # AI / LLM (core)
     "openai>=1.60",
     "anthropic>=0.42",
-    "google-generativeai>=0.8",
-    # TTS
-    "edge-tts>=7",
-    # Messaging channels
-    "aiogram>=3.17",
-    "discord.py>=2.4",
-    "slack-bolt>=1.22",
-    # Browser automation
-    "playwright>=1.50",
-    "flet>=0.81.0",
-    # Desktop screenshot
-    "mss>=9",
 ]
 
 [project.urls]
@@ -72,9 +61,11 @@ Issues = "https://github.com/chensaics/openclaw-py/issues"
 Changelog = "https://github.com/chensaics/openclaw-py/releases"
 
 [project.optional-dependencies]
-ui = [
-    "flet>=0.81",
-    "pystray>=0.19",
+# Messaging channel SDKs
+channels = [
+    "aiogram>=3.17",
+    "discord.py>=2.4",
+    "slack-bolt>=1.22",
 ]
 matrix = [
     "matrix-nio>=0.24",
@@ -82,8 +73,25 @@ matrix = [
 whatsapp = [
     "neonize>=0.3.14",
 ]
+# Desktop / Web UI
+ui = [
+    "flet>=0.81",
+    "pystray>=0.19",
+    "Pillow>=11",
+]
+# Media & automation
+media = [
+    "Pillow>=11",
+    "mss>=9",
+    "playwright>=1.50",
+]
+# Voice (TTS / STT)
 voice = [
     "edge-tts>=7",
+]
+# Additional LLM providers
+gemini = [
+    "google-generativeai>=0.8",
 ]
 llamacpp = [
     "huggingface_hub>=0.20",
@@ -93,18 +101,20 @@ mlx = [
     "huggingface_hub>=0.20",
     "mlx-lm>=0.10",
 ]
+# Office document processing
 office = [
     "pypdf>=5",
     "python-docx>=1.1",
     "openpyxl>=3.1",
     "python-pptx>=1.0",
 ]
+# Everything (except platform-specific: whatsapp, llamacpp, mlx)
 all = [
-    "pyclaw[ui,matrix,voice,whatsapp,llamacpp,mlx,office]",
+    "pyclaw[channels,ui,media,voice,gemini,matrix,office]",
 ]
-# Docker image: same as all but without llamacpp/mlx (need compilers/special libs)
+# Docker: excludes llamacpp/mlx (C++ compilers) and whatsapp (protobuf conflict)
 docker = [
-    "pyclaw[ui,matrix,voice,whatsapp,office]",
+    "pyclaw[channels,ui,media,voice,gemini,matrix,office]",
 ]
 dev = [
     "pytest>=8",
@@ -160,7 +170,7 @@ product = "OpenClaw"
 description = "Multi-channel AI gateway"
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 strict = true
 disable_error_code = ["misc"]
 

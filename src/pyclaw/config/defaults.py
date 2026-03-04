@@ -81,35 +81,10 @@ DEFAULT_REDACT_SENSITIVE = "tools"
 
 
 # ---------------------------------------------------------------------------
-# Provider defaults — base_url and default model for OpenAI-compatible providers
+# Provider defaults — delegated to model_catalog._KNOWN_PROVIDERS as the
+# single source of truth.  This module re-exports the lookup for callers
+# that only need (base_url, default_model).
 # ---------------------------------------------------------------------------
-
-_PROVIDER_DEFAULTS: dict[str, tuple[str, str]] = {
-    # provider_id -> (default_base_url, default_model)
-    "anthropic": ("https://api.anthropic.com", "claude-sonnet-4-6"),
-    "openai": ("https://api.openai.com/v1", "gpt-4o"),
-    "google": ("https://generativelanguage.googleapis.com", "gemini-2.5-flash"),
-    "deepseek": ("https://api.deepseek.com/v1", "deepseek-chat"),
-    "mistral": ("https://api.mistral.ai/v1", "mistral-large-latest"),
-    "xai": ("https://api.x.ai/v1", "grok-3"),
-    "qwen": ("https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen-max"),
-    "moonshot": ("https://api.moonshot.cn/v1", "kimi-k2.5"),
-    "zhipu": ("https://open.bigmodel.cn/api/paas/v4", "glm-4-plus"),
-    "volcengine": ("https://ark.cn-beijing.volces.com/api/v3", "doubao-pro-256k"),
-    "yi": ("https://api.lingyiwanwu.com/v1", "yi-lightning"),
-    "qianfan": ("https://aip.baidubce.com/rpc/2.0/ai_custom/v1", "ernie-4.5-turbo-128k"),
-    "minimax": ("https://api.minimax.chat/v1", "MiniMax-M2.5"),
-    "siliconflow": ("https://api.siliconflow.cn/v1", "deepseek-ai/DeepSeek-V3"),
-    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
-    "ollama": ("http://localhost:11434/v1", "llama3"),
-    "openrouter": ("https://openrouter.ai/api/v1", "anthropic/claude-sonnet-4-6"),
-    "together": ("https://api.together.xyz/v1", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
-    "fireworks": ("https://api.fireworks.ai/inference/v1", "accounts/fireworks/models/llama-v3p3-70b-instruct"),
-    "perplexity": ("https://api.perplexity.ai", "sonar-pro"),
-    "amazon-bedrock": ("", "anthropic.claude-sonnet-4-6"),
-    "vllm": ("http://localhost:8000/v1", "default"),
-    "litellm": ("http://localhost:4000/v1", "default"),
-}
 
 
 def get_provider_defaults(provider_id: str) -> tuple[str, str]:
@@ -118,7 +93,12 @@ def get_provider_defaults(provider_id: str) -> tuple[str, str]:
     Returns ("", "") for unknown providers — callers should fall back
     to OpenAI defaults or raise.
     """
-    return _PROVIDER_DEFAULTS.get(provider_id, ("", ""))
+    from pyclaw.agents.model_catalog import _KNOWN_PROVIDERS
+
+    meta = _KNOWN_PROVIDERS.get(provider_id)
+    if meta:
+        return meta.get("base_url", ""), meta.get("default_model", "")
+    return ("", "")
 
 
 def resolve_model_alias(raw: str) -> str:

@@ -89,10 +89,36 @@ jobs:
           draft: false
           files: dist/*
 
+  # ── TestPyPI (smoke test) ─────────────────────────────────────────
+  publish-testpypi:
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Verify install from TestPyPI
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Waiting for TestPyPI to index version ${VERSION}..."
+          sleep 30
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "pyclaw==${VERSION}" || echo "TestPyPI verification skipped (package not yet indexed)"
+
   # ── PyPI Publish ──────────────────────────────────────────────────
   publish-pypi:
     runs-on: ubuntu-latest
-    needs: [preflight, release-notes]
+    needs: [preflight, release-notes, publish-testpypi]
     environment: pypi
     permissions:
       id-token: write

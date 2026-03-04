@@ -101,9 +101,18 @@ class DarkColorScheme(ColorScheme):
 # Typography
 # ---------------------------------------------------------------------------
 
+CJK_FALLBACK = (
+    "Noto Sans SC, Noto Sans CJK SC, "      # Linux / Google Fonts
+    "Microsoft YaHei, "                       # Windows
+    "PingFang SC, Hiragino Sans GB, "         # macOS
+    "WenQuanYi Micro Hei, "                   # Linux fallback
+    "sans-serif"
+)
+
+
 @dataclass
 class Typography:
-    font_family: str = "Inter, system-ui, sans-serif"
+    font_family: str = f"Inter, system-ui, {CJK_FALLBACK}"
     mono_family: str = "JetBrains Mono, Fira Code, monospace"
     size_xs: int = 12
     size_sm: int = 14
@@ -153,7 +162,12 @@ class AppTheme:
     breakpoint_desktop: int = 1200
 
     def to_flet_theme(self) -> Any:
-        """Convert to a Flet ThemeData object (if flet is available)."""
+        """Convert to a Flet ThemeData with component-level theming.
+
+        Applies Material 3 design tokens from Flutter reference design:
+        flat cards (elevation 0, radius 16), pill inputs (radius 24),
+        rounded snackbars, and comfortable visual density.
+        """
         try:
             import flet as ft
 
@@ -161,8 +175,24 @@ class AppTheme:
                 color_scheme_seed=self.colors.primary,
                 font_family=self.typography.font_family,
                 visual_density=ft.VisualDensity.COMFORTABLE,
+                card_theme=ft.CardTheme(
+                    elevation=0,
+                    shape=ft.RoundedRectangleBorder(radius=self.card_border_radius),
+                    color=self.colors.surface_container,
+                ),
+                dialog_theme=ft.DialogTheme(
+                    shape=ft.RoundedRectangleBorder(radius=self.card_border_radius),
+                ),
+                snack_bar_theme=ft.SnackBarTheme(
+                    behavior=ft.SnackBarBehavior.FLOATING,
+                    shape=ft.RoundedRectangleBorder(radius=self.border_radius),
+                ),
+                divider_theme=ft.DividerTheme(
+                    space=1,
+                    thickness=1,
+                ),
             )
-        except ImportError:
+        except (ImportError, Exception):
             return None
 
     def role_color(self, role: str) -> str:

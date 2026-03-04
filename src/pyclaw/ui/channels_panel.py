@@ -62,31 +62,28 @@ class ChannelStatusPanel(ft.Column):
     """Panel showing configured channels with capabilities and metrics."""
 
     def __init__(self, on_refresh: Any = None) -> None:
+        from pyclaw.ui.components import page_header
+
         self._on_refresh = on_refresh
         self._channel_list = ft.ListView(expand=True, spacing=6)
         self._summary_row = ft.Row(spacing=16)
 
-        header = ft.Row(
-            [
-                ft.Text(t("channels.title"), size=18, weight=ft.FontWeight.BOLD, expand=True),
-                ft.IconButton(
-                    icon=ft.Icons.REFRESH,
-                    tooltip=t("channels.refresh"),
-                    icon_size=20,
-                    on_click=self._handle_refresh,
-                ),
-            ]
+        header = page_header(
+            ft.Icons.LINK, t("channels.title"),
+            [ft.IconButton(
+                icon=ft.Icons.REFRESH, tooltip=t("channels.refresh"),
+                icon_size=20, on_click=self._handle_refresh,
+            )],
         )
 
         super().__init__(
             controls=[
                 header,
-                self._summary_row,
-                ft.Divider(height=1),
+                ft.Container(content=self._summary_row, padding=ft.padding.symmetric(horizontal=16)),
                 self._channel_list,
             ],
             expand=True,
-            spacing=8,
+            spacing=0,
             horizontal_alignment=ft.CrossAxisAlignment.START,
         )
 
@@ -106,15 +103,9 @@ class ChannelStatusPanel(ft.Column):
         self._safe_update(self._summary_row)
 
         if not channels:
+            from pyclaw.ui.components import empty_state
             self._channel_list.controls.append(
-                ft.Container(
-                    content=ft.Text(
-                        t("channels.no_configured"),
-                        size=13,
-                        color=ft.Colors.ON_SURFACE_VARIANT,
-                    ),
-                    padding=ft.padding.all(16),
-                ),
+                empty_state(ft.Icons.LINK_OFF, t("channels.no_configured")),
             )
         else:
             for ch in channels:
@@ -162,6 +153,9 @@ class ChannelStatusPanel(ft.Column):
         if metrics_row:
             info_col_children.append(metrics_row)
 
+        from pyclaw.ui.theme import get_theme
+
+        theme = get_theme()
         return ft.Container(
             content=ft.Row(
                 [
@@ -181,9 +175,9 @@ class ChannelStatusPanel(ft.Column):
                 spacing=10,
             ),
             padding=ft.padding.symmetric(horizontal=12, vertical=10),
-            border_radius=ft.border_radius.all(10),
-            bgcolor=ft.Colors.SURFACE_CONTAINER,
-            border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=ft.border_radius.all(theme.card_border_radius),
+            bgcolor=theme.colors.surface_container,
+            border=ft.border.all(0.5, theme.colors.border),
         )
 
     @staticmethod

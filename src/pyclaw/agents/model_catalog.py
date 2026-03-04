@@ -29,29 +29,32 @@ _PROVIDER_ALIASES: dict[str, str] = {
     "baidu": "qianfan",
 }
 
-# Known providers with metadata and default model
+# Known providers — single source of truth for name, env key, default model, base URL.
+# ``config/defaults.py`` delegates to this via ``get_provider_defaults()``.
 _KNOWN_PROVIDERS: dict[str, dict[str, Any]] = {
-    "anthropic": {"name": "Anthropic", "env_key": "ANTHROPIC_API_KEY", "default_model": "claude-sonnet-4-6"},
-    "openai": {"name": "OpenAI", "env_key": "OPENAI_API_KEY", "default_model": "gpt-4o"},
-    "google": {"name": "Google Gemini", "env_key": "GOOGLE_API_KEY", "default_model": "gemini-2.5-flash"},
-    "deepseek": {"name": "DeepSeek", "env_key": "DEEPSEEK_API_KEY", "default_model": "deepseek-chat"},
-    "mistral": {"name": "Mistral", "env_key": "MISTRAL_API_KEY", "default_model": "mistral-large-latest"},
-    "xai": {"name": "xAI (Grok)", "env_key": "XAI_API_KEY", "default_model": "grok-3"},
-    "qwen": {"name": "通义千问 (Qwen)", "env_key": "DASHSCOPE_API_KEY", "default_model": "qwen-max"},
-    "moonshot": {"name": "Moonshot (Kimi)", "env_key": "MOONSHOT_API_KEY", "default_model": "kimi-k2.5"},
-    "zhipu": {"name": "智谱 AI (GLM)", "env_key": "ZHIPU_API_KEY", "default_model": "glm-4-plus"},
-    "volcengine": {"name": "火山引擎 (豆包)", "env_key": "VOLCENGINE_API_KEY", "default_model": "doubao-pro-256k"},
-    "yi": {"name": "零一万物 (Yi)", "env_key": "YI_API_KEY", "default_model": "yi-lightning"},
-    "qianfan": {"name": "百度千帆 (ERNIE)", "env_key": "QIANFAN_API_KEY", "default_model": "ernie-4.5-turbo-128k"},
-    "minimax": {"name": "MiniMax", "env_key": "MINIMAX_API_KEY", "default_model": "MiniMax-M2.5"},
-    "siliconflow": {"name": "SiliconFlow", "env_key": "SILICONFLOW_API_KEY", "default_model": "deepseek-ai/DeepSeek-V3"},
-    "groq": {"name": "Groq", "env_key": "GROQ_API_KEY", "default_model": "llama-3.3-70b-versatile"},
-    "ollama": {"name": "Ollama (本地)", "env_key": "", "default_model": "llama3"},
-    "openrouter": {"name": "OpenRouter", "env_key": "OPENROUTER_API_KEY", "default_model": "anthropic/claude-sonnet-4-6"},
-    "together": {"name": "Together AI", "env_key": "TOGETHER_API_KEY", "default_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo"},
-    "fireworks": {"name": "Fireworks AI", "env_key": "FIREWORKS_API_KEY", "default_model": "accounts/fireworks/models/llama-v3p3-70b-instruct"},
-    "amazon-bedrock": {"name": "Amazon Bedrock", "env_key": "AWS_BEARER_TOKEN_BEDROCK", "default_model": "anthropic.claude-sonnet-4-6"},
-    "perplexity": {"name": "Perplexity", "env_key": "PERPLEXITY_API_KEY", "default_model": "sonar-pro"},
+    "anthropic": {"name": "Anthropic", "env_key": "ANTHROPIC_API_KEY", "default_model": "claude-sonnet-4-6", "base_url": "https://api.anthropic.com"},
+    "openai": {"name": "OpenAI", "env_key": "OPENAI_API_KEY", "default_model": "gpt-4o", "base_url": "https://api.openai.com/v1"},
+    "google": {"name": "Google Gemini", "env_key": "GOOGLE_API_KEY", "default_model": "gemini-2.5-flash", "base_url": "https://generativelanguage.googleapis.com"},
+    "deepseek": {"name": "DeepSeek", "env_key": "DEEPSEEK_API_KEY", "default_model": "deepseek-chat", "base_url": "https://api.deepseek.com/v1"},
+    "mistral": {"name": "Mistral", "env_key": "MISTRAL_API_KEY", "default_model": "mistral-large-latest", "base_url": "https://api.mistral.ai/v1"},
+    "xai": {"name": "xAI (Grok)", "env_key": "XAI_API_KEY", "default_model": "grok-3", "base_url": "https://api.x.ai/v1"},
+    "qwen": {"name": "Qwen (通义千问)", "env_key": "DASHSCOPE_API_KEY", "default_model": "qwen-max", "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"},
+    "moonshot": {"name": "Moonshot (Kimi)", "env_key": "MOONSHOT_API_KEY", "default_model": "kimi-k2.5", "base_url": "https://api.moonshot.cn/v1"},
+    "zhipu": {"name": "Zhipu GLM (智谱)", "env_key": "ZHIPU_API_KEY", "default_model": "glm-4-plus", "base_url": "https://open.bigmodel.cn/api/paas/v4"},
+    "volcengine": {"name": "Doubao (豆包)", "env_key": "VOLCENGINE_API_KEY", "default_model": "doubao-pro-256k", "base_url": "https://ark.cn-beijing.volces.com/api/v3"},
+    "yi": {"name": "Yi (零一万物)", "env_key": "YI_API_KEY", "default_model": "yi-lightning", "base_url": "https://api.lingyiwanwu.com/v1"},
+    "qianfan": {"name": "ERNIE (百度千帆)", "env_key": "QIANFAN_API_KEY", "default_model": "ernie-4.5-turbo-128k", "base_url": "https://aip.baidubce.com/rpc/2.0/ai_custom/v1"},
+    "minimax": {"name": "MiniMax", "env_key": "MINIMAX_API_KEY", "default_model": "MiniMax-M2.5", "base_url": "https://api.minimax.chat/v1"},
+    "siliconflow": {"name": "SiliconFlow", "env_key": "SILICONFLOW_API_KEY", "default_model": "deepseek-ai/DeepSeek-V3", "base_url": "https://api.siliconflow.cn/v1"},
+    "groq": {"name": "Groq", "env_key": "GROQ_API_KEY", "default_model": "llama-3.3-70b-versatile", "base_url": "https://api.groq.com/openai/v1"},
+    "ollama": {"name": "Ollama (Local)", "env_key": "", "default_model": "llama3", "base_url": "http://localhost:11434/v1"},
+    "openrouter": {"name": "OpenRouter", "env_key": "OPENROUTER_API_KEY", "default_model": "anthropic/claude-sonnet-4-6", "base_url": "https://openrouter.ai/api/v1"},
+    "together": {"name": "Together AI", "env_key": "TOGETHER_API_KEY", "default_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo", "base_url": "https://api.together.xyz/v1"},
+    "fireworks": {"name": "Fireworks AI", "env_key": "FIREWORKS_API_KEY", "default_model": "accounts/fireworks/models/llama-v3p3-70b-instruct", "base_url": "https://api.fireworks.ai/inference/v1"},
+    "amazon-bedrock": {"name": "Amazon Bedrock", "env_key": "AWS_BEARER_TOKEN_BEDROCK", "default_model": "anthropic.claude-sonnet-4-6", "base_url": ""},
+    "perplexity": {"name": "Perplexity", "env_key": "PERPLEXITY_API_KEY", "default_model": "sonar-pro", "base_url": "https://api.perplexity.ai"},
+    "vllm": {"name": "vLLM (Local)", "env_key": "", "default_model": "default", "base_url": "http://localhost:8000/v1"},
+    "litellm": {"name": "LiteLLM (Proxy)", "env_key": "", "default_model": "default", "base_url": "http://localhost:4000/v1"},
 }
 
 
@@ -293,6 +296,16 @@ class ModelCatalog:
     def provider_info(self, provider: str) -> dict[str, Any] | None:
         """Return metadata dict for a known provider (or None)."""
         return _KNOWN_PROVIDERS.get(provider)
+
+    def provider_base_url(self, provider: str) -> str:
+        """Return the default base URL for a provider."""
+        meta = _KNOWN_PROVIDERS.get(provider)
+        return meta.get("base_url", "") if meta else ""
+
+    def provider_env_key(self, provider: str) -> str:
+        """Return the environment variable name for the provider's API key."""
+        meta = _KNOWN_PROVIDERS.get(provider)
+        return meta.get("env_key", "") if meta else ""
 
     def register(self, info: ModelInfo) -> None:
         self._models[info.key] = info

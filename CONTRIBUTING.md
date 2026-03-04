@@ -12,7 +12,7 @@
 ### 初始设置
 
 ```bash
-git clone https://github.com/<org>/openclaw-py.git
+git clone https://github.com/chensaics/openclaw-py.git
 cd openclaw-py
 python -m venv .venv
 source .venv/bin/activate
@@ -170,6 +170,94 @@ logger.error("Connection failed: %s", exc)
 | Discord Voice | `discord.py[voice]`, `pynacl` |
 | 浏览器自动化 | `playwright` |
 | Flet UI | `flet` |
+
+## 发布流程
+
+### 版本号规范
+
+遵循 [Semantic Versioning](https://semver.org/)：`MAJOR.MINOR.PATCH`
+
+- **PATCH** (0.1.x)：Bug 修复、文档更新
+- **MINOR** (0.x.0)：新功能、向后兼容的改动
+- **MAJOR** (x.0.0)：破坏性 API 变更
+
+### 发布步骤
+
+```bash
+# 1. 更新版本号
+#    编辑 pyproject.toml 中的 version 字段
+
+# 2. 更新 CHANGELOG.md
+#    将 [Unreleased] 中的内容移到新版本标题下
+
+# 3. 提交版本变更
+git add pyproject.toml CHANGELOG.md
+git commit -m "release: v0.2.0"
+
+# 4. 打标签并推送（触发 CI 自动发布）
+git tag v0.2.0
+git push origin master --tags
+```
+
+### 自动化发布流水线
+
+推送 `v*` 标签后，GitHub Actions 自动执行：
+
+1. **Preflight** — lint + type check + test + build wheel
+2. **TestPyPI** — 先发布到 TestPyPI 验证安装
+3. **GitHub Release** — 生成 release notes 并上传构建产物
+4. **PyPI** — 使用 Trusted Publisher 发布到正式 PyPI
+5. **Docker** — 构建并推送多架构镜像到 Docker Hub 和 GHCR
+
+### 本地构建验证
+
+```bash
+# 构建 wheel 和 sdist
+pip install build
+python -m build
+
+# 检查构建产物
+ls dist/
+# pyclaw-0.1.0-py3-none-any.whl
+# pyclaw-0.1.0.tar.gz
+
+# 验证 wheel 内容
+python -m zipfile -l dist/pyclaw-*.whl | head -20
+
+# 本地安装测试
+pip install dist/pyclaw-*.whl
+pyclaw --version
+```
+
+### 安装方式
+
+```bash
+# 最小安装（核心 + CLI + Gateway）
+pip install pyclaw
+
+# 带 UI 客户端
+pip install pyclaw[ui]
+
+# 带消息通道 SDK
+pip install pyclaw[channels]
+
+# 全功能安装
+pip install pyclaw[all]
+
+# Docker
+docker pull ghcr.io/chensaics/openclaw-py:latest
+```
+
+### PyPI Trusted Publisher 配置
+
+项目使用 PyPI Trusted Publisher（OIDC），无需 API token。在 PyPI 项目设置中配置：
+
+- **Publisher**: GitHub Actions
+- **Repository**: `chensaics/openclaw-py`
+- **Workflow**: `release.yml`
+- **Environment**: `pypi`
+
+TestPyPI 同理，environment 设为 `testpypi`。
 
 ## 许可证
 

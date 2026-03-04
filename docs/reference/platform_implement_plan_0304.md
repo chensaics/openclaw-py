@@ -288,9 +288,74 @@ flowchart LR
 | 插件能力声明模板化 | `channels/base.py` | 新增 `StabilityLevel` 枚举（stable/beta/alpha/experimental）、`ChannelMeta` 结构化元数据模板（版本/作者/依赖/连接方式等）；`ChannelPlugin` 新增 `meta` 属性和 `dod_report()` DoD 质量检查方法 |
 | 回归基线与测试矩阵 | `tests/test_catalog_schema_alignment.py`, `tests/test_gateway_channels.py` | 120 个新测试覆盖：catalog↔schema 对齐、catalog↔实现对齐、条目完整性（参数化 26 渠道×4 维度）、ChannelPlugin meta/DoD、gateway channels.list/status handler、指标记录与检索 |
 
+### UI 体验增强与 Flutter 设计反哺实施（2026-03-04）
+
+| 项目 | 改动文件 | 说明 |
+|------|----------|------|
+| Bug 修复：ChatMessage 搜索 | `ui/app.py` | 修复 `_message_content` 未在构造时初始化导致搜索失效的问题 |
+| Bug 修复：工具展示元数据 | `ui/app.py` | `_get_tool_display()` 修复 `tool-display.json` 中 `tools` 层级读取，增加 fallback 回退 |
+| 聊天气泡 Flutter 反哺 | `ui/app.py` | 非对称圆角（发言侧 4px，其余 18px）；角色色 avatar（User indigo / Assistant teal）；增强阴影（blur 8, offset 2）；气泡最大宽度 72%（expand 3:1 比例）|
+| Shimmer 加载动画集成 | `ui/app.py` | `set_loading()` 时在消息列表末尾展示 `ShimmerContainer(shimmer_chat_skeleton())`，替代单一 ProgressRing |
+| 文件附件功能 | `ui/app.py` | `_handle_attach()` 实现：`FilePicker` 多文件选取 + `_pending_attachments` 存储 + SnackBar 反馈 |
+| 聊天导出功能 | `ui/app.py` | `_handle_export_chat()` 实现：遍历消息生成 Markdown + `FilePicker.save_file_async()` 保存 |
+| 主题系统增强 | `ui/theme.py` | `to_flet_theme()` 扩展：CardTheme（elevation 0, radius 16）、DialogTheme、SnackBarTheme（floating, radius 12）、DividerTheme |
+| 主题色板选择器 | `ui/app.py` | SettingsView 新增 8 色 swatch 选择器（Flutter ThemePicker 反哺）：36px 圆形、选中态 3px 边框 + 阴影、200ms 动画过渡 |
+| 移动端权限引导 | `ui/app.py` | `_check_permissions()` 在 app 启动时调用，移动端弹出权限引导面板 |
+| 语音面板增强 | `ui/voice.py` | 新增语音选择下拉框 + `list_voices()` 刷新按钮；重构 FilePicker 为 async 模式；TTS/STT 分区展示 |
+| Menubar Export 接入 | `ui/app.py` | `build_menubar` 连接 `on_export=_handle_export_chat`，实现 File → Export Chat |
+
+### UI 优化路线图第二批实施（2026-03-04 续）
+
+| 项目 | 改动文件 | 说明 |
+|------|----------|------|
+| A1: 响应式 Shell 模块化 | `ui/responsive_shell.py`（新）, `ui/app.py` | 提取 `ResponsiveShell` 独立类，封装 Desktop/Tablet/Mobile 三档断点布局（NavigationRail、BottomNav、SessionSidebar 切换），`app.py` 原 `_apply_responsive_layout()` 37 行内联逻辑替换为 `self._shell.apply(width)` 单行调用 |
+| A2: 多语言 JSON 外置 | `ui/i18n.py`, `ui/locales/en.json`、`zh-CN.json`、`ja.json` | 将 i18n.py 中 300+ 行内联 `_TRANSLATIONS` dict 提取为 `locales/*.json` 外部文件；`_load_bundled_translations()` 在模块初始化时从 JSON 自动加载；支持社区贡献新语言只需添加 JSON 文件 |
+| D1: Desktop 托盘增强 | `ui/tray.py`, `ui/locales/*.json` | 系统托盘菜单新增 3 项快捷操作：新建对话、切换主题、静音/取消静音通知（含 checked 状态切换）；`is_notifications_muted()` API 供外部查询；三语 i18n 键同步更新 |
+| D2: Web PWA 支持 | `web/manifest.json`, `web/service-worker.js`, `web/icons/`, `flet_app.py` | 新增 PWA manifest（standalone、theme_color #6366F1、4 尺寸图标含 maskable）；Service Worker 实现 cache-first 静态资源 + network-first HTML 离线策略；`flet_app.py` Web 模式下自动注册 SW |
+
 ---
 
-## 15. 完成定义
+## 15. UI 优化方向路线图（Flutter 反哺 → Flet 实施）
+
+### 15.1 视觉层优化（短期，1-2 周）
+
+| # | 优化点 | 具体方案 | 关键文件 | 参考源 |
+|---|--------|----------|----------|--------|
+| V1 | 统一 theme 令牌 | 所有组件颜色从 `theme.py` 读取，消除硬编码 `ft.Colors.XXX` | `ui/app.py`, `ui/channels_panel.py` | Flutter `colors.dart` |
+| V2 | 列表项卡片化 | Plan/Cron/System 页列表项统一 `radius 16, elevation 0, outlineVariant 0.5px 边框` | `ui/app.py` | Flutter `SessionTile` |
+| V3 | 空状态设计 | 各面板空状态加入 48px icon + 说明文字 + 可选操作按钮 | `ui/app.py` | Flutter 各 feature 页 |
+| V4 | 代码块增强 | Markdown 代码块用 `surfaceContainerHighest` 背景 + 12px 圆角 + 复制按钮 | `ui/app.py` | Flutter `code_block.dart` |
+| V5 | 页面头部组件化 | 统一 `PageHeader(icon, title, actions)` 组件，替代各面板重复 Row | `ui/components.py`（新） | Flutter page header pattern |
+
+### 15.2 交互层优化（中期，2-4 周）
+
+| # | 优化点 | 具体方案 | 关键文件 | 参考源 |
+|---|--------|----------|----------|--------|
+| I1 | 消息列表淡入动画 | 新消息用 `stagger_fade_in()` 350ms fade+slide | `ui/app.py`, `ui/shimmer.py` | Flutter `stagger_list.dart` |
+| I2 | 发送按钮按压缩放 | 点击时 `scale 0.85` 150ms `easeInOut` | `ui/app.py` | Flutter chat_input |
+| I3 | 页面切换过渡 | 导航切换时 fade transition 200ms | `ui/app.py` | Flutter `app.dart` transition |
+| I4 | Streaming 打字指示器 | 三点脉冲动画 + 竖线光标 | `ui/app.py`, `ui/shimmer.py` | Flutter `message_bubble.dart` |
+| I5 | 滚动到底按钮 | 新消息时浮动"跳到最新"按钮，300ms easeOut 滚动 | `ui/app.py` | Flutter chat 页 |
+
+### 15.3 架构层优化（中长期，Phase C）
+
+| # | 优化点 | 具体方案 | 关键文件 |
+|---|--------|----------|----------|
+| A1 | 响应式 Shell 模块化 | 提取 `ResponsiveShell` 独立模块管理 rail/bottom-nav/sidebar 切换 | `ui/responsive_shell.py`（新） |
+| A2 | 多语言 JSON 外置 | `i18n.py` 内联 en/zh-CN 迁移到 `locales/*.json` | `ui/i18n.py`, `ui/locales/` |
+| A3 | ToolCallCard 多工具支持 | `add_tool_end` 按 tool_call_id 精确匹配而非取最后一个 | `ui/app.py` |
+
+### 15.4 平台差异化（持续）
+
+| # | 优化点 | 具体方案 | 关键文件 |
+|---|--------|----------|----------|
+| D1 | Desktop 托盘增强 | 系统托盘菜单增加快捷操作（新对话/切换主题/静音） | `ui/tray.py` |
+| D2 | Web PWA 支持 | PWA manifest + service worker 离线缓存 | `flet_app.py`, web 配置 |
+| D3 | 键盘快捷键 | Cmd+K 搜索、Cmd+N 新对话、Cmd+E 导出 | `ui/app.py` |
+
+---
+
+## 16. 完成定义
 
 本计划文档完成后，应满足：
 

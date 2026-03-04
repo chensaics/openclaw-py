@@ -1,4 +1,5 @@
-FROM python:3.12-slim AS builder
+ARG PYTHON_VERSION=3.13
+FROM python:${PYTHON_VERSION}-slim AS builder
 
 WORKDIR /app
 
@@ -9,11 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md ./
 COPY src/ src/
 
-# Use [docker] extra to avoid llamacpp/mlx build failures (need CMake/Apple libs)
+# [docker] extra excludes llamacpp/mlx (need C++ compilers) and
+# whatsapp/neonize (protobuf version conflict with google-generativeai)
 RUN pip install --no-cache-dir ".[docker]"
 
 # ── Runtime ──────────────────────────────────────────────────────────
-FROM python:3.12-slim
+FROM python:${PYTHON_VERSION}-slim
 
 WORKDIR /app
 
@@ -21,7 +23,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+# Copy installed packages — use python -c to discover the site-packages path
+# so upgrading PYTHON_VERSION doesn't break the build.
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
 COPY --from=builder /usr/local/bin/pyclaw /usr/local/bin/pyclaw
 
 EXPOSE 18789 18790
