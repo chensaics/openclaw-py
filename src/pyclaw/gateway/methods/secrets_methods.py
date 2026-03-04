@@ -22,10 +22,10 @@ async def handle_secrets_reload(params: dict[str, Any] | None, conn: GatewayConn
     runtime = getattr(conn, "secrets_runtime", None)
     if runtime and isinstance(runtime, SecretsRuntime):
         count = runtime.reload()
-        await conn.send_ok({"reloaded": True, "count": count})
+        await conn.send_ok("secrets.reload", {"reloaded": True, "count": count})
         logger.info("Secrets reloaded via gateway RPC")
     else:
-        await conn.send_ok({"reloaded": True, "count": 0})
+        await conn.send_ok("secrets.reload", {"reloaded": True, "count": 0})
 
 
 def create_secrets_handlers() -> dict[str, MethodHandler]:

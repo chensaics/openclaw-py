@@ -74,8 +74,8 @@ jobs:
 
       - name: Run smoke test
         run: |
-          docker run --rm pyclaw-smoke pyclaw --version
-          docker run --rm pyclaw-smoke pyclaw --help
+          docker run --rm pyclaw-smoke --version
+          docker run --rm pyclaw-smoke --help
 
   install-script:
     runs-on: ubuntu-latest

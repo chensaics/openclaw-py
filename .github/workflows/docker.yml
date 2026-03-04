@@ -56,4 +56,4 @@ jobs:
       - name: Smoke test image
         run: |
           docker pull ghcr.io/${{ github.repository }}:sha-${GITHUB_SHA::7}
-          docker run --rm ghcr.io/${{ github.repository }}:sha-${GITHUB_SHA::7} pyclaw --version
+          docker run --rm ghcr.io/${{ github.repository }}:sha-${GITHUB_SHA::7} --version
