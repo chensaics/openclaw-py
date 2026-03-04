@@ -86,6 +86,7 @@
 | Phase 74: 可靠性与可观测性 | **已完成** | 全量替换静默 except:pass 为结构化日志 (ui/app.py + chat.py + manager.py) + Gateway 统一 trace_id (请求关联 + 响应内嵌 _trace) |
 | Phase 75: Flet 多端可用性收敛 | **已完成** | 移动端导航全 8 项可达 + 统一 error_state/empty_state 组件 + Plans/Cron/Channels/System 面板错误态与重试按钮 |
 | Phase 76: 接口治理与孤立清理 | **已完成** | secrets.reload 注册规范化 + NOT_IMPLEMENTED 存根文档化 + registration.py 完整性验证 |
+| Phase 77: UI 修复与全平台打包 | **已完成** | Flet 0.81 兼容性修复 + 窗口最小化/最大化/关闭控制 + 全平台构建脚本 (Web/Desktop/Mobile) + Makefile |
 
 ## 代码统计
 
@@ -653,7 +654,7 @@ openclaw-py/
 
 ## 当前状态
 
-Phase 0-76 均已完成。项目包含:
+Phase 0-77 均已完成。项目包含:
 
 - **~443 个 .py 源码文件** / **~70,500 LOC**
 - **94 个测试文件** / **2,202 个测试全部通过**
@@ -771,6 +772,20 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 - **secrets.reload 规范化**: 处理器签名修正为 `MethodHandler` 标准格式，改用 `create_secrets_handlers()` 工厂函数，在 `registration.py` 统一注册
 - **NOT_IMPLEMENTED 存根文档化**: `extended.py` 中 `tts.speak`、`wizard.start/step`、`push.send`、`voicewake.status` 五个占位方法添加文档级说明
 - **注册完整性验证**: 确认 `registration.py` 覆盖所有 `create_*_handlers` 工厂函数（含新增的 `create_secrets_handlers`）
+
+### UI 修复与全平台打包 (Phase 77, 2026-03-04)
+
+修复 Flet 0.81 运行时兼容性问题，添加桌面窗口控制，完善全平台构建工具链：
+
+- **Flet 0.81 兼容修复**: `ft.alignment.center` (模块级属性不存在) → `ft.Alignment(0, 0)` (实例化)，修复 `_error_state` 和 `_empty_state` 4 处崩溃
+- **窗口控制**: `ft.Window` 配置 `min_width=400, min_height=500, maximizable=True, minimizable=True`；顶栏新增最小化/最大化/关闭三按钮（仅桌面端显示），含 `_minimize_window`、`_toggle_maximize`、`_close_window` 方法
+- **构建脚本完善**:
+  - `scripts/build-web.sh` — PWA Web 应用打包
+  - `scripts/build-desktop.sh` — 增加 `--build-version` 参数 + 平台特定输出提示
+  - `scripts/build-mobile.sh` — 支持 `apk`/`aab`/`ipa` 三种目标 + `--build-version`
+  - `scripts/build-all.sh` — 统一多目标构建 (`--targets web,macos,linux,windows,apk,ipa`) + 成功/失败汇总
+  - `scripts/build-all.ps1` — Windows PowerShell 版构建脚本
+- **Makefile**: 一键命令入口 — `make dev`/`make test`/`make build-web`/`make build-macos`/`make build-linux`/`make build-windows`/`make build-apk`/`make build-ipa`/`make docker`/`make clean`
 
 ## 参考文档
 

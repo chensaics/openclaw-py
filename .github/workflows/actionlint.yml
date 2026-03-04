@@ -1,0 +1,29 @@
+name: Actionlint
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+jobs:
+  lint-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1

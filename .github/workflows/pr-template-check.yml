@@ -1,0 +1,37 @@
+name: PR Template Check
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-pr-body:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Validate required PR template sections
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const requiredHeaders = [
+              "## Summary",
+              "## Security Impact (required)",
+              "## Human Verification (required)",
+            ];
+
+            const missing = requiredHeaders.filter((header) => !body.includes(header));
+            if (missing.length > 0) {
+              core.setFailed(
+                "PR description is missing required sections: " +
+                missing.join(", ") +
+                ". Please fill the PR template before requesting review."
+              );
+            }

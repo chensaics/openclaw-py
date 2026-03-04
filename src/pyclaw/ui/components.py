@@ -37,7 +37,7 @@ def error_state(message: str, on_retry: Any = None) -> ft.Container:
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=12,
         ),
-        alignment=ft.alignment.center,
+        alignment=ft.Alignment(0, 0),
         expand=True,
     )
 
@@ -54,7 +54,7 @@ def empty_state_simple(message: str, icon: str = ft.Icons.INBOX) -> ft.Container
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=12,
         ),
-        alignment=ft.alignment.center,
+        alignment=ft.Alignment(0, 0),
         expand=True,
     )
 

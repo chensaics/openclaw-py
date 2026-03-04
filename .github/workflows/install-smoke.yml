@@ -17,6 +17,9 @@ on:
       - "docker-compose.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -29,6 +32,11 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -47,6 +55,11 @@ jobs:
   pipx-install:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v6
 
       - name: Set up Python
@@ -67,6 +80,11 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v6
 
       - name: Build Docker image
@@ -80,6 +98,11 @@ jobs:
   install-script:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v6
 
       - name: Set up Python

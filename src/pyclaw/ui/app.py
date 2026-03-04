@@ -1254,7 +1254,16 @@ class PyClawApp:
         flet_theme = get_theme().to_flet_theme()
         if flet_theme:
             page.theme = flet_theme
-        page.window = ft.Window(width=1100, height=750)
+        page.window = ft.Window(
+            width=1100,
+            height=750,
+            min_width=400,
+            min_height=500,
+            maximizable=True,
+            minimizable=True,
+            resizable=True,
+            title_bar_hidden=False,
+        )
 
         self._page = page
 
@@ -1377,13 +1386,46 @@ class PyClawApp:
         )
         self._gw_indicator = gw_indicator
 
-        # Top bar: menubar (desktop only) + toolbar + gateway indicator
+        # Window control buttons (desktop only — not web/mobile)
+        is_desktop = not page.web and page.platform in (
+            ft.PagePlatform.MACOS,
+            ft.PagePlatform.LINUX,
+            ft.PagePlatform.WINDOWS,
+        )
+        window_controls = ft.Row(
+            [
+                ft.IconButton(
+                    icon=ft.Icons.MINIMIZE,
+                    icon_size=16,
+                    tooltip=t("window.minimize", default="最小化"),
+                    on_click=self._minimize_window,
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.CROP_SQUARE,
+                    icon_size=16,
+                    tooltip=t("window.maximize", default="最大化"),
+                    on_click=self._toggle_maximize,
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.CLOSE,
+                    icon_size=16,
+                    tooltip=t("window.close", default="关闭"),
+                    on_click=self._close_window,
+                ),
+            ],
+            spacing=0,
+            visible=is_desktop,
+        )
+        self._window_controls = window_controls
+
+        # Top bar: menubar (desktop only) + toolbar + gateway indicator + window buttons
         top_bar_controls: list[ft.Control] = []
         if self._menubar:
             top_bar_controls.append(self._menubar)
         if self._toolbar:
             top_bar_controls.append(self._toolbar)
         top_bar_controls.append(gw_indicator)
+        top_bar_controls.append(window_controls)
 
         self._top_bar = (
             ft.Row(
@@ -1434,6 +1476,22 @@ class PyClawApp:
         await self._check_permissions(page)
         await self._check_onboarding(page)
         await self._refresh_sessions()
+
+    # ─── Window controls ────────────────────────────────────────────
+
+    def _minimize_window(self, _e: Any = None) -> None:
+        if self._page and self._page.window:
+            self._page.window.minimized = True
+            self._page.update()
+
+    def _toggle_maximize(self, _e: Any = None) -> None:
+        if self._page and self._page.window:
+            self._page.window.maximized = not self._page.window.maximized
+            self._page.update()
+
+    def _close_window(self, _e: Any = None) -> None:
+        if self._page and self._page.window:
+            self._page.window.close()
 
     # ─── Gateway connection ──────────────────────────────────────────
 
@@ -1923,7 +1981,7 @@ class PyClawApp:
                 alignment=ft.MainAxisAlignment.CENTER,
                 spacing=12,
             ),
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),
             expand=True,
         )
 
@@ -1938,7 +1996,7 @@ class PyClawApp:
                 alignment=ft.MainAxisAlignment.CENTER,
                 spacing=12,
             ),
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),
             expand=True,
         )
 

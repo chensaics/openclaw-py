@@ -4,6 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Etc/UTC"
+    target-branch: "master"
     groups:
       production:
         patterns: ["*"]
@@ -14,12 +18,18 @@ updates:
       prefix: "deps"
     labels:
       - "dependencies"
+      - "automated"
     open-pull-requests-limit: 10
+    rebase-strategy: "auto"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "03:30"
+      timezone: "Etc/UTC"
+    target-branch: "master"
     groups:
       actions:
         patterns: ["*"]
@@ -27,13 +37,26 @@ updates:
       prefix: "ci"
     labels:
       - "ci"
+      - "automated"
+    open-pull-requests-limit: 10
+    rebase-strategy: "auto"
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
+    target-branch: "master"
+    groups:
+      docker-base-images:
+        patterns: ["*"]
     labels:
       - "docker"
+      - "automated"
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
     ignore:
       - dependency-name: "python"
         versions: [">=3.14"]
