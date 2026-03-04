@@ -166,6 +166,7 @@ class TestUsageTracking:
                 abort_event=abort,
                 conn=conn,
                 session_key="test-key",
+                method="chat.send",
             )
             mock_record.assert_called_once()
             call_kwargs = mock_record.call_args

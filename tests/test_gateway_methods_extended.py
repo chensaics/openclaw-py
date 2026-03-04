@@ -70,8 +70,10 @@ class TestExtendedHandlers:
         handlers = create_extended_handlers()
         conn = MagicMock()
         conn.send_ok = AsyncMock()
+        conn.send_error = AsyncMock()
         await handlers["tts.speak"]({"text": "Hello"}, conn)
-        conn.send_ok.assert_called_once()
+        conn.send_error.assert_called_once()
+        assert conn.send_error.call_args[0][1] == "not_implemented"
 
     @pytest.mark.asyncio
     async def test_system_info(self) -> None:

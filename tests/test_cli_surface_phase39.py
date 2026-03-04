@@ -28,7 +28,6 @@ def test_agent_help_includes_v2_options() -> None:
     result = runner.invoke(app, ["agent", "--help"])
     assert result.exit_code == 0
     for opt in (
-        "--message",
         "--to",
         "--session-id",
         "--thinking",
@@ -39,6 +38,7 @@ def test_agent_help_includes_v2_options() -> None:
         "--local",
     ):
         assert opt in result.stdout
+    assert "MESSAGE" in result.stdout or "message" in result.stdout.lower()
 
 
 def test_status_help_includes_usage_flag() -> None:

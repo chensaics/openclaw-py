@@ -120,7 +120,8 @@ class TestGatewayClient:
             }
         )
 
-    def test_handle_event_fires_listeners(self) -> None:
+    @pytest.mark.asyncio
+    async def test_handle_event_fires_listeners(self) -> None:
         client = GatewayClient()
         received: list[str] = []
 
@@ -128,18 +129,17 @@ class TestGatewayClient:
             received.append(payload.get("text", ""))
 
         client.on_event("test.event", on_test)
-        asyncio.get_event_loop().run_until_complete(
-            client._handle_event(
-                {
-                    "type": "event",
-                    "event": "test.event",
-                    "payload": {"text": "hello"},
-                }
-            )
+        await client._handle_event(
+            {
+                "type": "event",
+                "event": "test.event",
+                "payload": {"text": "hello"},
+            }
         )
         assert received == ["hello"]
 
-    def test_handle_event_fires_global_listeners(self) -> None:
+    @pytest.mark.asyncio
+    async def test_handle_event_fires_global_listeners(self) -> None:
         client = GatewayClient()
         received: list[tuple] = []
 
@@ -147,40 +147,39 @@ class TestGatewayClient:
             received.append((event_name, payload))
 
         client.on_any_event(on_any)
-        asyncio.get_event_loop().run_until_complete(
-            client._handle_event(
-                {
-                    "type": "event",
-                    "event": "test.global",
-                    "payload": {"x": 1},
-                }
-            )
+        await client._handle_event(
+            {
+                "type": "event",
+                "event": "test.global",
+                "payload": {"x": 1},
+            }
         )
         assert len(received) == 1
         assert received[0] == ("test.global", {"x": 1})
 
-    def test_call_raises_when_not_connected(self) -> None:
+    @pytest.mark.asyncio
+    async def test_call_raises_when_not_connected(self) -> None:
         client = GatewayClient()
         with pytest.raises(GatewayError) as exc_info:
-            asyncio.get_event_loop().run_until_complete(client.call("health"))
+            await client.call("health")
         assert exc_info.value.code == "not_connected"
 
-    def test_disconnect_clears_state(self) -> None:
+    @pytest.mark.asyncio
+    async def test_disconnect_clears_state(self) -> None:
         client = GatewayClient()
         client._connected = True
         client._should_reconnect = True
-        asyncio.get_event_loop().run_until_complete(client.disconnect())
+        await client.disconnect()
         assert not client._connected
         assert not client._should_reconnect
 
-    def test_multiple_event_listeners(self) -> None:
+    @pytest.mark.asyncio
+    async def test_multiple_event_listeners(self) -> None:
         client = GatewayClient()
         results: list[int] = []
         client.on_event("multi", lambda p: results.append(1))
         client.on_event("multi", lambda p: results.append(2))
-        asyncio.get_event_loop().run_until_complete(
-            client._handle_event({"type": "event", "event": "multi", "payload": {}})
-        )
+        await client._handle_event({"type": "event", "event": "multi", "payload": {}})
         assert results == [1, 2]
 
     def test_handle_response_error_with_details(self) -> None:

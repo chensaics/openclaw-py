@@ -216,7 +216,12 @@ class MockRuntime(AcpRuntimeProtocol):
         return True
 
     async def ensure_session(
-        self, session_key: str, agent: str, cwd: str, mode: str = "persistent"
+        self,
+        session_key: str,
+        agent: str,
+        cwd: str,
+        mode: str = "persistent",
+        sandbox_config: dict | None = None,
     ) -> AcpSessionResolution:
         res = AcpSessionResolution(
             session_key=session_key,
