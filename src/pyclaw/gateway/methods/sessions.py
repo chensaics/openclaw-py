@@ -148,6 +148,7 @@ def create_session_handlers() -> dict[str, MethodHandler]:
     async def handle_sessions_create(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         p = params or {}
         agent_id = p.get("agentId", "main")
+        title = p.get("title")  # optional: display title for the session
 
         from pyclaw.agents.session import SessionManager
         from pyclaw.config.paths import resolve_sessions_dir
@@ -161,7 +162,10 @@ def create_session_handlers() -> dict[str, MethodHandler]:
             mgr = SessionManager(path=session_file)
             mgr.session_id = session_id
             mgr.write_header()
-            await conn.send_ok("sessions.create", {"id": session_id})
+            result: dict[str, Any] = {"id": session_id}
+            if title:
+                result["title"] = title
+            await conn.send_ok("sessions.create", result)
         except Exception as e:
             await conn.send_error("sessions.create", "create_error", str(e))
 
