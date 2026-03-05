@@ -1364,4 +1364,9 @@ def uninstall(
         typer.echo("  pipx uninstall openclaw-py")
         typer.echo("  # or: pip uninstall openclaw-py")
         typer.echo("")
+        typer.echo("Or use the one-line uninstaller:")
+        typer.echo(
+            "  curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.sh | bash"
+        )
+        typer.echo("")
         typer.echo("To also remove data and config, add --purge")

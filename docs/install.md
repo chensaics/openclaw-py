@@ -140,14 +140,20 @@ brew upgrade pyclaw
 ## 卸载
 
 ```bash
-# pip
-pip uninstall openclaw-py
+# 一键卸载（macOS / Linux）— 自动检测 pipx/uv/pip
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.sh | bash
 
-# pipx
-pipx uninstall openclaw-py
+# 卸载并清除所有数据和配置
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.sh | bash -s -- --purge
 
-# 清理状态目录（可选）
-rm -rf ~/.pyclaw
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.ps1 | iex
+# 带清除数据：$env:PYCLAW_PURGE="1"; irm ... | iex
+
+# 或手动卸载
+pip uninstall openclaw-py     # 如果用 pip 安装
+pipx uninstall openclaw-py    # 如果用 pipx 安装
+pyclaw uninstall --purge      # CLI 方式 + 清除数据
 ```
 
 ## 作为系统服务安装

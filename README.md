@@ -98,6 +98,14 @@ pip install openclaw-py
 # Or via pipx (isolated environment, recommended for CLI usage)
 pipx install openclaw-py
 
+# Uninstall (macOS / Linux)
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.sh | bash
+# Uninstall + remove data: add --purge
+curl -fsSL https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.sh | bash -s -- --purge
+
+# Uninstall (Windows PowerShell)
+irm https://raw.githubusercontent.com/chensaics/openclaw-py/master/scripts/uninstall.ps1 | iex
+
 # macOS via Homebrew
 brew install chensaics/tap/pyclaw
 
