@@ -13,6 +13,7 @@ import flet as ft
 
 from pyclaw.ui.components import empty_state_simple, error_state
 from pyclaw.ui.i18n import t
+from pyclaw.ui.theme import get_theme
 
 # Icon mapping — covers all known channels
 _ICON_MAP: dict[str, str] = {
@@ -38,16 +39,21 @@ _ICON_MAP: dict[str, str] = {
     "webchat": ft.Icons.WEB,
 }
 
-_STATUS_COLORS: dict[str, str] = {
-    "connected": ft.Colors.GREEN,
-    "running": ft.Colors.GREEN,
-    "configured": ft.Colors.AMBER,
-    "disconnected": ft.Colors.RED,
-    "error": ft.Colors.RED,
-    "disabled": ft.Colors.GREY,
-    "stopped": ft.Colors.AMBER,
-    "unknown": ft.Colors.GREY,
-}
+
+def _status_color(status: str) -> str:
+    """Return theme-based color for a channel status."""
+    theme = get_theme()
+    return {
+        "connected": theme.colors.success,
+        "running": theme.colors.success,
+        "configured": theme.colors.warning,
+        "disconnected": theme.colors.error,
+        "error": theme.colors.error,
+        "disabled": theme.colors.muted,
+        "stopped": theme.colors.warning,
+        "unknown": theme.colors.muted,
+    }.get(status, theme.colors.muted)
+
 
 _CAPABILITY_LABELS: list[tuple[str, str, str]] = [
     ("typing", "T", "Typing indicator"),
@@ -113,14 +119,15 @@ class ChannelStatusPanel(ft.Column):
             )
             self._summary_row.controls = []
         else:
+            theme = get_theme()
             total = len(channels)
             running = sum(1 for c in channels if c.get("running") or c.get("status") == "running")
             configured = sum(1 for c in channels if c.get("status") == "configured")
 
             self._summary_row.controls = [
-                self._stat_chip(f"{total}", "Total"),
-                self._stat_chip(f"{running}", "Running", ft.Colors.GREEN),
-                self._stat_chip(f"{configured}", "Configured", ft.Colors.AMBER),
+                self._stat_chip(f"{total}", "Total", theme.colors.muted),
+                self._stat_chip(f"{running}", "Running", theme.colors.success),
+                self._stat_chip(f"{configured}", "Configured", theme.colors.warning),
             ]
 
             if not channels:
@@ -135,12 +142,14 @@ class ChannelStatusPanel(ft.Column):
         self._safe_update(self._channel_list)
 
     @staticmethod
-    def _stat_chip(value: str, label: str, color: str = ft.Colors.ON_SURFACE_VARIANT) -> ft.Control:
+    def _stat_chip(value: str, label: str, color: str | None = None) -> ft.Control:
+        theme = get_theme()
+        value_color = color if color is not None else theme.colors.muted
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Text(value, size=18, weight=ft.FontWeight.BOLD, color=color),
-                    ft.Text(label, size=10, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Text(value, size=18, weight=ft.FontWeight.BOLD, color=value_color),
+                    ft.Text(label, size=10, color=theme.colors.muted),
                 ],
                 spacing=0,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -150,18 +159,19 @@ class ChannelStatusPanel(ft.Column):
         )
 
     def _build_channel_tile(self, ch: dict[str, Any]) -> ft.Control:
+        theme = get_theme()
         cid = ch.get("id", ch.get("name", "unknown"))
         display_name = ch.get("display_name", ch.get("name", cid)).title()
         status = ch.get("status", "unknown")
-        color = _STATUS_COLORS.get(status, ft.Colors.GREY)
+        color = _status_color(status)
         ch_color = ch.get("color", "")
         icon = _ICON_MAP.get(cid.lower(), ft.Icons.LINK)
 
         capabilities = ch.get("capabilities", {})
-        cap_badges = self._build_capability_badges(capabilities)
+        cap_badges = self._build_capability_badges(capabilities, theme)
 
         metrics = ch.get("metrics", {})
-        metrics_row = self._build_metrics_row(metrics)
+        metrics_row = self._build_metrics_row(metrics, theme)
 
         info_col_children: list[ft.Control] = [
             ft.Text(display_name, size=14, weight=ft.FontWeight.BOLD),
@@ -176,9 +186,6 @@ class ChannelStatusPanel(ft.Column):
         if metrics_row:
             info_col_children.append(metrics_row)
 
-        from pyclaw.ui.theme import get_theme
-
-        theme = get_theme()
         return ft.Container(
             content=ft.Row(
                 [
@@ -205,9 +212,10 @@ class ChannelStatusPanel(ft.Column):
         )
 
     @staticmethod
-    def _build_capability_badges(capabilities: dict[str, Any]) -> list[ft.Control]:
+    def _build_capability_badges(capabilities: dict[str, Any], theme=None) -> list[ft.Control]:
         if not capabilities:
             return []
+        theme = theme or get_theme()
         badges: list[ft.Control] = []
         for key, short, tooltip_text in _CAPABILITY_LABELS:
             supported = capabilities.get(key, False)
@@ -220,9 +228,9 @@ class ChannelStatusPanel(ft.Column):
                                 short,
                                 size=9,
                                 weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.ON_PRIMARY,
+                                color=theme.colors.on_primary,
                             ),
-                            bgcolor=ft.Colors.PRIMARY,
+                            bgcolor=theme.colors.primary,
                             padding=ft.padding.symmetric(horizontal=5, vertical=2),
                             border_radius=ft.border_radius.all(4),
                         ),
@@ -231,16 +239,17 @@ class ChannelStatusPanel(ft.Column):
         return badges
 
     @staticmethod
-    def _build_metrics_row(metrics: dict[str, Any]) -> ft.Control | None:
+    def _build_metrics_row(metrics: dict[str, Any], theme=None) -> ft.Control | None:
         if not metrics:
             return None
+        theme = theme or get_theme()
         sent = metrics.get("messages_sent", 0)
         failed = metrics.get("messages_failed", 0)
         parts: list[ft.Control] = []
         if sent:
-            parts.append(ft.Text(f"{sent} sent", size=10, color=ft.Colors.GREEN))
+            parts.append(ft.Text(f"{sent} sent", size=10, color=theme.colors.success))
         if failed:
-            parts.append(ft.Text(f"{failed} failed", size=10, color=ft.Colors.RED))
+            parts.append(ft.Text(f"{failed} failed", size=10, color=theme.colors.error))
         if not parts:
             return None
         return ft.Row(parts, spacing=8)

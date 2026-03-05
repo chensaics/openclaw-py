@@ -87,6 +87,7 @@
 | Phase 75: Flet 多端可用性收敛 | **已完成** | 移动端导航全 8 项可达 + 统一 error_state/empty_state 组件 + Plans/Cron/Channels/System 面板错误态与重试按钮 |
 | Phase 76: 接口治理与孤立清理 | **已完成** | secrets.reload 注册规范化 + NOT_IMPLEMENTED 存根文档化 + registration.py 完整性验证 |
 | Phase 77: UI 修复与全平台打包 | **已完成** | Flet 0.81 兼容性修复 + 窗口最小化/最大化/关闭控制 + 全平台构建脚本 (Web/Desktop/Mobile) + Makefile |
+| Phase 78: UI 视觉一致性收敛 | **已完成** | 硬编码颜色→theme tokens + card_tile 统一列表 + page_header 全覆盖 + 代码块复制按钮 + scroll-to-bottom FAB + 空态/错误态补齐 |
 
 ## 代码统计
 
@@ -654,7 +655,7 @@ openclaw-py/
 
 ## 当前状态
 
-Phase 0-77 均已完成。项目包含:
+Phase 0-78 均已完成。项目包含:
 
 - **~443 个 .py 源码文件** / **~70,500 LOC**
 - **94 个测试文件** / **2,202 个测试全部通过**
@@ -786,6 +787,17 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
   - `scripts/build-all.sh` — 统一多目标构建 (`--targets web,macos,linux,windows,apk,ipa`) + 成功/失败汇总
   - `scripts/build-all.ps1` — Windows PowerShell 版构建脚本
 - **Makefile**: 一键命令入口 — `make dev`/`make test`/`make build-web`/`make build-macos`/`make build-linux`/`make build-windows`/`make build-apk`/`make build-ipa`/`make docker`/`make clean`
+
+### UI 视觉一致性收敛 (Phase 78, 2026-03-04)
+
+消除 UI 中的视觉不一致，补齐组件覆盖：
+
+- **V1 — Theme tokens 统一**: `app.py` 中 `ft.Colors.RED/GREEN/BLUE/ON_SURFACE_VARIANT/ERROR` 等 20+ 处硬编码颜色替换为 `get_theme().colors.*` 和 `get_theme().status_colors.*`；`channels_panel.py` 状态颜色改用 `_status_color()` 辅助函数
+- **V2 — card_tile 统一列表**: Session 侧边栏的 `_build_session_tile` 和 Agents 面板的列表项从自定义 Container/ListTile 改为共享 `card_tile()` 组件（统一 16px 圆角 + 边框 + 动画）
+- **V3 — 空态/错误态补齐**: Agents 面板新增 `empty_state("暂无 Agent 配置")`
+- **V4 — 代码块复制按钮**: `_render_markdown` 重写为分段渲染（Markdown + 自定义代码块），代码块顶部显示语言标签和一键复制按钮，复制后显示 ✓ 反馈 1.5 秒
+- **V5 — page_header 全覆盖**: Agents、Voice、Settings 三个面板补齐 `page_header(icon, title, actions)` 标题栏（Chat 已有 toolbar，无需添加）
+- **I5 — scroll-to-bottom FAB**: `_messages_list` 接入 `on_scroll` 处理器，用户上滚超过 100px 自动显示 FAB，滚动到底部自动隐藏
 
 ## 参考文档
 

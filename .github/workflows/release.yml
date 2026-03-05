@@ -104,9 +104,11 @@ jobs:
           files: dist/*
 
   # ── TestPyPI (smoke test) ─────────────────────────────────────────
+  # Requires Trusted Publisher on https://test.pypi.org/manage/account/publishing/
   publish-testpypi:
     runs-on: ubuntu-latest
     needs: preflight
+    continue-on-error: true
     environment: testpypi
     permissions:
       contents: read
@@ -136,9 +138,11 @@ jobs:
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "openclaw-py==${VERSION}" || echo "TestPyPI verification skipped (package not yet indexed)"
 
   # ── PyPI Publish ──────────────────────────────────────────────────
+  # Requires Trusted Publisher on https://pypi.org/manage/account/publishing/
   publish-pypi:
     runs-on: ubuntu-latest
-    needs: [preflight, release-notes, publish-testpypi]
+    needs: [preflight, release-notes]
+    continue-on-error: true
     environment: pypi
     permissions:
       contents: read

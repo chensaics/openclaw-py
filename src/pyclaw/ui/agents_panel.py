@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
+from pyclaw.ui.components import card_tile, empty_state, page_header
 from pyclaw.ui.i18n import t
 
 logger = logging.getLogger(__name__)
@@ -66,25 +67,29 @@ def build_agents_panel(
         agent_list.controls.clear()
         for agent in agents:
             is_selected = agent["id"] == selected_agent_id[0]
-            tile = ft.ListTile(
-                leading=ft.Icon(ft.Icons.SMART_TOY if is_selected else ft.Icons.SMART_TOY_OUTLINED),
-                title=ft.Text(agent["name"], weight=ft.FontWeight.BOLD if is_selected else None),
-                subtitle=ft.Text(agent["path"], size=11),
-                selected=is_selected,
+            tile = card_tile(
+                content=ft.Row(
+                    [
+                        ft.Icon(ft.Icons.SMART_TOY if is_selected else ft.Icons.SMART_TOY_OUTLINED),
+                        ft.Column(
+                            [
+                                ft.Text(agent["name"], weight=ft.FontWeight.BOLD if is_selected else None),
+                                ft.Text(agent["path"], size=11),
+                            ],
+                            spacing=2,
+                            expand=True,
+                            tight=True,
+                        ),
+                    ],
+                    spacing=8,
+                ),
                 on_click=lambda e, aid=agent["id"]: _select_agent(e, aid),
+                data=agent["id"],
             )
             agent_list.controls.append(tile)
 
         if not agents:
-            agent_list.controls.append(
-                ft.Container(
-                    content=ft.Text(
-                        t("agents.empty", default="No agents configured"),
-                        italic=True,
-                    ),
-                    padding=20,
-                )
-            )
+            agent_list.controls.append(empty_state(ft.Icons.SMART_TOY_OUTLINED, "暂无 Agent 配置"))
         if _mounted:
             agent_list.update()
 
@@ -181,16 +186,10 @@ def build_agents_panel(
 
     panel = ft.Column(
         controls=[
-            ft.Row(
-                [
-                    ft.Text(
-                        t("agents.title", default="Agents"),
-                        size=20,
-                        weight=ft.FontWeight.BOLD,
-                    ),
-                    refresh_btn,
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            page_header(
+                ft.Icons.SMART_TOY,
+                t("agents.title", default="Agents"),
+                actions=[refresh_btn],
             ),
             ft.Divider(height=1),
             ft.Row(

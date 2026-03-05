@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -17,7 +18,9 @@ from typing import Any, cast
 import flet as ft
 
 from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
+from pyclaw.ui.components import card_tile, page_header
 from pyclaw.ui.i18n import I18n, set_i18n, t
+from pyclaw.ui.theme import get_theme
 
 logger = logging.getLogger(__name__)
 
@@ -25,23 +28,105 @@ logger = logging.getLogger(__name__)
 
 
 def _render_markdown(text: str) -> ft.Control:
-    """Render markdown text as a Flet Markdown control with themed code blocks."""
+    """Render markdown with copyable code blocks."""
     from pyclaw.ui.theme import get_theme
 
     theme = get_theme()
-    code_theme = ft.MarkdownCodeTheme.MONOKAI if theme.name == "dark" else ft.MarkdownCodeTheme.GITHUB
-    return ft.Markdown(
-        value=text,
-        selectable=True,
-        extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
-        code_theme=code_theme,
-        code_style_sheet=ft.MarkdownStyleSheet(
-            code_text_style=ft.TextStyle(
-                font_family=theme.typography.mono_family,
-                size=13,
+    code_theme_name = ft.MarkdownCodeTheme.MONOKAI if theme.name == "dark" else ft.MarkdownCodeTheme.GITHUB
+
+    # Split on code fences
+    parts = re.split(r"(```[\s\S]*?```)", text)
+
+    if len(parts) <= 1:
+        # No code blocks, render as plain markdown
+        return ft.Markdown(
+            value=text,
+            selectable=True,
+            extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+            code_theme=code_theme_name,
+            code_style_sheet=ft.MarkdownStyleSheet(
+                code_text_style=ft.TextStyle(
+                    font_family=theme.typography.mono_family,
+                ),
             ),
+            auto_follow_links=True,
+        )
+
+    controls = []
+    for part in parts:
+        if part.startswith("```") and part.endswith("```"):
+            # Extract language and code
+            lines = part[3:-3].split("\n", 1)
+            lang = lines[0].strip() if lines else ""
+            code = lines[1] if len(lines) > 1 else ""
+
+            code_block = _build_code_block(code, lang, theme)
+            controls.append(code_block)
+        elif part.strip():
+            controls.append(
+                ft.Markdown(
+                    value=part,
+                    selectable=True,
+                    extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+                    code_theme=code_theme_name,
+                    code_style_sheet=ft.MarkdownStyleSheet(
+                        code_text_style=ft.TextStyle(
+                            font_family=theme.typography.mono_family,
+                        ),
+                    ),
+                    auto_follow_links=True,
+                )
+            )
+
+    return ft.Column(controls, spacing=4) if len(controls) > 1 else controls[0]
+
+
+def _build_code_block(code: str, lang: str, theme) -> ft.Container:
+    """Build a code block with a copy button."""
+
+    async def copy_code(e):
+        if e.control.page:
+            await e.control.page.set_clipboard_async(code)
+            e.control.icon = ft.Icons.CHECK
+            e.control.update()
+            await asyncio.sleep(1.5)
+            e.control.icon = ft.Icons.CONTENT_COPY
+            e.control.update()
+
+    copy_btn = ft.IconButton(
+        icon=ft.Icons.CONTENT_COPY,
+        icon_size=14,
+        tooltip="复制代码",
+        on_click=copy_code,
+        icon_color=theme.colors.muted,
+    )
+
+    header_controls = []
+    if lang:
+        header_controls.append(ft.Text(lang, size=11, color=theme.colors.muted, weight=ft.FontWeight.W_500))
+    header_controls.append(ft.Container(expand=True))
+    header_controls.append(copy_btn)
+
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Row(header_controls, spacing=0),
+                ft.Container(
+                    content=ft.Text(
+                        code,
+                        selectable=True,
+                        font_family=theme.typography.mono_family,
+                        size=13,
+                    ),
+                    padding=ft.padding.only(left=12, right=12, bottom=8),
+                ),
+            ],
+            spacing=0,
         ),
-        auto_follow_links=True,
+        bgcolor=theme.colors.code_block_bg,
+        border_radius=8,
+        border=ft.border.all(0.5, theme.colors.border),
+        padding=ft.padding.only(left=12, right=4, top=4, bottom=0),
     )
 
 
@@ -193,7 +278,7 @@ class ChatMessage(ft.Container):
         is_user = role == "user"
         theme = get_theme()
         alignment = ft.MainAxisAlignment.END if is_user else ft.MainAxisAlignment.START
-        bg_color = ft.Colors.PRIMARY_CONTAINER if is_user else theme.colors.surface_container
+        bg_color = theme.colors.primary_container if is_user else theme.colors.surface_container
         avatar_icon = ft.Icons.PERSON if is_user else ft.Icons.SMART_TOY
         avatar_bg = RoleColors.USER if is_user else RoleColors.ASSISTANT
 
@@ -297,7 +382,7 @@ class ChatMessage(ft.Container):
             shadow=ft.BoxShadow(
                 spread_radius=0,
                 blur_radius=8,
-                color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+                color=ft.Colors.with_opacity(0.08, theme.colors.on_surface),
                 offset=ft.Offset(0, 2),
             ),
             width=None,
@@ -433,6 +518,7 @@ class SessionSidebar(ft.Column):
         self._render_filtered(sessions)
 
     def _render_filtered(self, sessions: list[dict[str, str]]) -> None:
+        theme = get_theme()
         self._sessions_list.controls.clear()
 
         groups: dict[str, list[dict[str, str]]] = {}
@@ -450,7 +536,7 @@ class SessionSidebar(ft.Column):
                             group_name,
                             size=10,
                             weight=ft.FontWeight.BOLD,
-                            color=ft.Colors.ON_SURFACE_VARIANT,
+                            color=theme.colors.muted,
                         ),
                         padding=ft.padding.only(left=8, top=8, bottom=2),
                     )
@@ -461,12 +547,13 @@ class SessionSidebar(ft.Column):
         self._safe_update(self._sessions_list)
 
     def _build_session_tile(self, s: dict[str, str]) -> ft.Control:
+        theme = get_theme()
         sid = s.get("id", "")
         name = s.get("name", sid[:12])
         age = s.get("age", "")
         is_selected = sid == self._selected_id
 
-        return ft.Container(
+        return card_tile(
             content=ft.Row(
                 [
                     ft.Column(
@@ -477,7 +564,7 @@ class SessionSidebar(ft.Column):
                                 weight=ft.FontWeight.BOLD if is_selected else None,
                                 max_lines=1,
                             ),
-                            ft.Text(age, size=10, color=ft.Colors.ON_SURFACE_VARIANT),
+                            ft.Text(age, size=10, color=theme.colors.muted),
                         ],
                         spacing=2,
                         expand=True,
@@ -493,12 +580,8 @@ class SessionSidebar(ft.Column):
                 ],
                 spacing=4,
             ),
-            padding=ft.padding.symmetric(horizontal=8, vertical=4),
-            border_radius=ft.border_radius.all(8),
-            bgcolor=ft.Colors.PRIMARY_CONTAINER if is_selected else None,
-            data=sid,
             on_click=self._handle_select,
-            animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
+            data=sid,
         )
 
     def set_selected(self, session_id: str) -> None:
@@ -556,6 +639,7 @@ class ChatView(ft.Column):
         self._on_resend = on_resend
         self._is_streaming = False
         self._current_assistant_msg: ChatMessage | None = None
+        theme = get_theme()
 
         self._search_bar = ft.TextField(
             hint_text=t("chat.search", default="Search messages..."),
@@ -599,7 +683,7 @@ class ChatView(ft.Column):
             on_click=self._handle_abort,
             tooltip=t("chat.abort", default="Stop"),
             visible=False,
-            icon_color=ft.Colors.ERROR,
+            icon_color=theme.colors.error,
         )
 
         self._search_toggle = ft.IconButton(
@@ -640,8 +724,8 @@ class ChatView(ft.Column):
                 self._messages_list,
                 ft.Container(
                     content=self._scroll_to_bottom_btn,
-                    alignment=ft.Alignment(0, 1),
-                    padding=ft.padding.only(bottom=8),
+                    alignment=ft.Alignment(1, 1),
+                    padding=ft.padding.only(bottom=8, right=8),
                 ),
             ],
             expand=True,
@@ -765,6 +849,7 @@ class ChatView(ft.Column):
 
     def show_plan_progress(self, steps: list[dict[str, Any]], current_index: int) -> None:
         """Display plan step progress at the top of the chat."""
+        theme = get_theme()
         total = len(steps)
         completed = sum(1 for s in steps if s.get("status") == "completed")
 
@@ -772,11 +857,11 @@ class ChatView(ft.Column):
         for i, step in enumerate(steps):
             status = step.get("status", "pending")
             color = (
-                ft.Colors.GREEN
+                theme.colors.success
                 if status == "completed"
-                else ft.Colors.BLUE
+                else theme.colors.primary
                 if status == "running"
-                else ft.Colors.ON_SURFACE_VARIANT
+                else theme.colors.muted
             )
             icon = (
                 ft.Icons.CHECK_CIRCLE
@@ -804,7 +889,7 @@ class ChatView(ft.Column):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             padding=ft.padding.symmetric(horizontal=16, vertical=8),
-            bgcolor=ft.Colors.SURFACE_CONTAINER,
+            bgcolor=theme.colors.surface_container,
             border_radius=ft.border_radius.all(8),
         )
         self._plan_progress.visible = True
@@ -1002,6 +1087,7 @@ class SettingsView(ft.Column):
 
         from pyclaw.ui.theme import PRESET_SEED_COLORS
 
+        theme = get_theme()
         self._color_swatches = ft.Row(
             controls=[
                 ft.Container(
@@ -1011,7 +1097,7 @@ class SettingsView(ft.Column):
                     bgcolor=color,
                     border=ft.border.all(
                         3 if color == "#6366f1" else 1.5,
-                        ft.Colors.ON_SURFACE if color == "#6366f1" else ft.Colors.OUTLINE,
+                        theme.colors.on_surface if color == "#6366f1" else theme.colors.border,
                     ),
                     data=color,
                     on_click=self._handle_swatch_click,
@@ -1045,7 +1131,7 @@ class SettingsView(ft.Column):
 
         super().__init__(
             controls=[
-                ft.Text(t("settings.title"), size=24, weight=ft.FontWeight.BOLD),
+                page_header(ft.Icons.SETTINGS, t("settings.title", default="Settings")),
                 ft.Divider(),
                 ft.Text(t("settings.model_config"), size=16, weight=ft.FontWeight.W_500),
                 self._provider,
@@ -1169,6 +1255,7 @@ class SettingsView(ft.Column):
         i18n.locale = self._locale_dropdown.value or "en"
 
     async def _handle_swatch_click(self, e: Any) -> None:
+        theme = get_theme()
         color = e.control.data
         if not color:
             return
@@ -1180,7 +1267,7 @@ class SettingsView(ft.Column):
                 is_selected = swatch.data == color
                 swatch.border = ft.border.all(
                     3 if is_selected else 1.5,
-                    ft.Colors.ON_SURFACE if is_selected else ft.Colors.OUTLINE,
+                    theme.colors.on_surface if is_selected else theme.colors.border,
                 )
                 swatch.shadow = (
                     ft.BoxShadow(
@@ -1344,6 +1431,7 @@ class PyClawApp:
             visible=False,
         )
 
+        theme = get_theme()
         from pyclaw.ui.toolbar import build_toolbar
 
         self._toolbar_obj = build_toolbar(
@@ -1372,12 +1460,12 @@ class PyClawApp:
                         width=8,
                         height=8,
                         border_radius=4,
-                        bgcolor=ft.Colors.GREEN if self._gw_connected else ft.Colors.RED,
+                        bgcolor=theme.colors.success if self._gw_connected else theme.colors.error,
                     ),
                     ft.Text(
                         "Gateway" if self._gw_connected else "Offline",
                         size=10,
-                        color=ft.Colors.ON_SURFACE_VARIANT,
+                        color=theme.colors.muted,
                     ),
                 ],
                 spacing=4,
@@ -1700,12 +1788,13 @@ class PyClawApp:
 
     def _update_gw_indicator(self) -> None:
         if hasattr(self, "_gw_indicator"):
+            theme = get_theme()
             row = self._gw_indicator.content
             if isinstance(row, ft.Row) and len(row.controls) >= 2:
                 dot = row.controls[0]
                 label = row.controls[1]
                 if isinstance(dot, ft.Container):
-                    dot.bgcolor = ft.Colors.GREEN if self._gw_connected else ft.Colors.RED
+                    dot.bgcolor = theme.colors.success if self._gw_connected else theme.colors.error
                 if isinstance(label, ft.Text):
                     label.value = "Gateway" if self._gw_connected else "Offline"
             try:
@@ -2037,6 +2126,7 @@ class PyClawApp:
         )
 
     async def _refresh_plans(self) -> None:
+        theme = get_theme()
         from pyclaw.ui.components import card_tile, status_chip
         from pyclaw.ui.theme import StatusColors
 
@@ -2100,7 +2190,7 @@ class PyClawApp:
                                 ft.Row(
                                     [
                                         status_chip(status, color),
-                                        ft.Text(f"{done}/{total} steps", size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                                        ft.Text(f"{done}/{total} steps", size=11, color=theme.colors.muted),
                                     ],
                                     spacing=8,
                                 ),
@@ -2212,6 +2302,7 @@ class PyClawApp:
         )
 
     async def _refresh_cron(self) -> None:
+        theme = get_theme()
         from pyclaw.ui.components import card_tile, status_chip
         from pyclaw.ui.theme import StatusColors
 
@@ -2248,7 +2339,7 @@ class PyClawApp:
                                 ft.Row(
                                     [
                                         status_chip("enabled" if enabled else "disabled", job_color),
-                                        ft.Text(job.get("schedule", ""), size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                                        ft.Text(job.get("schedule", ""), size=11, color=theme.colors.muted),
                                     ],
                                     spacing=8,
                                 ),
@@ -2293,7 +2384,7 @@ class PyClawApp:
                             [
                                 ft.Container(width=8, height=8, border_radius=4, bgcolor=color),
                                 ft.Text(rec.get("job_title", ""), size=12, expand=True),
-                                ft.Text(rec.get("started_at", "")[:19], size=10, color=ft.Colors.ON_SURFACE_VARIANT),
+                                ft.Text(rec.get("started_at", "")[:19], size=10, color=theme.colors.muted),
                                 status_chip(status, color),
                             ],
                             spacing=6,
@@ -2415,6 +2506,7 @@ class PyClawApp:
     async def _run_doctor(self) -> None:
         if self._gw:
             try:
+                theme = get_theme()
                 result = await self._gw.call("doctor.run")
                 checks = result.get("checks", result)
                 self._system_info_col.controls.clear()
@@ -2423,7 +2515,7 @@ class PyClawApp:
                     for check in checks:
                         name = check.get("name", "")
                         status = check.get("status", "")
-                        color = ft.Colors.GREEN if status == "ok" else ft.Colors.RED
+                        color = theme.colors.success if status == "ok" else theme.colors.error
                         self._system_info_col.controls.append(
                             ft.Row(
                                 [

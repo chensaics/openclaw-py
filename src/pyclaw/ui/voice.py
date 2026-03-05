@@ -13,6 +13,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from pyclaw.ui.components import page_header
 from pyclaw.ui.i18n import t
 
 logger = logging.getLogger(__name__)
@@ -198,13 +199,7 @@ def build_voice_panel(
 
     return ft.Column(
         controls=[
-            ft.Row(
-                [
-                    ft.Icon(ft.Icons.MIC, size=20, color=ft.Colors.PRIMARY),
-                    ft.Container(width=8),
-                    ft.Text(t("voice.title"), size=20, weight=ft.FontWeight.BOLD),
-                ]
-            ),
+            page_header(ft.Icons.MIC, t("voice.title", default="Voice")),
             ft.Divider(height=1),
             ft.Text(t("voice.tts_section", default="Text-to-Speech"), size=16, weight=ft.FontWeight.W_500),
             text_input,
