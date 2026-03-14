@@ -1701,7 +1701,8 @@ class PyClawApp:
         if idx in self._MOBILE_NAV_INDICES:
             self._bottom_nav.selected_index = self._MOBILE_NAV_INDICES.index(idx)
         else:
-            self._bottom_nav.selected_index = None  # type: ignore[assignment]
+            # 设置为默认值0而不是None，避免Flet框架中的类型错误
+            self._bottom_nav.selected_index = 0
         self._safe_update(self._bottom_nav)
 
         attr = self._NAV_MAP.get(idx, "_chat_view")
