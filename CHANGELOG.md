@@ -16,6 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - (none yet)
 
+## [0.1.4] - 2026-03-15
+
+### Added
+- Versioned pre-push hook: `scripts/githooks/pre-push`（推送 tag 时跳过测试，由 release workflow 执行）
+- `scripts/githooks/README.md` — 安装说明
+
+### Changed
+- pre-push：仅对分支推送跑全量 pytest，推送 tag 时跳过，避免与 release 重复
+- ci-local.sh：不再跑 pytest，只做 ruff + mypy，pytest 由 pre-push 统一执行
+- commit.sh：文案改为“本地检查（ruff + mypy）”
+
+### Fixed
+- 测试耗时：`test_infra_misc.test_with_timeout_expired`、`test_cron_tts_logging.test_timeout` 中 `asyncio.sleep(10)` 改为最小必要时长（0.1s / 0.2s），pre-push 全量测试减少约 20 秒
+
 ## [0.1.3] - 2026-03-14
 
 ### Added
@@ -63,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cron job scheduling
 - Voice interaction (TTS via edge-tts, STT via Whisper API)
 
-[Unreleased]: https://github.com/chensaics/openclaw-py/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/chensaics/openclaw-py/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/chensaics/openclaw-py/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/chensaics/openclaw-py/compare/v0.1.2...v0.1.3
 [0.1.0]: https://github.com/chensaics/openclaw-py/releases/tag/v0.1.0

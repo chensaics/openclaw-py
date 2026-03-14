@@ -127,8 +127,7 @@ class TestIsolatedAgentRunner:
         task = CronTaskConfig(task_id="t2", schedule="*", timeout_s=0.05)
 
         async def handler(t: CronTaskConfig) -> str:
-            await asyncio.sleep(10)
-            return "never"
+            await asyncio.sleep(0.2)  # longer than task timeout_s=0.05
 
         result = await runner.run_task(task, handler)
         assert result.state == TaskState.TIMEOUT

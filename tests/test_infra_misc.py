@@ -499,7 +499,7 @@ class TestConcurrency:
     @pytest.mark.asyncio
     async def test_with_timeout_expired(self) -> None:
         async def slow():
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)  # longer than timeout 0.01s
 
         result = await with_timeout(slow(), 0.01, default=-1)
         assert result == -1
