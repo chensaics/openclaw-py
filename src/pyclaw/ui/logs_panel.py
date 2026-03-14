@@ -259,7 +259,7 @@ def build_logs_panel(*, gateway_client: Any = None) -> ft.Column:
         )
         log_list.controls.append(row)
         if auto_follow_switch.value:
-            log_list.scroll_to(offset=-1)
+            _fire_async(lambda: log_list.scroll_to(offset=-1))
         _safe_update(log_list)
 
     if gateway_client:

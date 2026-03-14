@@ -313,7 +313,10 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
                     ),
                 )
             if chart_controls:
-                charts_expansion.controls[:] = chart_controls
+                ctrls = charts_expansion.controls
+                if ctrls is not None:
+                    ctrls.clear()
+                    ctrls.extend(chart_controls)
                 charts_expansion.visible = True
             else:
                 charts_expansion.visible = False

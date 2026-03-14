@@ -1974,23 +1974,6 @@ class PyClawApp:
 
         self._show_snackbar(t("settings.saved"))
 
-    def _update_gw_indicator(self) -> None:
-        if hasattr(self, "_gw_indicator"):
-            theme = get_theme()
-            row = self._gw_indicator.content
-            if isinstance(row, ft.Row) and len(row.controls) >= 2:
-                dot = row.controls[0]
-                label = row.controls[1]
-                if isinstance(dot, ft.Container):
-                    dot.bgcolor = theme.colors.success if self._gw_connected else theme.colors.error
-                if isinstance(label, ft.Text):
-                    label.value = "Gateway" if self._gw_connected else "Offline"
-            try:
-                if self._gw_indicator.page:
-                    self._gw_indicator.update()
-            except RuntimeError:
-                pass
-
     # ─── Toolbar callbacks ───────────────────────────────────────────
 
     async def _handle_attach(self) -> None:
