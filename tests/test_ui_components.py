@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-import flet as ft
+import pytest
 
-from pyclaw.ui.components import (
+ft = pytest.importorskip("flet")
+
+from pyclaw.ui.components import (  # noqa: E402
     card_tile,
     empty_state,
     empty_state_simple,
