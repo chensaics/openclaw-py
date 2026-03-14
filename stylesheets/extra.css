@@ -1,0 +1,7 @@
+/* 自定义样式示例：取消 mkdocs.yml 中 extra_css 注释后生效 */
+
+/* 例如：调整正文最大宽度 */
+/* .md-content__inner { max-width: 900px; } */
+
+/* 例如：自定义标题间距 */
+/* .md-content h1 { margin-top: 1.5em; } */
