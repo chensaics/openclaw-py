@@ -59,6 +59,12 @@ skills-lock.json
 
 ./my-cache/*
 .ruff_cache/*
+.mypy_cache/*
+.mypy_cache
+cache/*
+*cache/*
+# MkDocs build output
+site/
 
 # Misc
 .serena/

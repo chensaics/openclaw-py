@@ -1,0 +1,96 @@
+site_name: PyClaw 文档
+site_url: https://www.pyclaw.cn
+site_description: 多通道 AI 网关 — 将 AI Agent 连接到 25+ 消息平台
+site_author: OpenClaw Team
+repo_url: https://github.com/chensaics/openclaw-py
+repo_name: openclaw-py
+
+docs_dir: .
+site_dir: ../site
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: 切换到暗色模式
+    - scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: 切换到亮色模式
+  font:
+    text: Noto Sans SC
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - 首页: README.md
+  - 入门:
+      - 快速开始: quickstart.md
+      - 安装指南: install.md
+      - 配置说明: configuration.md
+  - 核心概念:
+      - 概念总览: concepts.md
+      - 架构设计: architecture.md
+  - API:
+      - API 参考: api-reference.md
+  - 帮助:
+      - 故障排除: troubleshooting.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - minify:
+      minify_html: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/chensaics/openclaw-py
+  generator: false
+
+copyright: Copyright &copy; 2024-2026 OpenClaw Team
