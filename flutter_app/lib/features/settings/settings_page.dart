@@ -131,10 +131,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ListTile(
-                              leading: const Icon(Icons.info_outline),
-                              title: const Text('Version'),
-                              subtitle: const Text('0.1.0'),
+                            const ListTile(
+                              leading: Icon(Icons.info_outline),
+                              title: Text('Version'),
+                              subtitle: Text('0.1.0'),
                               contentPadding: EdgeInsets.zero,
                             ),
                             ListTile(

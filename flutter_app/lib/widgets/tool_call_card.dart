@@ -21,7 +21,7 @@ class ToolCallCard extends StatelessWidget {
       ),
       child: ExpansionTile(
         leading: toolCall.isRunning
-            ? SizedBox(
+            ? const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
@@ -39,7 +39,7 @@ class ToolCallCard extends StatelessWidget {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         subtitle: toolCall.isRunning
-            ? Text('Running...', style: TextStyle(color: AppColors.warning, fontSize: 12))
+            ? const Text('Running...', style: TextStyle(color: AppColors.warning, fontSize: 12))
             : null,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         children: [

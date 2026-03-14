@@ -146,11 +146,11 @@ class _DoctorDialog extends StatelessWidget {
     final asyncDoctor = ref.watch(_doctorProvider(null));
 
     return AlertDialog(
-      title: Row(
+      title: const Row(
         children: [
-          const Icon(Icons.health_and_safety, size: 22),
-          const SizedBox(width: 8),
-          const Text('System Doctor'),
+          Icon(Icons.health_and_safety, size: 22),
+          SizedBox(width: 8),
+          Text('System Doctor'),
         ],
       ),
       content: SizedBox(
