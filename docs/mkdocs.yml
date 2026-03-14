@@ -11,6 +11,9 @@ site_dir: ../site
 theme:
   name: material
   language: zh
+  # 可选：站点 logo 与 favicon（将图片放在 docs/assets/ 后取消注释）
+  # logo: assets/logo.svg
+  # favicon: assets/favicon.ico
   palette:
     - scheme: default
       primary: indigo
@@ -21,6 +24,13 @@ theme:
     - scheme: slate
       primary: indigo
       accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: 切换到亮色模式
+    # 第三套：深色偏好 + 青绿色强调
+    - scheme: slate
+      primary: teal
+      accent: lime
       toggle:
         icon: material/brightness-4
         name: 切换到亮色模式
@@ -86,6 +96,10 @@ plugins:
         - en
   - minify:
       minify_html: true
+
+# 自定义 CSS：在 docs/stylesheets/extra.css 中编写，取消下面注释即可生效
+# extra_css:
+#   - stylesheets/extra.css
 
 extra:
   social:
