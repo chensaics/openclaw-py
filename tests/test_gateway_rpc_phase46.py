@@ -193,4 +193,4 @@ class TestExtendedHandlerCount:
         from pyclaw.gateway.methods.extended import create_extended_handlers
 
         handlers = create_extended_handlers()
-        assert len(handlers) == 16
+        assert len(handlers) == 19
