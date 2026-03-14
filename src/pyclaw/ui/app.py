@@ -808,7 +808,7 @@ class ChatView(ft.Column):
             self._current_assistant_msg.update_content(new_content)
             self._safe_update(self._messages_list)
 
-    def finish_streaming(self, usage: dict[str, Any] | None = None) -> None:
+    def finish_streaming(self, usage: dict[str, Any] | None = None, *, error: str = "") -> None:
         """Finalize the current streaming message."""
         self._is_streaming = False
         if hasattr(self, "_dots_task") and self._dots_task:
@@ -820,6 +820,11 @@ class ChatView(ft.Column):
                 if col and self._typing_dots in col.controls:
                     col.controls.remove(self._typing_dots)
             self._typing_dots = None
+        if error and self._current_assistant_msg:
+            current = self._current_assistant_msg._message_content or ""
+            suffix = f"\n\n⚠ {error}" if current.strip() else f"⚠ {error}"
+            self._current_assistant_msg.update_content(current + suffix)
+            self._safe_update(self._messages_list)
         self._current_assistant_msg = None
         self._abort_btn.visible = False
         self._send_btn.visible = True
@@ -1377,12 +1382,13 @@ class PyClawApp:
         self._content_area = ft.Column(
             expand=True,
             animate_opacity=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
+            animate_offset=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
         )
         self._content_area.controls = [self._chat_view]
 
-        from pyclaw.ui.channels_panel import ChannelStatusPanel
+        from pyclaw.ui.channels_panel import build_channels_panel
 
-        self._channels_panel = ChannelStatusPanel(on_refresh=self._refresh_channels)
+        self._channels_panel = build_channels_panel(gateway_client=self._gw)
 
         from pyclaw.ui.voice import build_voice_panel
 
@@ -1392,19 +1398,79 @@ class PyClawApp:
 
         from pyclaw.ui.agents_panel import build_agents_panel
 
-        self._agents_panel = build_agents_panel()
+        self._agents_panel = build_agents_panel(gateway_client=self._gw)
 
-        self._plan_panel = self._build_plan_panel()
-        self._cron_panel = self._build_cron_panel()
-        self._system_panel = self._build_system_panel()
+        from pyclaw.ui.plans_panel import build_plans_panel
+        from pyclaw.ui.system_panel import build_system_panel
+
+        self._plan_panel = build_plans_panel(gateway_client=self._gw)
+
+        self._system_panel = build_system_panel(
+            gateway_client=self._gw,
+            on_snackbar=self._show_snackbar,
+        )
+
+        from pyclaw.ui.overview_panel import build_overview_panel
+
+        self._overview_panel = build_overview_panel(
+            gateway_client=self._gw,
+            config={"url": self._config.get("gateway_url", ""), "auth_token": self._config.get("auth_token", "")},
+            on_connect=self._handle_overview_connect,
+            on_refresh=self._refresh_overview,
+        )
+
+        from pyclaw.ui.instances_panel import build_instances_panel
+
+        self._instances_panel = build_instances_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.sessions_panel import build_sessions_panel
+
+        self._sessions_panel = build_sessions_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.logs_panel import build_logs_panel
+
+        self._logs_panel = build_logs_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.debug_panel import build_debug_panel
+
+        self._debug_panel = build_debug_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.skills_panel import build_skills_panel
+
+        self._skills_panel = build_skills_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.nodes_panel import build_nodes_panel
+
+        self._nodes_panel = build_nodes_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.config_panel import build_config_panel
+
+        self._config_panel = build_config_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.usage_panel import build_usage_panel
+
+        self._usage_panel = build_usage_panel(gateway_client=self._gw)
+
+        from pyclaw.ui.cron_panel import build_cron_panel
+
+        self._cron_panel_v2 = build_cron_panel(gateway_client=self._gw)
 
         nav_items = [
             (ft.Icons.CHAT_BUBBLE_OUTLINE, ft.Icons.CHAT_BUBBLE, t("nav.chat")),
+            (ft.Icons.DASHBOARD_OUTLINED, ft.Icons.DASHBOARD, t("nav.overview", default="Overview")),
             (ft.Icons.SMART_TOY_OUTLINED, ft.Icons.SMART_TOY, t("nav.agents", default="Agents")),
             (ft.Icons.LINK, ft.Icons.LINK, t("nav.channels")),
-            (ft.Icons.CHECKLIST, ft.Icons.CHECKLIST, t("nav.plans", default="Plans")),
+            (ft.Icons.DEVICES_OTHER_OUTLINED, ft.Icons.DEVICES_OTHER, t("nav.instances", default="Instances")),
+            (ft.Icons.FORUM_OUTLINED, ft.Icons.FORUM, t("nav.sessions", default="Sessions")),
+            (ft.Icons.BAR_CHART_OUTLINED, ft.Icons.BAR_CHART, t("nav.usage", default="Usage")),
             (ft.Icons.SCHEDULE, ft.Icons.SCHEDULE, t("nav.cron", default="Cron")),
+            (ft.Icons.CHECKLIST, ft.Icons.CHECKLIST, t("nav.plans", default="Plans")),
+            (ft.Icons.EXTENSION_OUTLINED, ft.Icons.EXTENSION, t("nav.skills", default="Skills")),
+            (ft.Icons.DEVICE_HUB_OUTLINED, ft.Icons.DEVICE_HUB, t("nav.nodes", default="Nodes")),
             (ft.Icons.MIC_NONE, ft.Icons.MIC, t("voice.title")),
+            (ft.Icons.DESCRIPTION_OUTLINED, ft.Icons.DESCRIPTION, t("nav.logs", default="Logs")),
+            (ft.Icons.BUG_REPORT_OUTLINED, ft.Icons.BUG_REPORT, t("nav.debug", default="Debug")),
+            (ft.Icons.TUNE_OUTLINED, ft.Icons.TUNE, t("nav.config", default="Config")),
             (ft.Icons.MONITOR_HEART_OUTLINED, ft.Icons.MONITOR_HEART, t("nav.system", default="System")),
             (ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS, t("nav.settings")),
         ]
@@ -1421,15 +1487,19 @@ class PyClawApp:
             min_width=72,
         )
 
-        # Bottom navigation bar for mobile (<600px)
+        # Mobile bottom nav: 5 core items + "More" drawer
+        self._MOBILE_NAV_INDICES = [0, 1, 2, 5, 16]  # Chat, Overview, Agents, Sessions, Settings
+        mobile_items = [nav_items[i] for i in self._MOBILE_NAV_INDICES]
+        mobile_items.append((ft.Icons.MORE_HORIZ, ft.Icons.MORE_HORIZ, t("nav.more", default="More")))
         self._bottom_nav = ft.NavigationBar(
             selected_index=0,
             destinations=[
-                ft.NavigationBarDestination(icon=ic, selected_icon=sel, label=lbl) for ic, sel, lbl in nav_items
+                ft.NavigationBarDestination(icon=ic, selected_icon=sel, label=lbl) for ic, sel, lbl in mobile_items
             ],
-            on_change=self._handle_nav_change,
+            on_change=self._handle_mobile_nav_change,
             visible=False,
         )
+        self._all_nav_items = nav_items
 
         theme = get_theme()
         from pyclaw.ui.toolbar import build_toolbar
@@ -1600,35 +1670,121 @@ class PyClawApp:
 
     _NAV_MAP = {
         0: "_chat_view",
-        1: "_agents_panel",
-        2: "_channels_panel",
-        3: "_plan_panel",
-        4: "_cron_panel",
-        5: "_voice_panel",
-        6: "_system_panel",
-        7: "_settings_view",
+        1: "_overview_panel",
+        2: "_agents_panel",
+        3: "_channels_panel",
+        4: "_instances_panel",
+        5: "_sessions_panel",
+        6: "_usage_panel",
+        7: "_cron_panel_v2",
+        8: "_plan_panel",
+        9: "_skills_panel",
+        10: "_nodes_panel",
+        11: "_voice_panel",
+        12: "_logs_panel",
+        13: "_debug_panel",
+        14: "_config_panel",
+        15: "_system_panel",
+        16: "_settings_view",
     }
 
-    async def _handle_nav_change(self, e: Any) -> None:
-        idx = e.control.selected_index
+    _NAV_REFRESH_MAP: dict[int, str] = {
+        1: "_refresh_overview",
+    }
+
+    async def _navigate_to(self, idx: int) -> None:
+        """Navigate to the panel at the given nav index."""
+        self._nav_rail.selected_index = idx
+        self._safe_update(self._nav_rail)
+
+        # Sync bottom nav: find the mobile slot or clear highlight
+        if idx in self._MOBILE_NAV_INDICES:
+            self._bottom_nav.selected_index = self._MOBILE_NAV_INDICES.index(idx)
+        else:
+            self._bottom_nav.selected_index = None  # type: ignore[assignment]
+        self._safe_update(self._bottom_nav)
+
         attr = self._NAV_MAP.get(idx, "_chat_view")
         panel = getattr(self, attr, self._chat_view)
         if panel:
             self._content_area.opacity = 0
+            self._content_area.offset = ft.Offset(0.02, 0)
             self._safe_update(self._content_area)
             await asyncio.sleep(0.05)
             self._content_area.controls = [panel]
             self._content_area.opacity = 1
+            self._content_area.offset = ft.Offset(0, 0)
             self._safe_update(self._content_area)
 
-        if idx == 2:
-            await self._refresh_channels()
-        elif idx == 3:
-            await self._refresh_plans()
-        elif idx == 4:
-            await self._refresh_cron()
-        elif idx == 6:
-            await self._refresh_system()
+        refresh_method = self._NAV_REFRESH_MAP.get(idx)
+        if refresh_method:
+            method = getattr(self, refresh_method, None)
+            if method:
+                await method()
+        elif panel and hasattr(panel, "refresh"):
+            await panel.refresh()
+
+    async def _handle_nav_change(self, e: Any) -> None:
+        """Desktop/tablet NavigationRail change handler."""
+        await self._navigate_to(e.control.selected_index)
+
+    async def _handle_mobile_nav_change(self, e: Any) -> None:
+        """Mobile bottom nav handler — maps 5 core slots + More."""
+        slot = e.control.selected_index
+        if slot < len(self._MOBILE_NAV_INDICES):
+            await self._navigate_to(self._MOBILE_NAV_INDICES[slot])
+        else:
+            self._show_more_drawer()
+
+    def _show_more_drawer(self) -> None:
+        """Open a bottom sheet with all navigation items for mobile."""
+        theme = get_theme()
+        items: list[ft.Control] = []
+        for nav_idx, (ic, _sel, lbl) in enumerate(self._all_nav_items):
+            if nav_idx in self._MOBILE_NAV_INDICES:
+                continue
+            items.append(
+                ft.ListTile(
+                    leading=ft.Icon(ic, size=20),
+                    title=ft.Text(lbl, size=14),
+                    data=nav_idx,
+                    on_click=self._handle_more_item_click,
+                )
+            )
+
+        sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            content=ft.Text(
+                                t("nav.more", default="More"),
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            padding=ft.padding.all(16),
+                        ),
+                        ft.Divider(height=1),
+                        *items,
+                    ],
+                    tight=True,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                bgcolor=theme.colors.surface,
+                border_radius=ft.border_radius.only(top_left=16, top_right=16),
+            ),
+            open=True,
+        )
+        self._page.overlay.append(sheet)
+        self._safe_update(self._page)
+
+    async def _handle_more_item_click(self, e: Any) -> None:
+        nav_idx = e.control.data
+        # Close the bottom sheet
+        if self._page.overlay:
+            self._page.overlay.pop()
+            self._safe_update(self._page)
+        await self._navigate_to(nav_idx)
 
     async def _handle_keyboard(self, e: Any) -> None:
         """Handle global keyboard shortcuts: Cmd/Ctrl+K search, +N new, +E export."""
@@ -1652,6 +1808,30 @@ class PyClawApp:
         self._shell.apply(self._page.width or 1100)
         self._page.update()
 
+    # ─── Overview handlers ────────────────────────────────────────────
+
+    async def _handle_overview_connect(self, cfg: dict[str, Any]) -> None:
+        self._config["gateway_url"] = cfg.get("url", self._config.get("gateway_url"))
+        self._config["auth_token"] = cfg.get("auth_token")
+        await self._connect_gateway()
+        self._update_gw_indicator()
+
+    async def _refresh_overview(self) -> None:
+        pass
+
+    def _update_gw_indicator(self) -> None:
+        theme = get_theme()
+        if hasattr(self, "_gw_indicator"):
+            row = self._gw_indicator.content
+            if isinstance(row, ft.Row) and len(row.controls) >= 2:
+                dot = row.controls[0]
+                label = row.controls[1]
+                if isinstance(dot, ft.Container):
+                    dot.bgcolor = theme.colors.success if self._gw_connected else theme.colors.error
+                if isinstance(label, ft.Text):
+                    label.value = "Gateway" if self._gw_connected else "Offline"
+            self._safe_update(self._gw_indicator)
+
     # ─── Chat handlers ───────────────────────────────────────────────
 
     async def _handle_send(self, text: str) -> None:
@@ -1664,7 +1844,7 @@ class PyClawApp:
 
     async def _send_via_gateway(self, text: str) -> None:
         """Send message through gateway with streaming events."""
-        from pyclaw.ui.gateway_client import chat_send
+        from pyclaw.ui.gateway_client import GatewayError, chat_send
 
         self._chat_view.start_streaming()
         try:
@@ -1680,10 +1860,18 @@ class PyClawApp:
                 api_key=self._config.get("api_key"),
                 session_id=self._current_session,
             )
-        except Exception as exc:
-            self._chat_view.add_message("assistant", t("chat.error", error=str(exc)))
-        finally:
             self._chat_view.finish_streaming()
+        except GatewayError as exc:
+            if exc.code == "not_connected":
+                self._gw_connected = False
+                self._update_gw_indicator()
+                self._chat_view.finish_streaming(
+                    error=t("chat.gateway_disconnected", default="Gateway connection lost")
+                )
+            else:
+                self._chat_view.finish_streaming(error=str(exc))
+        except Exception as exc:
+            self._chat_view.finish_streaming(error=t("chat.error", error=str(exc)))
 
     async def _send_via_local(self, text: str) -> None:
         """Fall back to in-process agent execution."""
@@ -1811,28 +1999,29 @@ class PyClawApp:
         self._page.overlay.append(picker)
         self._page.update()
 
-        result = await picker.pick_files_async(
-            dialog_title=t("toolbar.attach_dialog", default="Select files to attach"),
-            allow_multiple=True,
-        )
+        try:
+            result = await picker.pick_files(
+                dialog_title=t("toolbar.attach_dialog", default="Select files to attach"),
+                allow_multiple=True,
+            )
 
-        if result and result.files:
-            if not hasattr(self, "_pending_attachments"):
-                self._pending_attachments: list[dict[str, str]] = []
-            for f in result.files:
-                self._pending_attachments.append(
-                    {
-                        "name": f.name,
-                        "path": f.path or "",
-                        "size": str(f.size or 0),
-                    }
-                )
-            names = ", ".join(f.name for f in result.files)
-            self._show_snackbar(t("toolbar.attached", default="Attached: {names}", names=names))
-
-        if picker in self._page.overlay:
-            self._page.overlay.remove(picker)
-            self._page.update()
+            if result:
+                if not hasattr(self, "_pending_attachments"):
+                    self._pending_attachments: list[dict[str, str]] = []
+                for f in result:
+                    self._pending_attachments.append(
+                        {
+                            "name": f.name,
+                            "path": f.path or "",
+                            "size": str(f.size or 0),
+                        }
+                    )
+                names = ", ".join(f.name for f in result)
+                self._show_snackbar(t("toolbar.attached", default="Attached: {names}", names=names))
+        finally:
+            if picker in self._page.overlay:
+                self._page.overlay.remove(picker)
+                self._page.update()
 
     async def _handle_export_chat(self) -> None:
         """Export current chat session to a Markdown file."""
@@ -1859,25 +2048,26 @@ class PyClawApp:
         self._page.overlay.append(picker)
         self._page.update()
 
-        result = await picker.save_file_async(
-            dialog_title=t("export.save_title", default="Export chat"),
-            file_name=f"chat-export-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}.md",
-            allowed_extensions=["md", "txt"],
-        )
+        try:
+            result = await picker.save_file(
+                dialog_title=t("export.save_title", default="Export chat"),
+                file_name=f"chat-export-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}.md",
+                allowed_extensions=["md", "txt"],
+            )
 
-        if result:
-            try:
-                Path(result).write_text(export_text, encoding="utf-8")
-                self._show_snackbar(t("export.saved", default="Chat exported to {path}", path=result))
-            except Exception as exc:
-                self._show_snackbar(f"Export failed: {exc}")
-
-        if picker in self._page.overlay:
-            self._page.overlay.remove(picker)
-            self._page.update()
+            if result:
+                try:
+                    Path(result).write_text(export_text, encoding="utf-8")
+                    self._show_snackbar(t("export.saved", default="Chat exported to {path}", path=result))
+                except Exception as exc:
+                    self._show_snackbar(f"Export failed: {exc}")
+        finally:
+            if picker in self._page.overlay:
+                self._page.overlay.remove(picker)
+                self._page.update()
 
     async def _handle_voice_toggle(self) -> None:
-        self._nav_rail.selected_index = 5
+        self._nav_rail.selected_index = 11
         await self._handle_nav_change(type("E", (), {"control": self._nav_rail})())
 
     async def _handle_clear_session(self) -> None:
@@ -2058,36 +2248,17 @@ class PyClawApp:
 
     # ─── UI state helpers ────────────────────────────────────────────────
 
-    def _error_state(self, message: str, on_retry=None) -> ft.Container:
-        return ft.Container(
-            content=ft.Column(
-                [
-                    ft.Icon(ft.Icons.ERROR_OUTLINE, size=48, color=ft.Colors.ERROR),
-                    ft.Text(message, size=14, color=ft.Colors.ERROR),
-                    *([ft.ElevatedButton("重试", on_click=lambda e: _fire_async(on_retry))] if on_retry else []),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=12,
-            ),
-            alignment=ft.Alignment(0, 0),
-            expand=True,
-        )
+    @staticmethod
+    def _error_state(message: str, on_retry=None) -> ft.Container:
+        from pyclaw.ui.components import error_state
 
-    def _empty_state(self, message: str, icon=ft.Icons.INBOX) -> ft.Container:
-        return ft.Container(
-            content=ft.Column(
-                [
-                    ft.Icon(icon, size=48, color=ft.Colors.ON_SURFACE_VARIANT),
-                    ft.Text(message, size=14, color=ft.Colors.ON_SURFACE_VARIANT),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=12,
-            ),
-            alignment=ft.Alignment(0, 0),
-            expand=True,
-        )
+        return error_state(message, on_retry=on_retry)
+
+    @staticmethod
+    def _empty_state(message: str, icon=ft.Icons.INBOX) -> ft.Container:
+        from pyclaw.ui.components import empty_state_simple
+
+        return empty_state_simple(message, icon=icon)
 
     @staticmethod
     def _session_date_group(mtime_str: str, now: datetime) -> str:
@@ -2103,520 +2274,6 @@ class PyClawApp:
         elif delta < 604800:
             return "This Week"
         return "Earlier"
-
-    # ─── Plan panel ──────────────────────────────────────────────────
-
-    def _build_plan_panel(self) -> ft.Column:
-        from pyclaw.ui.components import page_header
-
-        self._plan_list = ft.ListView(expand=True, spacing=6)
-        refresh_btn = ft.IconButton(
-            icon=ft.Icons.REFRESH,
-            tooltip="Refresh",
-            icon_size=20,
-            on_click=lambda e: _fire_async(self._refresh_plans),
-        )
-        return ft.Column(
-            controls=[
-                page_header(ft.Icons.CHECKLIST, t("nav.plans", default="Plans"), [refresh_btn]),
-                self._plan_list,
-            ],
-            spacing=0,
-            expand=True,
-        )
-
-    async def _refresh_plans(self) -> None:
-        theme = get_theme()
-        from pyclaw.ui.components import card_tile, status_chip
-        from pyclaw.ui.theme import StatusColors
-
-        if not self._gw_connected or not self._gw:
-            self._plan_list.controls = [
-                self._error_state(
-                    t("plans.offline", default="Connect to gateway to view plans."),
-                    on_retry=self._refresh_plans,
-                ),
-            ]
-            self._safe_update(self._plan_list)
-            return
-        try:
-            result = await self._gw.call("plan.list")
-            plans = result.get("plans", [])
-            self._plan_list.controls.clear()
-            if not plans:
-                self._plan_list.controls.append(
-                    self._empty_state("暂无执行计划", icon=ft.Icons.CHECKLIST),
-                )
-            for p in plans:
-                status = p.get("status", "pending")
-                color = {
-                    "completed": StatusColors.SUCCESS,
-                    "running": StatusColors.INFO,
-                    "paused": StatusColors.WARNING,
-                    "failed": StatusColors.ERROR,
-                }.get(status, "#94a3b8")
-
-                steps = p.get("steps", [])
-                total = len(steps)
-                done = sum(1 for s in steps if s.get("status") == "completed")
-
-                actions: list[ft.Control] = []
-                if status == "paused":
-                    actions.append(
-                        ft.IconButton(
-                            icon=ft.Icons.PLAY_ARROW,
-                            icon_size=16,
-                            tooltip="Resume",
-                            data=p.get("id"),
-                            on_click=lambda e: _fire_async(self._resume_plan, e.control.data),
-                        )
-                    )
-                actions.append(
-                    ft.IconButton(
-                        icon=ft.Icons.DELETE_OUTLINE,
-                        icon_size=16,
-                        tooltip="Delete",
-                        data=p.get("id"),
-                        on_click=lambda e: _fire_async(self._delete_plan, e.control.data),
-                    )
-                )
-
-                tile_content = ft.Row(
-                    [
-                        ft.Icon(ft.Icons.CHECKLIST, color=color, size=20),
-                        ft.Column(
-                            [
-                                ft.Text(p.get("goal", "Plan"), weight=ft.FontWeight.BOLD, size=13),
-                                ft.Row(
-                                    [
-                                        status_chip(status, color),
-                                        ft.Text(f"{done}/{total} steps", size=11, color=theme.colors.muted),
-                                    ],
-                                    spacing=8,
-                                ),
-                            ],
-                            spacing=4,
-                            expand=True,
-                            tight=True,
-                        ),
-                        ft.Row(actions, spacing=0),
-                    ],
-                    spacing=8,
-                )
-                self._plan_list.controls.append(card_tile(tile_content))
-            self._safe_update(self._plan_list)
-        except Exception:
-            logger.warning("_refresh_plans failed", exc_info=True)
-            self._plan_list.controls = [
-                self._error_state("加载失败", on_retry=self._refresh_plans),
-            ]
-            self._safe_update(self._plan_list)
-
-    async def _resume_plan(self, plan_id: str) -> None:
-        if self._gw:
-            try:
-                await self._gw.call("plan.resume", {"planId": plan_id})
-                await self._refresh_plans()
-            except Exception:
-                logger.warning("_resume_plan failed", exc_info=True)
-
-    async def _delete_plan(self, plan_id: str) -> None:
-        if self._gw:
-            try:
-                await self._gw.call("plan.delete", {"planId": plan_id})
-                await self._refresh_plans()
-            except Exception:
-                logger.warning("_delete_plan failed", exc_info=True)
-
-    # ─── Cron panel ──────────────────────────────────────────────────
-
-    def _build_cron_panel(self) -> ft.Column:
-        from pyclaw.ui.components import page_header
-
-        self._cron_list = ft.ListView(expand=True, spacing=6)
-        self._cron_history_list = ft.ListView(spacing=4, height=200)
-
-        add_name = ft.TextField(label="Name", dense=True, width=200, border_radius=12)
-        add_schedule = ft.TextField(label="Schedule (cron)", dense=True, width=200, border_radius=12)
-        add_message = ft.TextField(label="Message", dense=True, width=300, border_radius=12)
-
-        async def _add_job(e: Any) -> None:
-            if self._gw and add_name.value and add_schedule.value:
-                try:
-                    await self._gw.call(
-                        "cron.add",
-                        {
-                            "name": add_name.value,
-                            "schedule": add_schedule.value,
-                            "message": add_message.value or "",
-                        },
-                    )
-                    add_name.value = ""
-                    add_schedule.value = ""
-                    add_message.value = ""
-                    await self._refresh_cron()
-                except Exception:
-                    pass
-
-        add_btn = ft.Button("Add Job", icon=ft.Icons.ADD, on_click=_add_job)
-
-        return ft.Column(
-            controls=[
-                page_header(
-                    ft.Icons.SCHEDULE,
-                    t("nav.cron", default="Scheduled Tasks"),
-                    [
-                        ft.IconButton(
-                            icon=ft.Icons.REFRESH, icon_size=20, on_click=lambda e: _fire_async(self._refresh_cron)
-                        )
-                    ],
-                ),
-                self._cron_list,
-                ft.Divider(height=1),
-                ft.ExpansionTile(
-                    title=ft.Text("Add Job", size=14),
-                    controls=[
-                        ft.Container(
-                            content=ft.Column(
-                                [
-                                    ft.Row([add_name, add_schedule], spacing=8),
-                                    add_message,
-                                    add_btn,
-                                ],
-                                spacing=8,
-                            ),
-                            padding=12,
-                        )
-                    ],
-                ),
-                ft.Divider(height=1),
-                ft.Container(
-                    content=ft.Text("Execution History", size=14, weight=ft.FontWeight.BOLD),
-                    padding=ft.padding.only(left=16, top=8, bottom=4),
-                ),
-                self._cron_history_list,
-            ],
-            spacing=0,
-            expand=True,
-            scroll=ft.ScrollMode.AUTO,
-        )
-
-    async def _refresh_cron(self) -> None:
-        theme = get_theme()
-        from pyclaw.ui.components import card_tile, status_chip
-        from pyclaw.ui.theme import StatusColors
-
-        if not self._gw_connected or not self._gw:
-            self._cron_list.controls = [
-                self._error_state(
-                    "请连接 Gateway 以查看定时任务",
-                    on_retry=self._refresh_cron,
-                ),
-            ]
-            self._safe_update(self._cron_list)
-            return
-        try:
-            result = await self._gw.call("cron.list")
-            jobs = result.get("jobs", [])
-            self._cron_list.controls.clear()
-            if not jobs:
-                self._cron_list.controls.append(
-                    self._empty_state("暂无定时任务", icon=ft.Icons.SCHEDULE),
-                )
-            for job in jobs:
-                enabled = job.get("enabled", True)
-                job_color = StatusColors.SUCCESS if enabled else "#94a3b8"
-                tile_content = ft.Row(
-                    [
-                        ft.Icon(
-                            ft.Icons.TIMER if enabled else ft.Icons.TIMER_OFF,
-                            size=18,
-                            color=job_color,
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text(job.get("name", job.get("title", "Job")), weight=ft.FontWeight.BOLD, size=13),
-                                ft.Row(
-                                    [
-                                        status_chip("enabled" if enabled else "disabled", job_color),
-                                        ft.Text(job.get("schedule", ""), size=11, color=theme.colors.muted),
-                                    ],
-                                    spacing=8,
-                                ),
-                            ],
-                            spacing=4,
-                            expand=True,
-                            tight=True,
-                        ),
-                        ft.IconButton(
-                            icon=ft.Icons.DELETE_OUTLINE,
-                            icon_size=16,
-                            data=job.get("id"),
-                            on_click=lambda e: _fire_async(self._delete_cron_job, e.control.data),
-                        ),
-                    ],
-                    spacing=8,
-                )
-                self._cron_list.controls.append(card_tile(tile_content))
-            self._safe_update(self._cron_list)
-        except Exception:
-            logger.warning("_refresh_cron (jobs) failed", exc_info=True)
-            self._cron_list.controls = [
-                self._error_state("加载失败", on_retry=self._refresh_cron),
-            ]
-            self._safe_update(self._cron_list)
-            return
-
-        try:
-            history = await self._gw.call("cron.history", {"limit": 20})
-            records = history.get("records", [])
-            self._cron_history_list.controls.clear()
-            for rec in records:
-                status = rec.get("status", "")
-                color = {
-                    "completed": StatusColors.SUCCESS,
-                    "running": StatusColors.INFO,
-                    "failed": StatusColors.ERROR,
-                }.get(status, "#94a3b8")
-                self._cron_history_list.controls.append(
-                    ft.Container(
-                        content=ft.Row(
-                            [
-                                ft.Container(width=8, height=8, border_radius=4, bgcolor=color),
-                                ft.Text(rec.get("job_title", ""), size=12, expand=True),
-                                ft.Text(rec.get("started_at", "")[:19], size=10, color=theme.colors.muted),
-                                status_chip(status, color),
-                            ],
-                            spacing=6,
-                        ),
-                        padding=ft.padding.symmetric(horizontal=12, vertical=4),
-                    )
-                )
-            self._safe_update(self._cron_history_list)
-        except Exception:
-            logger.warning("_refresh_cron (history) failed", exc_info=True)
-
-    async def _delete_cron_job(self, job_id: str) -> None:
-        if self._gw:
-            try:
-                await self._gw.call("cron.remove", {"id": job_id})
-                await self._refresh_cron()
-            except Exception:
-                logger.warning("_delete_cron_job failed", exc_info=True)
-
-    # ─── System panel ────────────────────────────────────────────────
-
-    def _build_system_panel(self) -> ft.Column:
-        from pyclaw.ui.components import page_header
-
-        self._system_info_col = ft.Column(spacing=4)
-        self._system_logs_list = ft.ListView(spacing=2, height=300)
-
-        backup_btn = ft.OutlinedButton(
-            "Export Backup",
-            icon=ft.Icons.BACKUP,
-            on_click=lambda e: _fire_async(self._export_backup),
-        )
-        doctor_btn = ft.OutlinedButton(
-            "Run Doctor",
-            icon=ft.Icons.HEALTH_AND_SAFETY,
-            on_click=lambda e: _fire_async(self._run_doctor),
-        )
-
-        return ft.Column(
-            controls=[
-                page_header(
-                    ft.Icons.MONITOR_HEART,
-                    t("nav.system", default="System"),
-                    [
-                        ft.IconButton(
-                            icon=ft.Icons.REFRESH, icon_size=20, on_click=lambda e: _fire_async(self._refresh_system)
-                        )
-                    ],
-                ),
-                ft.Container(content=self._system_info_col, padding=ft.padding.all(16)),
-                ft.Divider(height=1),
-                ft.Container(
-                    content=ft.Row([backup_btn, doctor_btn], spacing=8),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
-                ),
-                ft.Divider(height=1),
-                ft.Container(
-                    content=ft.Text("Logs", size=14, weight=ft.FontWeight.BOLD),
-                    padding=ft.padding.only(left=16, top=8, bottom=4),
-                ),
-                self._system_logs_list,
-            ],
-            spacing=0,
-            expand=True,
-            scroll=ft.ScrollMode.AUTO,
-        )
-
-    async def _refresh_system(self) -> None:
-        if not self._gw_connected or not self._gw:
-            self._system_info_col.controls = [
-                self._error_state(
-                    "请连接 Gateway 以查看系统信息",
-                    on_retry=self._refresh_system,
-                ),
-            ]
-            self._safe_update(self._system_info_col)
-            return
-        try:
-            info = await self._gw.call("system.info")
-            self._system_info_col.controls.clear()
-            for key, val in info.items():
-                self._system_info_col.controls.append(
-                    ft.Row(
-                        [
-                            ft.Text(key, weight=ft.FontWeight.BOLD, size=12, width=150),
-                            ft.Text(str(val), size=12),
-                        ],
-                        spacing=8,
-                    )
-                )
-            self._safe_update(self._system_info_col)
-        except Exception:
-            logger.warning("_refresh_system (info) failed", exc_info=True)
-            self._system_info_col.controls = [
-                self._error_state("加载失败", on_retry=self._refresh_system),
-            ]
-            self._safe_update(self._system_info_col)
-
-        try:
-            logs_result = await self._gw.call("logs.tail", {"limit": 50})
-            lines = logs_result.get("lines", [])
-            self._system_logs_list.controls.clear()
-            for line in lines:
-                text = line if isinstance(line, str) else str(line)
-                self._system_logs_list.controls.append(ft.Text(text, size=10, font_family="monospace", max_lines=2))
-            self._safe_update(self._system_logs_list)
-        except Exception:
-            logger.warning("_refresh_system (logs) failed", exc_info=True)
-
-    async def _export_backup(self) -> None:
-        if self._gw:
-            try:
-                result = await self._gw.call("backup.export")
-                path = result.get("path", "backup completed")
-                self._show_snackbar(f"Backup exported: {path}")
-            except Exception as exc:
-                self._show_snackbar(f"Backup failed: {exc}")
-
-    async def _run_doctor(self) -> None:
-        if self._gw:
-            try:
-                theme = get_theme()
-                result = await self._gw.call("doctor.run")
-                checks = result.get("checks", result)
-                self._system_info_col.controls.clear()
-                self._system_info_col.controls.append(ft.Text("Doctor Results", size=14, weight=ft.FontWeight.BOLD))
-                if isinstance(checks, list):
-                    for check in checks:
-                        name = check.get("name", "")
-                        status = check.get("status", "")
-                        color = theme.colors.success if status == "ok" else theme.colors.error
-                        self._system_info_col.controls.append(
-                            ft.Row(
-                                [
-                                    ft.Icon(
-                                        ft.Icons.CHECK_CIRCLE if status == "ok" else ft.Icons.ERROR,
-                                        size=16,
-                                        color=color,
-                                    ),
-                                    ft.Text(name, size=12, expand=True),
-                                    ft.Text(status, size=12, color=color),
-                                ],
-                                spacing=4,
-                            )
-                        )
-                elif isinstance(checks, dict):
-                    for k, v in checks.items():
-                        self._system_info_col.controls.append(
-                            ft.Row(
-                                [
-                                    ft.Text(k, size=12, weight=ft.FontWeight.BOLD, width=150),
-                                    ft.Text(str(v), size=12),
-                                ],
-                                spacing=4,
-                            )
-                        )
-                self._safe_update(self._system_info_col)
-            except Exception:
-                logger.warning("_run_doctor failed", exc_info=True)
-
-    # ─── Channel refresh ─────────────────────────────────────────────
-
-    async def _refresh_channels(self) -> None:
-        if self._gw_connected and self._gw:
-            try:
-                result = await self._gw.call("channels.list")
-                gw_channels = result.get("channels", [])
-                self._channels_panel.update_channels(gw_channels)
-                return
-            except Exception:
-                logger.warning("_refresh_channels failed", exc_info=True)
-                self._channels_panel.update_channels(
-                    [],
-                    error="加载失败",
-                    on_retry=self._refresh_channels,
-                )
-                return
-
-        from pyclaw.config.io import load_config
-        from pyclaw.config.paths import resolve_config_path
-
-        channels: list[dict[str, Any]] = []
-        try:
-            config = load_config(resolve_config_path())
-            ch_cfg = config.channels
-            if ch_cfg:
-                cfg_dict = ch_cfg.model_dump(by_alias=True, exclude_none=True)
-                for name, cfg_val in cfg_dict.items():
-                    if name == "defaults" or not isinstance(cfg_val, dict):
-                        continue
-                    enabled = cfg_val.get("enabled", True)
-                    entry_meta = self._get_catalog_meta(name)
-                    info: dict[str, Any] = {
-                        "id": name,
-                        "name": entry_meta.get("display_name", name.title()),
-                        "enabled": enabled,
-                        "status": "configured" if enabled else "disabled",
-                    }
-                    info.update(entry_meta)
-                    channels.append(info)
-        except Exception:
-            self._channels_panel.update_channels(
-                [],
-                error="加载失败",
-                on_retry=self._refresh_channels,
-            )
-            return
-        self._channels_panel.update_channels(channels)
-
-    @staticmethod
-    def _get_catalog_meta(channel_type: str) -> dict[str, Any]:
-        try:
-            from pyclaw.channels.plugins.catalog import BUILTIN_CATALOG
-
-            entry = BUILTIN_CATALOG.get(channel_type)
-            if entry:
-                spec = entry.action_spec
-                return {
-                    "display_name": entry.display_name,
-                    "color": entry.color,
-                    "capabilities": {
-                        "typing": spec.supports_typing,
-                        "reactions": spec.supports_reactions,
-                        "threads": spec.supports_threads,
-                        "editing": spec.supports_editing,
-                        "buttons": spec.supports_buttons,
-                        "pins": spec.supports_pins,
-                    },
-                }
-        except Exception:
-            pass
-        return {}
 
     # ─── Permissions ─────────────────────────────────────────────────
 
@@ -2692,6 +2349,16 @@ class PyClawApp:
             dialog.open = False
             page.update()
 
+            # After onboarding, navigate to Overview to confirm gateway connection
+            await self._navigate_to(1)  # Overview page
+
+            self._show_snackbar(
+                t(
+                    "onboarding.complete_hint",
+                    default="Setup complete! Configure your Gateway connection on the Overview page.",
+                ),
+            )
+
         wizard = OnboardingWizard(on_complete=on_complete)
         dialog = ft.AlertDialog(
             content=ft.Container(content=wizard, width=500, height=500),
@@ -2724,7 +2391,13 @@ class PyClawApp:
 
     def _show_snackbar(self, message: str) -> None:
         if self._page:
-            sb = ft.SnackBar(content=ft.Text(message), open=True)
+            theme = get_theme()
+            sb = ft.SnackBar(
+                content=ft.Text(message),
+                open=True,
+                bgcolor=theme.colors.surface_container,
+                duration=2000,
+            )
             self._page.overlay.append(sb)
             self._page.update()
 

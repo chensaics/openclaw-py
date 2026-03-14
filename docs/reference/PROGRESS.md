@@ -799,6 +799,123 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 - **V5 — page_header 全覆盖**: Agents、Voice、Settings 三个面板补齐 `page_header(icon, title, actions)` 标题栏（Chat 已有 toolbar，无需添加）
 - **I5 — scroll-to-bottom FAB**: `_messages_list` 接入 `on_scroll` 处理器，用户上滚超过 100px 自动显示 FAB，滚动到底部自动隐藏
 
+### UI PRD 执行 — Phase A~D P0 完成 (Phase 79, 2026-03-05)
+
+基于 `ui_prd_flet_flutter.md` PRD 和 `ui_execution_task_breakdown.md` 任务清单，完成 M1 里程碑（稳定可用）全部 P0 任务：
+
+**EPIC-A 稳定性修复：**
+- **Voice FilePicker 修复** (`UI-A1`): `voice.py` 中 `pick_files_async()` 改为 `pick_files()` + `try/finally` 统一清理 overlay
+- **事件订阅/解绑生命周期** (`UI-A2`): `gateway_client.py` 新增 `clear_all_listeners()` 方法，`disconnect()` 自动清理所有事件监听
+- **空态/错态/加载态组件统一** (`UI-A3`): `app.py` 中 Plans/System 面板的内联 `_error_state`/`_empty_state` 委托到 `components.py` 统一组件
+
+**EPIC-B 导航重构：**
+- **导航分组重构** (`UI-B1`): NavigationRail 从 8 项扩展至 13 项（Chat → Overview → Agents → Channels → Instances → Sessions → Cron → Plans → Voice → Logs → Debug → System → Settings）
+- **页面路由映射** (`UI-B2`): `_NAV_MAP` 与 `_NAV_REFRESH_MAP` 分离，新页面插拔不影响现有索引；切换逻辑统一为数据驱动
+
+**EPIC-C 核心页面补齐（5 个新文件）：**
+- **overview_panel.py** (`UI-C1`): Gateway 连接状态卡片 + URL/Token 配置 + 一键连接/刷新
+- **instances_panel.py** (`UI-C2`): `system.presence` RPC 获取在线实例列表，展示 host/platform/version/roles
+- **sessions_panel.py** (`UI-C3`): `sessions.list` RPC + limit/active minutes 过滤 + 行内编辑 label + 删除
+- **logs_panel.py** (`UI-C4`): `logs.tail` RPC + 6 级别 ChoiceChip 筛选 + 文本搜索 + 自动跟随 + 导出
+- **debug_panel.py** (`UI-C5`): status/health/heartbeat JSON 展示 + 手工 RPC 调用界面 + 网关事件日志
+
+**EPIC-D 现有页面收敛：**
+- **Chat P0 收敛** (`UI-D1`): `finish_streaming()` 支持 `error` 参数在流式消息尾部追加错误提示；`_send_via_gateway()` 区分 `GatewayError(not_connected)` 触发断连指示器更新
+- **Plans/System 收敛** (`UI-D6`): `_error_state`/`_empty_state` 方法委托到统一组件模块
+
+### UI PRD 执行 — EPIC-D/E/F P1 完成 (Phase 80, 2026-03-05)
+
+完成 M2（运维闭环）和 M3（分析增强）里程碑全部 P1 任务：
+
+**EPIC-D 现有页面增强：**
+- **Chat P1** (`UI-D2`): `_handle_attach`/`_handle_export_chat` FilePicker 修复为 `pick_files()`/`save_file()` + `try/finally`；附件流程健壮化
+- **Channels 交互补齐** (`UI-D3`): 渠道状态卡片能力徽章、指标展示已完善
+- **Cron 拆分独立面板** (`UI-D4`): 新增 `cron_panel.py`，支持任务筛选/排序、启停 toggle（`cron.toggle` RPC）、agent 选择、执行历史；后端新增 `cron.toggle` 方法
+- **Agents 子面板化** (`UI-D5`): `agents_panel.py` 详情区改为 6 Tab（Overview/Files/Tools/Skills/Channels/Cron），支持 `gateway_client` 远程获取工具列表
+
+**EPIC-E 运维治理能力（3 个新文件）：**
+- **skills_panel.py** (`UI-E1`): 技能列表 + 搜索/过滤 + 启停 Toggle + 缺失依赖红色提示 + API Key 编辑 + 安装提示
+- **nodes_panel.py** (`UI-E2`): 设备配对审批（approve/reject）+ 已配对设备 token 管理（rotate/revoke）+ Exec Node Bindings 展示
+- **config_panel.py** (`UI-E3`): 双 Tab 模式 — Raw JSON 编辑（config.get/save/apply）+ Form 模式（schema 驱动、section 侧栏导航）
+
+**EPIC-F 分析增强（1 个新文件）：**
+- **usage_panel.py** (`UI-F1`): 时间范围选择（24h/7d/30d/all）+ 总统计卡片（tokens/sessions/cost）+ Session 排序列表 + 导出
+
+**导航扩展：**
+- NavigationRail 从 13 项扩展至 17 项：新增 Usage、Skills、Nodes、Config 页面
+- `_NAV_MAP` 更新至 17 项映射
+
+### UI PRD 执行 — EPIC-F/G P2 完成，PRD 全量交付 (Phase 81, 2026-03-05)
+
+完成 M3（分析增强）和 M4（发布）里程碑全部 P2 任务，PRD 24/24 任务全部 DONE：
+
+**EPIC-F 高级体验：**
+- **Usage P1** (`UI-F2`): `usage_panel.py` 新增每日柱状图（`ft.BarChart`）、24h 时段热力图（24 格 Container 方块）、Session 详情钻取弹窗（AlertDialog）；后端新增 `usage.daily`/`usage.hourly`/`usage.sessions` RPC
+- **视觉动效优化** (`UI-F3`): `_content_area` 页面切换增加滑入效果（`animate_offset`）；`_handle_nav_change` 同步 `_nav_rail` 与 `_bottom_nav` 选中索引；`_show_snackbar` 使用 themed 样式
+
+**EPIC-G 质量收敛与发布：**
+- **回归测试清单** (`UI-G1`): 新增 `docs/reference/ui_test_checklist.md` — 涵盖 17 页面回归、跨页面测试、响应式测试、Chat 专项测试、Smoke 脚本
+- **文档同步** (`UI-G2`): `README.md` UI 段落更新为 17 页面完整功能描述
+- **发布 Gate** (`UI-G3`): 新增 `docs/reference/ui_release_gate.md` — 发布前提条件、功能验收矩阵、已知限制、发布 Checklist
+
+---
+
+### 工程质量与体验深化计划 (Phase 82+, EPIC-H)
+
+PRD 24 项全量交付后，启动工程质量与体验深化计划（EPIC-H），共 9 项任务：
+
+### EPIC-H 全量完成 (Phase 82, 2026-03-05)
+
+**UI-H1 版本号统一 + API 残余清理：**
+- `__init__.py` 改用 `importlib.metadata.version()` 动态读取版本号，与 `pyproject.toml` 保持一致
+- `pick_files_async` 残余已在 PRD 阶段清理完毕
+
+**UI-H2 UI 组件单元测试：**
+- 新增 `tests/test_ui_components.py`，36 个测试覆盖 `components.py` 纯函数、14 个面板 `build_*()` 构造、事件订阅验证
+- 修复 Flet API 兼容性：`ChoiceChip` → `Chip`，`Tab(text=)` → `Tab(label=)`，`initially_expanded` → `expanded`
+
+**UI-H3 移动端导航优化：**
+- 底部导航栏缩减为 5 核心入口（Chat, Overview, Agents, Sessions, Settings）+ "More" 按钮
+- "More" 按钮打开 `BottomSheet` 显示其余 12 个页面入口
+- `_navigate_to()` 统一导航方法，桌面端 NavigationRail 同步
+
+**UI-H4 实时事件推送：**
+- `logs_panel.py` 订阅 `logs.new`/`log.entry` 事件，实时追加日志条目，支持自动滚动
+- `instances_panel.py` 订阅 `system.presence.changed`/`presence.update` 事件，自动刷新在线实例
+
+**UI-H5 离线模式增强：**
+- `overview_panel.py` 新增本地环境卡片（Host/Platform/Python/pyclaw版本/Config路径）
+- `sessions_panel.py` 离线时扫描本地 session 文件并渲染（带 "Offline" 标识）
+- `plans_panel.py` 离线时显示友好离线图标 + 重试按钮
+
+**UI-H6 i18n 翻译补齐：**
+- 三个语言文件（en/zh-CN/ja）各新增 106+ 翻译 key，覆盖全部新增页面
+
+**UI-H7 app.py 拆分瘦身：**
+- Plans → `plans_panel.py`，System → `system_panel.py`，旧 Cron 内联代码移除
+- `app.py` 从 2666 行减少到 2336 行（-330 行）
+
+**UI-H8 统一面板接口协议：**
+- `ChannelStatusPanel`（类式）重构为 `build_channels_panel()`（函数式）
+- 所有 14 个面板统一为 `build_*_panel(*, gateway_client=None) -> ft.Column` 签名
+- 面板通过 `.refresh` 属性暴露刷新方法，`_handle_nav_change` 统一调用
+
+**UI-H9 Onboarding 流程接入：**
+- Onboarding 完成后自动导航到 Overview 页面
+- 显示 Snackbar 提示用户配置 Gateway 连接
+
+| ID | 任务 | 优先级 | 状态 |
+|---|---|---|---|
+| UI-H1 | 版本号统一 + API 残余清理 | P0 | DONE |
+| UI-H2 | UI 组件单元测试 | P1 | DONE |
+| UI-H3 | 移动端导航优化（More 抽屉） | P1 | DONE |
+| UI-H4 | 实时事件推送（Logs/Instances） | P1 | DONE |
+| UI-H5 | 离线模式增强 | P1 | DONE |
+| UI-H6 | i18n 翻译补齐 | P1 | DONE |
+| UI-H7 | app.py 拆分瘦身 | P1 | DONE |
+| UI-H8 | 统一面板接口协议 | P1 | DONE |
+| UI-H9 | Onboarding 流程接入 | P2 | DONE |
+
 ## 参考文档
 
 - 完整重写方案: [python-flet-rewrite-plan.md](reference/python-flet-rewrite-plan.md)
@@ -806,4 +923,8 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 - P0-P13 实施计划: [implement_plan_20260228.md](reference/implement_plan_20260228.md)
 - Phase 14+ 后续计划: [implement_plan_next.md](reference/implement_plan_next.md)
 - UI 升级计划: [ui_upgrade_plan.md](reference/ui_upgrade_plan.md)
+- UI PRD: [ui_prd_flet_flutter.md](reference/ui_prd_flet_flutter.md)
+- UI 任务清单: [ui_execution_task_breakdown.md](reference/ui_execution_task_breakdown.md)
+- 回归测试清单: [ui_test_checklist.md](reference/ui_test_checklist.md)
+- 发布 Gate: [ui_release_gate.md](reference/ui_release_gate.md)
 - 原始 TypeScript 项目: `openclaw/openclaw`

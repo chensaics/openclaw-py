@@ -82,6 +82,41 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
             },
         )
 
+    async def handle_usage_daily(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        from pyclaw.infra.session_cost import aggregate_usage_daily
+
+        p = params or {}
+        range_val = str(p.get("range", "7d"))
+        days_map = {"24h": 1, "7d": 7, "30d": 30, "all": 365}
+        days = days_map.get(range_val, 7)
+        daily = aggregate_usage_daily(days=days)
+        await conn.send_ok("usage.daily", {"dailyBreakdown": daily})
+
+    async def handle_usage_hourly(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        from pyclaw.infra.session_cost import aggregate_usage_hourly
+
+        p = params or {}
+        range_val = str(p.get("range", "7d"))
+        days_map = {"24h": 1, "7d": 7, "30d": 30, "all": 365}
+        days = days_map.get(range_val, 7)
+        hourly = aggregate_usage_hourly(days=days)
+        await conn.send_ok("usage.hourly", {"hourlyDistribution": hourly})
+
+    async def handle_usage_sessions(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        from pyclaw.infra.session_cost import list_sessions_with_usage
+
+        p = params or {}
+        range_val = str(p.get("range", "7d"))
+        sort_val = str(p.get("sort", "tokens"))
+        days_map = {"24h": 1, "7d": 7, "30d": 30, "all": 365}
+        days = days_map.get(range_val, 7)
+        sessions = list_sessions_with_usage(days=days, sort=sort_val, limit=50)
+        for s in sessions:
+            s["updated"] = s.get("updated", 0)
+            s["agentId"] = s.get("agentId", "")
+            s["agent"] = s.get("agentId", "")
+        await conn.send_ok("usage.sessions", {"sessions": sessions})
+
     # ------------------------------------------------------------------
     # System (Phase 56 — real RPC implementations)
     # ------------------------------------------------------------------
@@ -330,6 +365,9 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
         "tts.speak": handle_tts_speak,
         "tts.voices": handle_tts_voices,
         "usage.get": handle_usage_get,
+        "usage.daily": handle_usage_daily,
+        "usage.hourly": handle_usage_hourly,
+        "usage.sessions": handle_usage_sessions,
         "system.info": handle_system_info,
         "system.logs": handle_system_logs,
         "system.event": handle_system_event,

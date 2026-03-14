@@ -172,6 +172,22 @@ class CronScheduler:
     def get_job(self, job_id: str) -> CronJob | None:
         return self._jobs.get(job_id)
 
+    def toggle_job(self, job_id: str, enabled: bool) -> bool:
+        """Enable or disable a job by ID. Returns True if job was found and toggled."""
+        job = self._jobs.get(job_id)
+        if not job:
+            return False
+        job.enabled = enabled
+        if self._scheduler:
+            if enabled:
+                self._add_apscheduler_job(job)
+            else:
+                try:
+                    self._scheduler.remove_job(job_id)
+                except Exception:
+                    pass
+        return True
+
     def _add_apscheduler_job(self, job: CronJob) -> None:
         trigger = self._build_trigger(job)
         if trigger is None:

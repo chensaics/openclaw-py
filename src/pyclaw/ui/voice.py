@@ -161,38 +161,34 @@ def build_voice_panel(
             page.overlay.append(picker)
             page.update()
 
-        result = await picker.pick_files_async(
-            dialog_title=t("voice.select_audio", default="Select audio file"),
-            allowed_extensions=["mp3", "wav", "ogg", "m4a", "flac", "webm", "mp4"],
-            allow_multiple=False,
-        )
-        if not result or not result.files:
-            if page and picker in page.overlay:
-                page.overlay.remove(picker)
-                page.update()
-            return
-        picked = result.files[0]
-        if not picked.path:
-            if page and picker in page.overlay:
-                page.overlay.remove(picker)
-                page.update()
-            return
-        status_text.value = t("voice.transcribing", default="Transcribing...")
-        status_text.update()
         try:
-            text_result = await transcribe_audio(picked.path, api_key=api_key)
-            transcription_result.value = text_result
-            status_text.value = t("voice.transcribed", default="Transcribed ({n} chars)", n=len(text_result))
-            if on_transcribed:
-                await on_transcribed(text_result)
-        except Exception as exc:
-            status_text.value = t("voice.error", error=str(exc))
-        status_text.update()
-        transcription_result.update()
-
-        if page and picker in page.overlay:
-            page.overlay.remove(picker)
-            page.update()
+            result = await picker.pick_files(
+                dialog_title=t("voice.select_audio", default="Select audio file"),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["mp3", "wav", "ogg", "m4a", "flac", "webm", "mp4"],
+                allow_multiple=False,
+            )
+            if not result:
+                return
+            picked = result[0]
+            if not picked.path:
+                return
+            status_text.value = t("voice.transcribing", default="Transcribing...")
+            status_text.update()
+            try:
+                text_result = await transcribe_audio(picked.path, api_key=api_key)
+                transcription_result.value = text_result
+                status_text.value = t("voice.transcribed", default="Transcribed ({n} chars)", n=len(text_result))
+                if on_transcribed:
+                    await on_transcribed(text_result)
+            except Exception as exc:
+                status_text.value = t("voice.error", error=str(exc))
+            status_text.update()
+            transcription_result.update()
+        finally:
+            if page and picker in page.overlay:
+                page.overlay.remove(picker)
+                page.update()
 
     tts_btn = ft.Button(t("voice.speak"), icon=ft.Icons.VOLUME_UP, on_click=handle_tts)
     stt_btn = ft.Button(t("voice.transcribe"), icon=ft.Icons.MIC, on_click=handle_transcribe)

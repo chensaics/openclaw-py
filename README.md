@@ -40,8 +40,24 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 
 ### Desktop / Mobile / Web UI
 - **Flet UI** — cross-platform Python UI (macOS, Linux, Windows, iOS, Android, Web)
-  - Chat with streaming, tool call cards, interrupt/edit/resend
-  - 8-page navigation: Chat, Agents, Channels, Plans, Cron, Voice, System, Settings
+  - **17-page navigation**:
+    - **Chat** — 流式消息、工具可视化、搜索、导出
+    - **Overview** — Gateway 连接管理
+    - **Agents** — 多 Tab 子面板（Overview/Files/Tools/Skills/Channels/Cron）
+    - **Channels** — 渠道状态与能力徽章
+    - **Instances** — 在线设备 Presence
+    - **Sessions** — 会话运维（过滤/编辑/删除）
+    - **Usage** — 用量统计与分析
+    - **Cron** — 定时任务管理
+    - **Plans** — 执行计划跟踪
+    - **Skills** — 技能管理（启停/Key/安装）
+    - **Nodes** — 设备配对与节点绑定
+    - **Voice** — TTS/STT 语音交互
+    - **Logs** — 实时日志查看
+    - **Debug** — 手工 RPC 与事件日志
+    - **Config** — 配置编辑（Raw + Form）
+    - **System** — 系统信息与备份
+    - **Settings** — 模型/主题/语言配置
   - Gateway WebSocket integration with local fallback
   - Voice interaction (edge-tts + Whisper), system tray, multi-language (EN/中文/日本語)
 - **Flutter App** — archived reference design (`flutter_app/`, see `ARCHIVE_NOTICE.md`)
@@ -609,7 +625,7 @@ openclaw-py/
 │   ├── pairing/                 # Device pairing (challenge/response)
 │   ├── terminal/                # ANSI tables, palette
 │   └── ui/                      # Flet UI
-│       ├── app.py               # Chat + Settings + Sessions + 8-page nav
+│       ├── app.py               # Chat + Settings + Sessions + 17-page nav
 │       ├── gateway_client.py    # WebSocket v3 Gateway client (Python)
 │       ├── i18n.py              # Multi-language (en/zh-CN/ja)
 │       ├── voice.py             # Voice interaction (TTS + Whisper)

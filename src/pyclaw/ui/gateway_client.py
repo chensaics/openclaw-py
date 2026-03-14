@@ -115,6 +115,7 @@ class GatewayClient:
             if not fut.done():
                 fut.cancel()
         self._pending.clear()
+        self.clear_all_listeners()
 
     async def call(
         self,
@@ -162,6 +163,10 @@ class GatewayClient:
     def on_any_event(self, callback: Callable[..., Any]) -> None:
         """Register a listener for all events."""
         self._global_listeners.append(callback)
+
+    def clear_all_listeners(self) -> None:
+        self._event_listeners.clear()
+        self._global_listeners.clear()
 
     async def _recv_loop(self) -> None:
         """Background loop that reads and dispatches incoming frames."""

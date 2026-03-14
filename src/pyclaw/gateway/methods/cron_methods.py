@@ -61,9 +61,24 @@ def create_cron_handlers() -> dict[str, MethodHandler]:
             at=params.get("at", ""),
             message=message,
             enabled=params.get("enabled", True),
+            agent_id=params.get("agentId", params.get("agent_id", "main")),
         )
         _scheduler.add_job(job)
         await conn.send_ok("cron.add", {"jobId": job.id, "ok": True})
+
+    async def handle_cron_toggle(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
+        if not _scheduler:
+            await conn.send_error("cron.toggle", "unavailable", "Scheduler not available")
+            return
+        if not params or "id" not in params:
+            await conn.send_error("cron.toggle", "invalid_params", "Missing job id")
+            return
+        job_id = params["id"]
+        enabled = params.get("enabled", True)
+        if not _scheduler.toggle_job(job_id, enabled):
+            await conn.send_error("cron.toggle", "not_found", f"Job {job_id} not found")
+            return
+        await conn.send_ok("cron.toggle", {"ok": True, "enabled": enabled})
 
     async def handle_cron_remove(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         if not _scheduler:
@@ -79,5 +94,6 @@ def create_cron_handlers() -> dict[str, MethodHandler]:
     return {
         "cron.list": handle_cron_list,
         "cron.add": handle_cron_add,
+        "cron.toggle": handle_cron_toggle,
         "cron.remove": handle_cron_remove,
     }

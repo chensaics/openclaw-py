@@ -382,3 +382,125 @@ def summarize_session_usage(
 
     summary["estimated_cost"] = format_cost(float(summary["estimated_cost_value"]))
     return summary
+
+
+def aggregate_usage_daily(*, days: int = 7, path: Path | None = None) -> list[dict[str, Any]]:
+    """Aggregate usage by day. Returns list of {date: YYYY-MM-DD, tokens: int}."""
+    import datetime as dt
+
+    now = time.time()
+    cutoff = now - max(days, 1) * 86400
+    usage_path = _usage_log_path(path)
+    daily: dict[str, int] = defaultdict(int)
+
+    if usage_path.exists():
+        with usage_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                ts = float(row.get("timestamp", 0.0) or 0.0)
+                if ts < cutoff:
+                    continue
+                inp = int(row.get("input_tokens", 0) or 0)
+                out = int(row.get("output_tokens", 0) or 0)
+                raw_total = row.get("total_tokens") or (inp + out)
+                total_tokens = int(raw_total)
+                d = dt.datetime.fromtimestamp(ts, tz=dt.UTC).strftime("%Y-%m-%d")
+                daily[d] += total_tokens
+
+    dates = sorted(daily.keys())
+    return [{"date": d, "tokens": daily[d]} for d in dates]
+
+
+def aggregate_usage_hourly(*, days: int = 7, path: Path | None = None) -> list[int]:
+    """Aggregate usage by hour (0-23). Returns 24-element list of token counts."""
+    now = time.time()
+    cutoff = now - max(days, 1) * 86400
+    usage_path = _usage_log_path(path)
+    hourly: list[int] = [0] * 24
+
+    if usage_path.exists():
+        import datetime as dt
+
+        with usage_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                ts = float(row.get("timestamp", 0.0) or 0.0)
+                if ts < cutoff:
+                    continue
+                inp = int(row.get("input_tokens", 0) or 0)
+                out = int(row.get("output_tokens", 0) or 0)
+                raw_total = row.get("total_tokens") or (inp + out)
+                total_tokens = int(raw_total)
+                hour = dt.datetime.fromtimestamp(ts, tz=dt.UTC).hour
+                hourly[hour] += total_tokens
+
+    return hourly
+
+
+def list_sessions_with_usage(
+    *,
+    days: int = 7,
+    sort: str = "tokens",
+    limit: int = 50,
+    path: Path | None = None,
+) -> list[dict[str, Any]]:
+    """List sessions with token usage from the ledger, sorted by tokens or updated."""
+    now = time.time()
+    cutoff = now - max(days, 1) * 86400
+    usage_path = _usage_log_path(path)
+    by_session: dict[str, dict[str, Any]] = {}
+
+    if usage_path.exists():
+        with usage_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                ts = float(row.get("timestamp", 0.0) or 0.0)
+                if ts < cutoff:
+                    continue
+                session_id = str(row.get("session_id", "") or "")
+                if not session_id:
+                    continue
+                if session_id not in by_session:
+                    by_session[session_id] = {
+                        "sessionKey": session_id,
+                        "path": session_id,
+                        "tokens": 0,
+                        "inputTokens": 0,
+                        "outputTokens": 0,
+                        "updated": ts,
+                        "calls": 0,
+                    }
+                s = by_session[session_id]
+                inp = int(row.get("input_tokens", 0) or 0)
+                out = int(row.get("output_tokens", 0) or 0)
+                tot = int(row.get("total_tokens", inp + out) or inp + out)
+                s["tokens"] += tot
+                s["inputTokens"] += inp
+                s["outputTokens"] += out
+                s["calls"] += 1
+                s["updated"] = max(s["updated"], ts)
+
+    result = list(by_session.values())
+    if sort == "tokens":
+        result.sort(key=lambda x: -x["tokens"])
+    else:
+        result.sort(key=lambda x: -x["updated"])
+    return result[:limit]
