@@ -47,8 +47,8 @@
 以下为开发团队内部参考资料：
 
 - [进度记录](reference/PROGRESS.md) — 开发阶段进度
-- [待办清单](reference/20260302_todo.md) — 当前待办事项
-- [差距分析](reference/gap-analysis.md) — 功能差距分析
+- [待办与占位表](reference/REFERENCE_TABLES.md#6-待办与占位表) — 当前待办事项（规整文档唯一信息源）
+- [差距与能力总览](reference/REFERENCE_TABLES.md#5-差距总览表) — 功能差距与按领域明细（§5、§10）
 - [UI 升级计划](reference/ui_upgrade_plan.md) — Flet 重构 + Flutter 美化计划
 - [maxclaw 对比](reference/maxclaw_comparison_plan.md) — maxclaw 功能集成计划
 - [国际化资源](../.i18n/README.md) — 翻译词汇表与翻译记忆

@@ -2,214 +2,11 @@
 
 > 最后更新: 2026-03-04
 > 项目路径: `/Users/cs/projects/openclaw-py/`
-
-## 当前状态概览
-
-| 阶段 | 状态 | 说明 |
-|------|------|------|
-| Phase 1: 基础层 | **已完成** | 脚手架、配置模型、IO 兼容、会话存储 |
-| Phase 2: Gateway | **已完成** | FastAPI + WebSocket 协议 v3 + 核心方法处理器 |
-| Phase 3a: Agent 核心循环 | **已完成** | LLM 流式调用 + 工具执行循环 |
-| Phase 3b: 工具框架 | **已完成** | BaseTool, Registry, 20+ 内置工具 |
-| Phase 3c: SessionManager | **已完成** | DAG entries, 文件锁, token 估算, compaction |
-| Phase 3d: LLM 提供商 | **已完成** | OpenAI, Anthropic, Google Gemini, Ollama |
-| Phase 4: 消息通道 | **已完成** | 通道抽象层 + Telegram + Discord + Slack + WhatsApp + Signal + iMessage |
-| Phase 5: Flet UI | **已完成** | 桌面聊天 + Session 管理 + Tool 可视化 + Markdown + 设置 + 系统托盘 + Channel 面板 + Onboarding |
-| Phase 6: 高级功能 | **已完成** | 记忆/RAG + 插件系统 + 定时任务 |
-| Phase 7: P0/P1 功能完善 | **已完成** | Auth Profiles + Subagents + Model Catalog + Skills + Embeddings + CLI + Gateway API |
-| Phase 8: P2 增强功能 | **已完成** | Hooks + Exec 审批 + Heartbeat + Security + Markdown IR + Media Understanding + Pairing + UI 增强 |
-| Phase 9: P3 完善功能 | **已完成** | 7 扩展通道 + ACP + Canvas + Node Host + Daemon + QMD + Voice + Gateway 控制面板 + Gmail Hook + 工具补全 |
-| Phase 10: 质量加固 | **已完成** | 15 个新测试文件 (~2,900 LOC) + pytest-cov + CI/CD + pyproject 工程化 |
-| Phase 11: 基础设施 P4 | **已完成** | mDNS/Bonjour 局域网发现 + Tailscale VPN 集成 |
-| Phase 12: 扩展通道 P4 | **已完成** | 10 个新通道 (Synology, Mattermost, Nextcloud, Tlon, Zalo, ZaloUser, Nostr, LINE, VoiceCall) |
-| Phase 13: 原生 App 打包 | **已完成** | Flet build 入口 + 桌面/移动端构建脚本 |
-| Phase 14: 核心功能对齐 | **已完成** | ACP/acpx + External Secrets + Agent Bindings + OpenAI Codex/Responses |
-| Phase 15: 重要增强 | **已完成** | Android Nodes 策略 + Plugin Onboarding Hooks + Discord Thread Lifecycle |
-| Phase 16: 扩展功能 | **已完成** | Memory Plugins (LanceDB) + Non-channel Extensions + Web UI i18n |
-| Phase 17: 安全加固 | **已完成** | Exec Approval 增强 + Gateway 安全加固 + Sandbox 边界 |
-| Phase 18: 核心管道补全 | **已完成** | Auto-reply 引擎 + Typing 管理器 + Outbound 管道 + Delivery Queue + Model Fallback |
-| Phase 19: Feishu 深度对齐 | **已完成** | Reactions + Docx + 高级路由 + 消息增强 + 运行时优化 |
-| Phase 20: 通道安全统一 | **已完成** | Auth Guard + Allowlist 边界 + 安全审计扩展 + 危险工具标记 |
-| Phase 21: Gateway + Agent 加固 | **已完成** | WS Flood Guard + Compaction 增强 + Config/State 迁移 + Command Gating |
-| Phase 22: Telegram + Browser 增强 | **已完成** | Telegram 媒体上下文/chunking/退避 + Browser Relay + Link Understanding |
-| Phase 23: Extensions + 杂项 | **已完成** | Memory-core Extension + Gemini CLI Auth + Ollama 增强 + 德语 i18n |
-| Phase 24: 斜杠命令系统 | **已完成** | 命令注册表 + 核心/会话/模型命令 + 内联指令 + 消息队列 + 回复调度器 |
-| Phase 25: 流式分块 + 投递管道 | **已完成** | Block Streaming + 投递目标解析 + 发送服务 + 消息动作 + 通道适配器 + HTML 导出 |
-| Phase 26: LLM 提供商扩展 | **已完成** | OpenAI 兼容适配器 + 9 个中国提供商 + OAuth 流 (MiniMax/Qwen/Copilot) + Bedrock + 提供商注册表 |
-| Phase 27: Channel Plugin SDK | **已完成** | 20+ 适配器 Protocol + 草稿流式 + 确认反应 + 模型覆盖 + 提及门控 + 通道健康检查 |
-| Phase 28: Config 系统深化 | **已完成** | 环境变量替换 + Config Includes + 备份轮转 + Session Store + 运行时覆盖 + 配置脱敏 |
-| Phase 29: 进程管理 + 媒体扩展 | **已完成** | 进程监管器 + 命令队列 + Groq/Mistral/Deepgram/xAI 媒体理解 + 视频管道 + Voyage/Mistral 嵌入 + 批量上传 |
-| Phase 30: Gateway 高级功能 | **已完成** | 配置热重载 + 通道健康监控 + 控制面限速 + Hooks 映射 + 服务发现 (mDNS + Tailscale) |
-| Phase 31: Commands/Doctor/Onboarding | **已完成** | Doctor 9 项诊断 + 27 提供商认证 + 交互/非交互 Onboarding + Status 增强 + Models CLI + Channels CLI |
-| Phase 32: Cron/TTS/Logging 高级 | **已完成** | 隔离代理运行器 + 技能快照 + 任务交错 + 超时策略 + 会话收割器 + Webhook 触发 + ElevenLabs/OpenAI TTS + 日志轮转/脱敏 + SSRF 防护 + 会话成本 |
-| Phase 33: Infra 杂项 + 非通道扩展 | **已完成** | SSH/SCP + 系统事件总线 + 归档管理 + Lobster/LLM-Task/Copilot/OTEL 扩展 + Shared 工具 + Exec 加固 |
-| Phase 34: Browser 自动化 | **已完成** | Playwright 薄适配层: Session Manager + Navigation Guard + Agent Tools + Bridge Server + Screenshot |
-| Phase 35: Pi Embedded Runner | **已完成** | Run 循环 + Session Manager + Thinking/Extensions + Tool Guards + Provider Helpers |
-| Phase 36: Channel Plugins 深度 | **已完成** | 通道目录 + 6 通道 Onboarding 向导 + 6 通道 Outbound 适配 + 5 通道 Status Issues + Config Schema |
-| Phase 37: Gateway Methods + Sessions | **已完成** | 15 扩展 RPC 方法 + Chat 高级 (附件/净化/中止) + Sessions 高级 (覆盖/标签/转录) + Exec Approvals |
-| Phase 38: TUI/Models/Wizard/杂项 | **已完成** | Boot-MD + Extra Files + Command Logger + Model Probe/Scan + Wizard Session + Shell 补全 + Discord Voice + VoiceWake + Respawn + 6 额外 LLM 提供商 |
-| Phase 39: CLI 命令面覆盖 | **已完成** | `pyclaw` 主命令切换 + `agent` v2 参数面 + `acp/sessions/logs/system/browser/health` 入口对齐 |
-| Phase 40: ACP 生产化 | **已完成** | `pyclaw acp`/`acp client` 参数齐全 + session key/label 映射 + require-existing/reset 语义 + token/password file |
-| Phase 41: Usage/Cost + 方法接线 | **已完成** | extended/exec_approvals 注册可达 + usage ledger 持久化聚合 + `status --usage` + models probe/scan/auth-overview |
-| Phase 42: Browser CLI 端到端 | **已完成** | browser CLI 全局 `--url/--token/--timeout` + Gateway `browser.*` RPC + SSRF 导航守卫 + 截图输出链路 |
-| Phase 43: 文档一致性收敛 | **已完成** | `PROGRESS/gap/plan` 滚动更新 + docs parity contract 测试 + `pyclaw` 命名一致性守卫 |
-| Phase 44: Gateway 控制面 + Logs RPC + 去重 | **已完成** | `gateway status/probe/call/discover` 子命令树 + `logs.tail` RPC + CLI 远程日志 + `pyclaw` 文案全量收敛 + extended.py browser 占位移除 |
-| Phase 45: Embedded Runner 主路径接线 | **已完成** | `chat.send` 默认走 embedded runner + `runner.mode` 配置开关(embedded/legacy) + abort/usage 一致性 + 成本记录 |
-| Phase 46: 扩展 RPC 去占位 | **已完成** | `doctor.run` 接入真实诊断 + `system.logs` 读取日志文件(含 level 过滤) + `skills.list` 发现技能 |
-| Phase 47: CLI 深水区收敛 | **已完成** | `sessions cleanup --dry-run/--enforce/--active-key` + `security audit --deep/--fix/--json` + system CLI RPC-first fallback |
-| Phase 48: Browser 控制深化 | **已完成** | `browser profiles/create-profile/delete-profile/focus/close` 子命令 + RPC 接线 |
-| Phase 49: 命名一致性 + 契约加固 | **已完成** | ACP `--token-file/--password-file` + `pyclaw` 文案统一 + docs parity 扩展测试 |
-| Phase 50: MCP + Docker 部署 | **已完成** | MCP 客户端 (stdio+HTTP) + McpToolAdapter + MCP CLI + Dockerfile + docker-compose.yml |
-| Phase 51: DingTalk + QQ + OAuth CLI + 技能市场 | **已完成** | DingTalk Stream 通道 + QQ WebSocket 通道 + OAuth/Device-Code CLI + ClawHub 技能搜索/安装 + Workspace 模板同步 |
-| Phase 52: Agent 社交网络 | **已完成** | 社交平台注册表 + Moltbook/ClawdChat 适配 + 社交技能包 + Agent 工具 |
-| Phase 53: Progress + 语音 | **已完成** | ProgressEvent + Gateway 广播 + 工具/技能嵌入 + Flet UI 进度条 + 语音转录 |
-| Phase 54: Browser RPC 真执行化 | **已完成** | Gateway browser 方法改为复用 Playwright 实际执行器 + profiles/createProfile/deleteProfile/focus/close RPC 实现 + 真实截图与 DOM 快照 |
-| Phase 55: Chat 主路径收敛 | **已完成** | chat.send 接入 chat_advanced 参数校验/内容净化/时间注入 + chat.edit/chat.resend 实现 + usage/abort 一致性 |
-| Phase 56: System/Logs RPC-first | **已完成** | system.event/heartbeat.last/presence Gateway RPC + CLI fallback 显式警告 |
-| Phase 57: Extended 去占位 | **已完成** | wizard/push/voicewake/tts 改为 NOT_IMPLEMENTED + update.check 读取真实版本 + web.status 反映真实 Gateway 状态 |
-| Phase 58: 文档基线重建 | **已完成** | docs/reference 差距与进度基线重建 + API 参考更新 + 契约测试 |
-| Phase 59: Gateway 控制面子命令补齐 | **已完成** | `gateway status/probe/call/discover` 已在 Phase 44 实现完毕，验证确认对齐 + api-reference 文档更新 |
-| Phase 60: 发布与分发最后一环 | **已完成** | Homebrew formula + 分发文档完善 (pipx/brew 安装路径) |
-| Phase 61: 契约与文档持续守护 | **已完成** | CI 独立契约测试 step + 季度复核 upstream 流程文档 + 自动化守护说明 |
-| Phase 62: 本地模型运行时 | **已完成** | llama.cpp + MLX 后端 + HuggingFace/ModelScope 下载 + manifest 管理 + CLI 命令 (download/local/delete-local/select) |
-| Phase 63: 桌面截图 + 文件发送 | **已完成** | mss 跨平台截图 + macOS screencapture + send_file 工具 + 工具注册 |
-| Phase 64: 一键安装脚本 | **已完成** | install.sh (macOS/Linux) + install.ps1 (Windows) + --extras 参数 + uninstall 命令 |
-| Phase 65: Office 文件技能包 | **已完成** | PDF/DOCX/XLSX/PPTX 读取工具 + SKILL.md + pyproject office extra |
-| Phase 66: Heartbeat 增强 | **已完成** | HEARTBEAT.md 文件驱动 + compound 间隔 (2h30m) + target=last 通道分发 + 活跃时段 |
-| Phase 67: MCP 热重载 | **已完成** | McpConfigWatcher 配置变更自动重连 + 文档更新 |
-| Phase 68: 任务规划 + 运行时增强 | **已完成** | Plan/Step 模型 + 用户中断 + 意图分析 + 消息总线 + 上下文注入 + Timeline + 每日摘要 + Cron 增强 + 子代理增强 + 数据备份 |
-| Phase 69: Flet UI Phase 1 重构 | **已完成** | Gateway WebSocket Client + 流式聊天 + 中断按钮 + 编辑/重发 + 管理页面 + 响应式布局 + 8 页导航 |
-| Phase 70: Flutter App 搭建 | **已完成** | Flutter 原生客户端 + 9 个功能页面 + 6 个通用组件 + Material 3 + Riverpod |
-| Phase 71: Flutter App 完善 | **已完成** | 动画系统 + LaTeX 公式 + 图片预览 + 文件附件 + 离线缓存 + 乐观更新 + Dynamic Color + PWA |
-| Phase 72: Flet + Flutter 融合 | **已完成** | Flet 为唯一客户端 + Flutter App 归档 + Material 3 配色/Shimmer 动画反哺 + flet build 配置 |
-| Phase 73: 文档-接口契约收敛 | **已完成** | api-reference.md 帧格式修正 (request→req) + sessions.get/create/cleanup RPC 实现 + 契约测试扩展 (参数/协议版本/模块存在性) |
-| Phase 74: 可靠性与可观测性 | **已完成** | 全量替换静默 except:pass 为结构化日志 (ui/app.py + chat.py + manager.py) + Gateway 统一 trace_id (请求关联 + 响应内嵌 _trace) |
-| Phase 75: Flet 多端可用性收敛 | **已完成** | 移动端导航全 8 项可达 + 统一 error_state/empty_state 组件 + Plans/Cron/Channels/System 面板错误态与重试按钮 |
-| Phase 76: 接口治理与孤立清理 | **已完成** | secrets.reload 注册规范化 + NOT_IMPLEMENTED 存根文档化 + registration.py 完整性验证 |
-| Phase 77: UI 修复与全平台打包 | **已完成** | Flet 0.81 兼容性修复 + 窗口最小化/最大化/关闭控制 + 全平台构建脚本 (Web/Desktop/Mobile) + Makefile |
-| Phase 78: UI 视觉一致性收敛 | **已完成** | 硬编码颜色→theme tokens + card_tile 统一列表 + page_header 全覆盖 + 代码块复制按钮 + scroll-to-bottom FAB + 空态/错误态补齐 |
-
-## 代码统计
-
-- 源码: **~70,500 行** (~443 个 .py 文件)
-- 测试: **~20,350 行** (94 个测试文件, 2202 个测试)
-- 测试状态: **2202/2202 通过**
-- 通道总数: **25 个** (6 核心 + 7 P3 扩展 + 12 P4/P5 扩展)
+> 规整表格与架构见 [REFERENCE_README.md](REFERENCE_README.md) 与 [REFERENCE_TABLES.md](REFERENCE_TABLES.md)。阶段与进度一览、代码统计、架构概览均在 REFERENCE_TABLES；本文仅保留各 Phase 的「新增文件/说明」细表供历史查阅。
 
 ---
 
-## 架构概览
-
-```
-openclaw-py/
-├── src/openclaw/
-│   ├── agents/           # Agent 运行时
-│   │   ├── runner.py     # 核心循环 (stream → tool → loop)
-│   │   ├── stream.py     # 多提供商 LLM 流式 (OpenAI/Anthropic/Gemini/Ollama)
-│   │   ├── session.py    # JSONL DAG 会话管理 + compaction
-│   │   ├── auth_profiles/# 多模式认证 (API key/token/OAuth)
-│   │   ├── subagents/    # 子 Agent 管理 (spawn/steer/kill)
-│   │   ├── skills/       # Skills 系统 (SKILL.md 发现/过滤/提示 + 技能市场)
-│   │   ├── workspace_sync.py # Workspace 模板同步
-│   │   ├── model_catalog.py # 模型目录 (provider + 元数据)
-│   │   ├── tool_policy.py   # 工具策略 (group/plugin allowlist)
-│   │   └── tools/        # 20+ 内置工具 (含 MCP 外部工具)
-│   ├── channels/         # 消息通道 (25 个)
-│   │   ├── telegram/     # aiogram
-│   │   ├── discord/      # discord.py
-│   │   ├── slack/        # slack-bolt
-│   │   ├── whatsapp/     # neonize (Baileys)
-│   │   ├── signal/       # signal-cli JSON-RPC/SSE
-│   │   ├── imessage/     # imsg JSON-RPC (P2)
-│   │   ├── irc/          # 原生 TCP/TLS (P3)
-│   │   ├── msteams/      # Bot Framework + Graph API (P3)
-│   │   ├── matrix/       # matrix-nio (P3)
-│   │   ├── feishu/       # Feishu Open Platform (P3)
-│   │   ├── twitch/       # Twitch IRC (P3)
-│   │   ├── bluebubbles/  # REST webhook (P3)
-│   │   └── googlechat/   # Google Chat webhook (P3)
-│   ├── mcp/              # MCP (Model Context Protocol) 客户端
-│   │   ├── types.py      # JSON-RPC 2.0 + McpServerConfig
-│   │   ├── client.py     # 服务器连接 + 工具发现
-│   │   ├── registry.py   # 多服务器管理 + McpToolAdapter
-│   │   ├── stdio_transport.py  # 子进程 stdio 传输
-│   │   └── http_transport.py   # 远程 HTTP 传输
-│   ├── cli/              # Typer CLI (25+ 命令)
-│   ├── config/           # 配置管理 (Pydantic + JSON5)
-│   ├── cron/             # 定时任务 (APScheduler)
-│   ├── gateway/          # Gateway 服务器
-│   │   ├── server.py     # FastAPI + WebSocket v3
-│   │   ├── openai_compat.py # OpenAI Chat Completions API
-│   │   ├── plugin_routes.py # 插件 HTTP 路由
-│   │   └── methods/      # 20+ 方法处理器
-│   ├── hooks/            # 事件 Hook 框架 (P2)
-│   │   ├── registry.py   # register/trigger/clear
-│   │   ├── loader.py     # HOOK.md 发现
-│   │   └── bundled/      # session-memory
-│   ├── infra/            # 基础设施
-│   │   ├── retry.py      # 重试策略
-│   │   ├── rate_limit.py # 速率限制
-│   │   ├── exec_approvals.py # Exec 审批 (P2)
-│   │   ├── heartbeat.py  # 心跳运行器 (P2)
-│   │   ├── update_check.py  # 更新检查 (P2)
-│   │   └── provider_usage.py # Provider 用量 (P2)
-│   ├── logging/          # 日志子系统 (P2)
-│   │   ├── subsystem.py  # 分类彩色日志
-│   │   └── redact.py     # 敏感数据脱敏
-│   ├── markdown/         # Markdown IR + 多通道渲染 (P2)
-│   │   ├── ir.py         # 中间表示
-│   │   ├── render.py     # 可插拔标记渲染
-│   │   ├── channel_formats.py # WhatsApp/Telegram/Signal/Slack
-│   │   ├── tables.py     # 表格转换
-│   │   └── fences.py     # 代码块检测
-│   ├── media/            # 媒体处理
-│   │   ├── understanding/# 多 Provider 媒体理解 (P2)
-│   │   │   ├── providers/ # OpenAI/Google/Anthropic
-│   │   │   └── apply.py  # 编排
-│   │   ├── images.py, audio.py, mime.py, storage.py
-│   │   └── embeddings.py # 向量嵌入
-│   ├── memory/           # 记忆/RAG
-│   ├── pairing/          # 设备配对 (P2)
-│   │   ├── store.py      # 请求/allowFrom 持久化
-│   │   ├── challenge.py  # 挑战响应流程
-│   │   └── setup_code.py # 二维码/深链接编码
-│   ├── plugins/          # 插件系统
-│   ├── routing/          # 会话路由
-│   ├── security/         # 安全 (P2)
-│   │   ├── dm_policy.py  # DM/群组访问策略
-│   │   └── audit.py      # 配置安全审计
-│   ├── terminal/         # 终端工具 (ANSI 表格/调色板)
-│   ├── acp/              # Agent Control Protocol (P3)
-│   │   ├── types.py      # 协议类型
-│   │   ├── session.py    # 会话存储 + TTL 驱逐
-│   │   ├── server.py     # NDJSON stdio 桥接
-│   │   └── client.py     # 子进程客户端
-│   ├── canvas/           # Canvas Host (P3)
-│   │   ├── handler.py    # 文件解析 + live-reload 注入
-│   │   └── server.py     # HTTP + WebSocket 服务
-│   ├── node_host/        # 无头节点服务 (P3)
-│   │   ├── invoke.py     # 命令分发 (system.run/which)
-│   │   └── runner.py     # Gateway WebSocket 连接
-│   ├── daemon/           # 服务管理 (P3)
-│   │   ├── service.py    # 跨平台抽象
-│   │   ├── launchd.py    # macOS LaunchAgent
-│   │   ├── systemd.py    # Linux systemd
-│   │   └── schtasks.py   # Windows 计划任务
-│   └── ui/               # Flet UI
-│       ├── app.py        # 主应用 (Chat + Settings + Channels)
-│       ├── channels_panel.py # 通道状态面板 (P2)
-│       ├── media_preview.py  # 媒体预览 (P2)
-│       ├── onboarding.py    # 首次使用向导 (P2)
-│       ├── voice.py      # Voice 交互 (P3)
-│       └── tray.py       # 系统托盘
-├── tests/                # 9 个测试文件, 97 个测试
-├── pyproject.toml        # Hatch + 依赖
-└── docs/
-    ├── PROGRESS.md       # 本文档
-    └── reference/
-        ├── gap-analysis.md
-        └── python-flet-rewrite-plan.md
-```
+架构概览（目录树）已迁至 [REFERENCE_TABLES.md](REFERENCE_TABLES.md) §8。下文仅保留各 Phase 的「新增文件/说明」细表。
 
 ---
 
@@ -679,7 +476,6 @@ Phase 36-38 完成了 Channel Plugins 深度 (6 通道目录/Onboarding/Outbound
 Phase 39-43 已完成命令面与接线层对齐：CLI 主命令统一为 **`pyclaw`**（无 `openclaw` 兼容别名），ACP/Usage/Browser 关键路径已形成端到端可用链路，并加入文档-命令契约测试防回归。
 Phase 54-58 重点修复了"文档已完成但实现占位"的关键差距：Browser RPC 改为 Playwright 真执行、Chat 接入参数校验/净化/编辑/重发、System/Logs 补齐 Gateway RPC、Extended 占位方法改为 NOT_IMPLEMENTED 或真实状态。
 Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI 契约测试独立步骤与 upstream 持续对比流程。
-详见 [20260301_plan.md](reference/20260301_plan.md) 和 [20260301gap.md](reference/20260301gap.md)。
 
 ### CoPaw 对比 (2026-03-02)
 
@@ -731,7 +527,7 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 分析 Flet 与 Flutter 的关系后，发现 Flet 底层就是 Flutter 渲染引擎，维护两套独立 UI（Python-Flet + Dart-Flutter）
 造成代码冗余。决定以 Flet UI 为唯一客户端，将 Flutter App 的设计精华反哺到 Flet UI。
 
-- **文档更新**: README.md 项目统计 (440 .py + 46 .dart / 66,400 + 4,980 LOC)、20260302_todo.md Phase 72 分项 + 优先级表
+- **文档更新**: README.md 项目统计 (440 .py + 46 .dart / 66,400 + 4,980 LOC)、待办清单 Phase 72 分项 + 优先级表（见 REFERENCE_TABLES §6）
 - **Flutter App 归档**: `flutter_app/ARCHIVE_NOTICE.md` 标记用途，README.md 标注 "[Archived]"
 - **Material 3 配色反哺**: `theme.py` 新增 `PRESET_SEED_COLORS` (8 预设色)、`StatusColors`、`RoleColors`、`CodeBlockColors`、`surface_container_high`、`primary_container`、`card_border_radius`、`input_border_radius`、`role_color()` 方法、`list_seed_presets()`
 - **Shimmer + 动画反哺**: 新建 `shimmer.py` — `ShimmerContainer` (脉冲动画)、`shimmer_chat_skeleton()` (聊天骨架)、`shimmer_list_tile()` (列表骨架)、`stagger_fade_in()` (交错淡入)
@@ -801,9 +597,7 @@ Phase 59-61 补全了 Gateway CLI 子命令验证、Homebrew formula 分发、CI
 
 ## 参考文档
 
-- 完整重写方案: [python-flet-rewrite-plan.md](reference/python-flet-rewrite-plan.md)
-- 功能差距分析: [gap-analysis.md](reference/gap-analysis.md)
-- P0-P13 实施计划: [implement_plan_20260228.md](reference/implement_plan_20260228.md)
-- Phase 14+ 后续计划: [implement_plan_next.md](reference/implement_plan_next.md)
+- 完整重写方案（总纲领、架构、阶段）: [python-flet-rewrite-plan.md](reference/python-flet-rewrite-plan.md)
 - UI 升级计划: [ui_upgrade_plan.md](reference/ui_upgrade_plan.md)
+- 计划/差距/待办总览: [REFERENCE_TABLES.md](reference/REFERENCE_TABLES.md)
 - 原始 TypeScript 项目: `openclaw/openclaw`

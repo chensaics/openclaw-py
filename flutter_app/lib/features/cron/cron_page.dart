@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pyclaw/core/gateway_client.dart';
 import 'package:pyclaw/core/models/cron_job.dart';
 import 'package:pyclaw/core/providers/gateway_provider.dart';
 import 'package:pyclaw/core/theme/colors.dart';

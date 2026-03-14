@@ -11,11 +11,11 @@ from pyclaw.cli.app import app
 
 runner = CliRunner()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DOCS_DIR = PROJECT_ROOT / "docs" / "reference"
+REFERENCE_DIR = PROJECT_ROOT / "reference"
 
 
 def _read_doc(name: str) -> str:
-    return (DOCS_DIR / name).read_text(encoding="utf-8")
+    return (REFERENCE_DIR / name).read_text(encoding="utf-8")
 
 
 def test_docs_mark_phase39_to_phase42_completed() -> None:
@@ -23,26 +23,14 @@ def test_docs_mark_phase39_to_phase42_completed() -> None:
     for phase in ("39", "40", "41", "42"):
         assert re.search(rf"\| Phase {phase}: .+\| \*\*已完成\*\* \|", progress)
 
-    gap = _read_doc("20260301gap.md")
-    for phase in ("Phase 39", "Phase 40", "Phase 41", "Phase 42"):
-        assert phase in gap
-        assert "✅ 已完成" in gap
-
-    plan = _read_doc("20260301_plan.md")
-    for phase in ("39", "40", "41", "42"):
-        assert f"~~**Phase {phase}**" in plan
-    assert "~~**Phase 43**" in plan
-    assert "✅ 已完成" in plan
-
 
 def test_docs_keep_pyclaw_as_only_cli_name() -> None:
     pyproject = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert 'pyclaw = "pyclaw.main:main"' in pyproject
     assert 'openclaw = "pyclaw.main:main"' not in pyproject
 
-    plan = _read_doc("20260301_plan.md")
-    assert "CLI 主命令统一为 `pyclaw`" in plan
-    assert "不保留 `openclaw` 兼容别名" in plan
+    progress = _read_doc("PROGRESS.md")
+    assert "pyclaw" in progress and "CLI 主命令" in progress
 
 
 def test_documented_cli_commands_exist() -> None:
