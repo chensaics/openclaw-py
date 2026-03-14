@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- (none yet)
+
+### Changed
+- (none yet)
+
+### Fixed
+- (none yet)
+
+## [0.1.3] - 2026-03-14
+
+### Added
 - Responsive shell module (`ui/responsive_shell.py`) — breakpoint-based layout management
 - External locale JSON files (`ui/locales/*.json`) — i18n data no longer hardcoded
 - Desktop tray quick actions — new chat, toggle theme, mute notifications
@@ -20,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Streaming typing indicator with animated dots
 - Scroll-to-bottom floating button
 - Reusable UI components (`ui/components.py`): page_header, empty_state, card_tile, status_chip
+- New UI panels: config, cron, debug, instances, logs, nodes, overview, plans, sessions, skills, system, usage
+- Docs site (MkDocs) and GitHub Pages deploy workflow
+- Reference docs restructure: PROGRESS.md + REFERENCE_TABLES.md milestone-driven layout
 
 ### Changed
 - Provider defaults consolidated into single source of truth (`model_catalog._KNOWN_PROVIDERS`)
@@ -27,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat bubble design enhanced — asymmetric border radius, role-colored avatars, improved shadows
 - Provider names use English-first format with CJK in parentheses
 - Dependencies reorganized — heavy channel SDKs moved to optional `[channels]` extra
+- Reference and docs layout: legacy plans moved/archived, single source in `reference/`
 
 ### Fixed
 - Dropdown event binding: `on_select` instead of `on_change` for Flet Dropdown
@@ -48,5 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cron job scheduling
 - Voice interaction (TTS via edge-tts, STT via Whisper API)
 
-[Unreleased]: https://github.com/chensaics/openclaw-py/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/chensaics/openclaw-py/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/chensaics/openclaw-py/compare/v0.1.2...v0.1.3
 [0.1.0]: https://github.com/chensaics/openclaw-py/releases/tag/v0.1.0
