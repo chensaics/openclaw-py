@@ -27,6 +27,18 @@ class SkillInvocationPolicy:
 
 
 @dataclass
+class SkillRuntimeContract:
+    """Runtime declaration and compatibility status for a skill."""
+
+    runtime: str = "python-native"  # python-native | node-wrapper | mcp-bridge
+    launcher: str = "python-native"
+    security_level: str = "standard"  # standard | elevated | restricted
+    deps: list[str] = field(default_factory=list)
+    missing_deps: list[str] = field(default_factory=list)
+    is_compatible: bool = True
+
+
+@dataclass
 class SkillCommandSpec:
     name: str
     skill_name: str
@@ -45,6 +57,7 @@ class SkillEntry:
     frontmatter: dict[str, str] = field(default_factory=dict)
     metadata: SkillMetadata = field(default_factory=SkillMetadata)
     invocation: SkillInvocationPolicy = field(default_factory=SkillInvocationPolicy)
+    runtime_contract: SkillRuntimeContract = field(default_factory=SkillRuntimeContract)
     source: str = ""  # "workspace", "bundled", "managed", "plugin"
 
 

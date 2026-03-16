@@ -45,7 +45,8 @@ class Plan extends Equatable {
     required this.createdAt,
   });
 
-  int get completedCount => steps.where((s) => s.status == StepStatus.done).length;
+  int get completedCount =>
+      steps.where((s) => s.status == StepStatus.done).length;
   int get totalCount => steps.length;
   double get progress => totalCount > 0 ? completedCount / totalCount : 0;
 
@@ -56,7 +57,10 @@ class Plan extends Equatable {
                 ?.map((s) => PlanStep.fromJson(s as Map<String, dynamic>))
                 .toList() ??
             [],
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ??
+                json['created_at'] as String? ??
+                '') ??
+            DateTime.now(),
       );
 
   @override

@@ -3,6 +3,15 @@
 import typer
 
 from pyclaw import __version__
+from pyclaw.constants.env import AUTH_TOKEN_ENV_VARS, GATEWAY_PASSWORD_ENV_VARS
+from pyclaw.constants.runtime import (
+    DEFAULT_GATEWAY_BIND,
+    DEFAULT_GATEWAY_PORT,
+    DEFAULT_GATEWAY_WS_URL,
+    DEFAULT_GATEWAY_WS_URL_PATH,
+    DEFAULT_SERVICE_LABEL,
+    DEFAULT_UI_WEB_PORT,
+)
 
 app = typer.Typer(
     name="pyclaw",
@@ -103,9 +112,9 @@ app.add_typer(gateway_app)
 @gateway_app.callback(invoke_without_command=True)
 def gateway_root(
     ctx: typer.Context,
-    port: int = typer.Option(18789, help="Port to listen on."),
-    bind: str = typer.Option("127.0.0.1", help="Address to bind to."),
-    auth_token: str | None = typer.Option(None, envvar="PYCLAW_AUTH_TOKEN", help="Auth token."),
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Port to listen on."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Address to bind to."),
+    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Start the gateway server (default) or manage it with subcommands."""
     if ctx.invoked_subcommand:
@@ -117,9 +126,9 @@ def gateway_root(
 
 @gateway_app.command("run")
 def gateway_run_cmd(
-    port: int = typer.Option(18789, help="Port to listen on."),
-    bind: str = typer.Option("127.0.0.1", help="Address to bind to."),
-    auth_token: str | None = typer.Option(None, envvar="PYCLAW_AUTH_TOKEN", help="Auth token."),
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Port to listen on."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Address to bind to."),
+    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Start the pyclaw gateway server."""
     from pyclaw.cli.commands.gateway_cmd import gateway_run_command
@@ -203,7 +212,7 @@ def gateway_discover_cmd(
 @app.command()
 def ui(
     web: bool = typer.Option(False, "--web", help="Launch as web app instead of desktop."),
-    port: int = typer.Option(8550, help="Port for web mode."),
+    port: int = typer.Option(DEFAULT_UI_WEB_PORT, help="Port for web mode."),
 ) -> None:
     """Launch the pyclaw graphical interface."""
     from pyclaw.ui.app import run_app, run_web
@@ -545,8 +554,8 @@ def message_send_cmd(
     text: str = typer.Argument(..., help="Message text to send."),
     channel: str = typer.Option("default", help="Target channel."),
     recipient: str = typer.Option("", help="Recipient ID."),
-    gateway_url: str = typer.Option("ws://127.0.0.1:18789", help="Gateway WebSocket URL."),
-    auth_token: str | None = typer.Option(None, envvar="PYCLAW_AUTH_TOKEN", help="Auth token."),
+    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL, help="Gateway WebSocket URL."),
+    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Send a message through the gateway."""
     from pyclaw.cli.commands.message_cmd import message_send
@@ -595,9 +604,9 @@ app.add_typer(service_app)
 
 @service_app.command("install")
 def service_install_cmd(
-    label: str = typer.Option("ai.pyclaw.gateway", help="Service label."),
-    port: int = typer.Option(18789, help="Gateway port."),
-    bind: str = typer.Option("127.0.0.1", help="Bind address."),
+    label: str = typer.Option(DEFAULT_SERVICE_LABEL, help="Service label."),
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Gateway port."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Bind address."),
 ) -> None:
     """Install gateway as a system service."""
     from pyclaw.cli.commands.service_cmd import service_install
@@ -607,7 +616,7 @@ def service_install_cmd(
 
 @service_app.command("uninstall")
 def service_uninstall_cmd(
-    label: str = typer.Option("ai.pyclaw.gateway", help="Service label."),
+    label: str = typer.Option(DEFAULT_SERVICE_LABEL, help="Service label."),
 ) -> None:
     """Uninstall the gateway service."""
     from pyclaw.cli.commands.service_cmd import service_uninstall
@@ -617,7 +626,7 @@ def service_uninstall_cmd(
 
 @service_app.command("status")
 def service_status_cmd(
-    label: str = typer.Option("ai.pyclaw.gateway", help="Service label."),
+    label: str = typer.Option(DEFAULT_SERVICE_LABEL, help="Service label."),
 ) -> None:
     """Show gateway service status."""
     from pyclaw.cli.commands.service_cmd import service_status
@@ -627,7 +636,7 @@ def service_status_cmd(
 
 @service_app.command("restart")
 def service_restart_cmd(
-    label: str = typer.Option("ai.pyclaw.gateway", help="Service label."),
+    label: str = typer.Option(DEFAULT_SERVICE_LABEL, help="Service label."),
 ) -> None:
     """Restart the gateway service."""
     from pyclaw.cli.commands.service_cmd import service_restart
@@ -637,7 +646,7 @@ def service_restart_cmd(
 
 @service_app.command("stop")
 def service_stop_cmd(
-    label: str = typer.Option("ai.pyclaw.gateway", help="Service label."),
+    label: str = typer.Option(DEFAULT_SERVICE_LABEL, help="Service label."),
 ) -> None:
     """Stop the gateway service."""
     from pyclaw.cli.commands.service_cmd import service_stop
@@ -650,8 +659,8 @@ def service_stop_cmd(
 
 @app.command()
 def node(
-    gateway_url: str = typer.Option("ws://127.0.0.1:18789/ws", help="Gateway WebSocket URL."),
-    auth_token: str | None = typer.Option(None, envvar="PYCLAW_AUTH_TOKEN", help="Auth token."),
+    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL_PATH, help="Gateway WebSocket URL."),
+    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
     node_id: str = typer.Option("", help="Node identifier (defaults to hostname)."),
 ) -> None:
     """Start a headless node host."""
@@ -669,7 +678,7 @@ app.add_typer(acp_app)
 @acp_app.callback(invoke_without_command=True)
 def acp_run(
     ctx: typer.Context,
-    url: str = typer.Option("ws://127.0.0.1:18789/ws", "--url", help="Gateway URL."),
+    url: str = typer.Option(DEFAULT_GATEWAY_WS_URL_PATH, "--url", help="Gateway URL."),
     token: str | None = typer.Option(None, "--token", help="Gateway auth token."),
     token_file: str | None = typer.Option(None, "--token-file", help="Read auth token from file."),
     password: str | None = typer.Option(None, "--password", help="Optional ACP password."),
@@ -716,7 +725,7 @@ def acp_client_cmd(
         "--server-arg",
         help="Additional server args (repeatable).",
     ),
-    url: str = typer.Option("ws://127.0.0.1:18789/ws", "--url", help="Gateway URL for spawned server."),
+    url: str = typer.Option(DEFAULT_GATEWAY_WS_URL_PATH, "--url", help="Gateway URL for spawned server."),
     token: str | None = typer.Option(None, "--token", help="Gateway auth token."),
     token_file: str | None = typer.Option(None, "--token-file", help="Read auth token from file."),
     password: str | None = typer.Option(None, "--password", help="Gateway password."),
@@ -910,10 +919,13 @@ app.add_typer(browser_app)
 def browser_root(
     ctx: typer.Context,
     browser_profile: str = typer.Option("pyclaw", "--browser-profile", help="Browser profile name."),
-    url: str = typer.Option("ws://127.0.0.1:18789", "--url", help="Gateway WebSocket URL."),
-    token: str | None = typer.Option(None, "--token", envvar="PYCLAW_AUTH_TOKEN", help="Gateway auth token."),
+    url: str = typer.Option(DEFAULT_GATEWAY_WS_URL, "--url", help="Gateway WebSocket URL."),
+    token: str | None = typer.Option(None, "--token", envvar=AUTH_TOKEN_ENV_VARS, help="Gateway auth token."),
     password: str | None = typer.Option(
-        None, "--password", envvar="PYCLAW_GATEWAY_PASSWORD", help="Gateway auth password."
+        None,
+        "--password",
+        envvar=GATEWAY_PASSWORD_ENV_VARS,
+        help="Gateway auth password.",
     ),
     timeout: int = typer.Option(10000, "--timeout", help="Gateway request timeout in ms."),
     output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
@@ -1151,6 +1163,14 @@ def browser_delete_profile_cmd(
     )
 
 
+@browser_app.command("audit-lifecycle")
+def browser_audit_lifecycle_cmd(ctx: typer.Context) -> None:
+    """Audit local browser profile lifecycle snapshots."""
+    from pyclaw.cli.commands.browser_cmd import browser_lifecycle_audit_command
+
+    browser_lifecycle_audit_command(output_json=ctx.obj["output_json"])
+
+
 @browser_app.command("focus")
 def browser_focus_cmd(
     ctx: typer.Context,
@@ -1308,6 +1328,110 @@ def skills_remove_cmd(
     from pyclaw.cli.commands.skills_cmd import skills_remove_command
 
     skills_remove_command(name=name)
+
+
+@skills_app.command("inspect")
+def skills_inspect_cmd(
+    name: str = typer.Argument(..., help="Skill name to inspect."),
+) -> None:
+    """Inspect a skill via clawhub (if available)."""
+    from pyclaw.cli.commands.skills_cmd import skills_inspect_command
+
+    skills_inspect_command(name=name)
+
+
+@skills_app.command("sync")
+def skills_sync_cmd() -> None:
+    """Sync installed skills from clawhub (if available)."""
+    from pyclaw.cli.commands.skills_cmd import skills_sync_command
+
+    skills_sync_command()
+
+
+@skills_app.command("update")
+def skills_update_cmd() -> None:
+    """Update installed clawhub-managed skills (if available)."""
+    from pyclaw.cli.commands.skills_cmd import skills_update_command
+
+    skills_update_command()
+
+
+@skills_app.command("run")
+def skills_run_cmd(
+    name: str = typer.Argument(..., help="Skill key to run."),
+    payload: str = typer.Option("{}", "--payload", help="JSON payload object."),
+    output_json: bool = typer.Option(True, "--json/--no-json", help="Print JSON output."),
+) -> None:
+    """Run a bundled skill by key."""
+    from pyclaw.cli.commands.skills_cmd import skills_run_command
+
+    skills_run_command(name=name, payload_json=payload, output_json=output_json)
+
+
+# ─── Ops automation subcommands ───────────────────────────────────────
+
+ops_app = typer.Typer(name="ops", help="Milestone ops automation commands.", no_args_is_help=True)
+app.add_typer(ops_app)
+
+
+@ops_app.command("release-gate")
+def ops_release_gate_cmd(
+    artifacts_dir: str = typer.Option("dist", "--artifacts-dir", help="Artifacts directory path."),
+    release_notes: str = typer.Option("", "--release-notes", help="Release notes summary."),
+    rollback_notes: str = typer.Option("", "--rollback-notes", help="Rollback notes summary."),
+    expected_version: str | None = typer.Option(None, "--version", help="Expected release version."),
+    output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
+    write_report: str | None = typer.Option(
+        "reference/ops/M3_RELEASE_GATE_REPORT.json",
+        "--write-report",
+        help="Write report JSON to this path; pass empty string to disable.",
+    ),
+) -> None:
+    """Run M3 release gate checks and generate report."""
+    from pyclaw.cli.commands.ops_cmd import ops_release_gate_command
+
+    ops_release_gate_command(
+        artifacts_dir=artifacts_dir,
+        release_notes=release_notes,
+        rollback_notes=rollback_notes,
+        expected_version=expected_version,
+        output_json=output_json,
+        write_report=write_report,
+    )
+
+
+@ops_app.command("m2-baseline")
+def ops_m2_baseline_cmd(
+    output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """Run M2 baseline automated subset checks."""
+    from pyclaw.cli.commands.ops_cmd import ops_client_baseline_check_command
+
+    ops_client_baseline_check_command(output_json=output_json)
+
+
+@ops_app.command("m4-snapshot")
+def ops_m4_snapshot_cmd(
+    window_start: str = typer.Option(..., "--window-start", help="Window start date (YYYY-MM-DD)."),
+    window_end: str = typer.Option(..., "--window-end", help="Window end date (YYYY-MM-DD)."),
+    summary: str = typer.Option("", "--summary", help="Weekly summary result."),
+    tracker_path: str = typer.Option(
+        "reference/ops/M4_UPSTREAM_RELEASE_DOCS_TRACKER.md",
+        "--tracker-path",
+        help="Tracker markdown path.",
+    ),
+    output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """Append an M4 upstream tracking snapshot entry."""
+    from pyclaw.cli.commands.ops_cmd import ops_upstream_snapshot_command
+
+    ops_upstream_snapshot_command(
+        window_start=window_start,
+        window_end=window_end,
+        summary=summary,
+        output_json=output_json,
+        tracker_path=tracker_path,
+    )
 
 
 # ─── Workspace subcommands ───────────────────────────────────────────

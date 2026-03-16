@@ -8,9 +8,11 @@ gateway via WebSocket v3 protocol for all backend interactions.
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
 import logging
 import re
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -18,7 +20,14 @@ from typing import Any, cast
 import flet as ft
 
 from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
-from pyclaw.ui.components import card_tile, page_header
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_SLASH, DEFAULT_UI_WEB_PORT
+from pyclaw.ui.components import (
+    card_tile,
+    expandable_section,
+    page_header,
+    slider_input,
+    switch_with_info,
+)
 from pyclaw.ui.i18n import I18n, set_i18n, t
 from pyclaw.ui.theme import get_theme
 
@@ -410,7 +419,7 @@ class ChatMessage(ft.Container):
             animate_opacity=ft.Animation(350, ft.AnimationCurve.EASE_OUT),
         )
 
-    def update_content(self, new_content: str) -> None:
+    def update_content(self, new_content: str, *, render_markdown: bool = True) -> None:
         """Update the message content (used for streaming)."""
         self._message_content = new_content
         if self._content_control is not None:
@@ -420,7 +429,11 @@ class ChatMessage(ft.Container):
                 if self.role == "user":
                     self._content_control = ft.Text(new_content, selectable=True)
                 else:
-                    self._content_control = _render_markdown(new_content) if new_content else ft.Text("")
+                    if render_markdown:
+                        self._content_control = _render_markdown(new_content) if new_content else ft.Text("")
+                    else:
+                        # Streaming updates should stay lightweight; markdown renders on finalize.
+                        self._content_control = ft.Text(new_content, selectable=True)
                 col.controls[idx] = self._content_control
 
     @property
@@ -520,6 +533,28 @@ class SessionSidebar(ft.Column):
     def _render_filtered(self, sessions: list[dict[str, str]]) -> None:
         theme = get_theme()
         self._sessions_list.controls.clear()
+        if not sessions:
+            self._sessions_list.controls.append(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Icon(ft.Icons.INBOX_OUTLINED, size=28, color=theme.colors.muted),
+                            ft.Text(
+                                t("sessions.empty", default="No sessions."),
+                                size=12,
+                                color=theme.colors.muted,
+                                text_align=ft.TextAlign.CENTER,
+                            ),
+                        ],
+                        spacing=6,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    padding=ft.padding.symmetric(vertical=24),
+                    alignment=ft.Alignment(0, 0),
+                )
+            )
+            self._safe_update(self._sessions_list)
+            return
 
         groups: dict[str, list[dict[str, str]]] = {}
         for s in sessions:
@@ -584,6 +619,50 @@ class SessionSidebar(ft.Column):
             data=sid,
         )
 
+    def update_filter(self, filter_text: str) -> None:
+        """Update the session list based on the filter text."""
+        self._filter = filter_text
+        sessions = self._filter_sessions(self._sessions)
+        self._render_filtered(sessions)
+
+    def _filter_sessions(self, sessions: list[dict[str, str]]) -> list[dict[str, str]]:
+        """Filter sessions based on the filter text."""
+        if not self._filter:
+            return sessions
+        filter_lower = self._filter.lower()
+        return [s for s in sessions if filter_lower in (s.get("name", "") or s.get("id", "")).lower()]
+
+    def _render_all(self, sessions: list[dict[str, str]]) -> None:
+        """Render all sessions without grouping."""
+        self._sessions_list.controls.clear()
+        if not sessions:
+            self._sessions_list.controls.append(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Icon(ft.Icons.INBOX_OUTLINED, size=28, color=get_theme().colors.muted),
+                            ft.Text(
+                                t("sessions.empty", default="No sessions."),
+                                size=12,
+                                color=get_theme().colors.muted,
+                                text_align=ft.TextAlign.CENTER,
+                            ),
+                        ],
+                        spacing=6,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    padding=ft.padding.symmetric(vertical=24),
+                    alignment=ft.Alignment(0, 0),  # Fixed alignment
+                )
+            )
+            self._safe_update(self._sessions_list)
+            return
+
+        for s in sessions:
+            self._sessions_list.controls.append(self._build_session_tile(s))
+
+        self._safe_update(self._sessions_list)
+
     def set_selected(self, session_id: str) -> None:
         self._selected_id = session_id
 
@@ -639,6 +718,7 @@ class ChatView(ft.Column):
         self._on_resend = on_resend
         self._is_streaming = False
         self._current_assistant_msg: ChatMessage | None = None
+        self._last_stream_render_ts = 0.0
         theme = get_theme()
 
         self._search_bar = ft.TextField(
@@ -658,11 +738,74 @@ class ChatView(ft.Column):
             padding=ft.padding.symmetric(horizontal=16, vertical=8),
             auto_scroll=True,
         )
+        self._welcome_state = ft.Container(
+            content=ft.Column(
+                [
+                    ft.Icon(ft.Icons.CHAT_BUBBLE_OUTLINE, size=40, color=theme.colors.muted),
+                    ft.Text(
+                        t("chat.welcome_title", default="Start a new chat"),
+                        size=16,
+                        weight=ft.FontWeight.W_500,
+                    ),
+                    ft.Text(
+                        t("chat.welcome_hint1", default="• Ask any question to begin"),
+                        size=12,
+                        color=theme.colors.muted,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Text(
+                        t("chat.welcome_hint2", default="• Use quick actions for common tasks"),
+                        size=12,
+                        color=theme.colors.muted,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Text(
+                        t("chat.welcome_hint3", default="• Pick a previous session from the left"),
+                        size=12,
+                        color=theme.colors.muted,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Row(
+                        [
+                            ft.OutlinedButton(
+                                t("chat.welcome_action_publish", default="Publish Wizard"),
+                                on_click=lambda e: self._prefill_input("/skills run "),
+                            ),
+                            ft.OutlinedButton(
+                                t("chat.welcome_action_agent", default="Select Agent"),
+                                on_click=lambda e: self._prefill_input("@main "),
+                            ),
+                            ft.OutlinedButton(
+                                t("chat.welcome_action_settings", default="Settings"),
+                                on_click=lambda e: self._prefill_input("/settings "),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        wrap=True,
+                    ),
+                    ft.Container(
+                        content=ft.Text(
+                            t("chat.welcome_tip", default="Tip: Press Ctrl+K to open command palette"),
+                            size=11,
+                            color=theme.colors.muted,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
+                        border=ft.border.all(0.5, theme.colors.border),
+                        border_radius=8,
+                    ),
+                ],
+                spacing=8,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            alignment=ft.Alignment(0, 0),
+            expand=True,
+            visible=True,
+        )
 
         self._plan_progress = ft.Container(visible=False)
 
         self._input = ft.TextField(
-            hint_text=t("chat.placeholder"),
+            hint_text=t("chat.placeholder", default="Type your message here, press Enter to send..."),
             expand=True,
             border_radius=24,
             autofocus=True,
@@ -710,18 +853,46 @@ class ChatView(ft.Column):
             opacity=0.8,
         )
 
+        self._quick_action_bar = ft.Row(
+            controls=[
+                ft.TextButton(
+                    t("toolbar.attach", default="Attach file"),
+                    icon=ft.Icons.ATTACH_FILE,
+                    on_click=lambda e: self._prefill_input("/attach "),
+                ),
+                ft.TextButton(
+                    t("toolbar.voice", default="Voice input"),
+                    icon=ft.Icons.MIC,
+                    on_click=lambda e: self._prefill_input("/voice "),
+                ),
+                ft.TextButton(
+                    t("chat.quick_mention", default="Mention"),
+                    icon=ft.Icons.ALTERNATE_EMAIL,
+                    on_click=lambda e: self._prefill_input("@"),
+                ),
+                ft.TextButton(
+                    t("chat.search", default="Search messages..."),
+                    icon=ft.Icons.SEARCH,
+                    on_click=lambda e: _fire_async(self._toggle_search, e),
+                ),
+            ],
+            spacing=4,
+            wrap=True,
+        )
+
         input_row = ft.Row(
             controls=[self._input, self._abort_btn, self._send_btn],
             spacing=4,
         )
         bottom_bar = ft.Container(
-            content=ft.Column([self._loading, self._progress_row, input_row], spacing=4),
+            content=ft.Column([self._loading, self._progress_row, self._quick_action_bar, input_row], spacing=4),
             padding=ft.padding.symmetric(horizontal=16, vertical=8),
         )
 
         chat_area = ft.Stack(
             controls=[
                 self._messages_list,
+                self._welcome_state,
                 ft.Container(
                     content=self._scroll_to_bottom_btn,
                     alignment=ft.Alignment(1, 1),
@@ -762,6 +933,9 @@ class ChatView(ft.Column):
         msg.animate_opacity = ft.Animation(350, ft.AnimationCurve.EASE_OUT)
         msg.animate_offset = ft.Animation(350, ft.AnimationCurve.EASE_OUT)
         self._messages_list.controls.append(msg)
+        if self._welcome_state.visible:
+            self._welcome_state.visible = False
+            self._safe_update(self._welcome_state)
         self._safe_update(self._messages_list)
         msg.opacity = 1
         msg.offset = ft.Offset(0, 0)
@@ -805,8 +979,11 @@ class ChatView(ft.Column):
                 col.controls.remove(self._typing_dots)
             new_content = (self._current_assistant_msg._message_content or "") + delta
             self._current_assistant_msg._message_content = new_content
-            self._current_assistant_msg.update_content(new_content)
-            self._safe_update(self._messages_list)
+            now = time.monotonic()
+            if (now - self._last_stream_render_ts) >= 0.04:
+                self._current_assistant_msg.update_content(new_content, render_markdown=False)
+                self._safe_update(self._messages_list)
+                self._last_stream_render_ts = now
 
     def finish_streaming(self, usage: dict[str, Any] | None = None, *, error: str = "") -> None:
         """Finalize the current streaming message."""
@@ -823,9 +1000,14 @@ class ChatView(ft.Column):
         if error and self._current_assistant_msg:
             current = self._current_assistant_msg._message_content or ""
             suffix = f"\n\n⚠ {error}" if current.strip() else f"⚠ {error}"
-            self._current_assistant_msg.update_content(current + suffix)
+            self._current_assistant_msg.update_content(current + suffix, render_markdown=True)
+            self._safe_update(self._messages_list)
+        elif self._current_assistant_msg:
+            final_content = self._current_assistant_msg._message_content or ""
+            self._current_assistant_msg.update_content(final_content, render_markdown=True)
             self._safe_update(self._messages_list)
         self._current_assistant_msg = None
+        self._last_stream_render_ts = 0.0
         self._abort_btn.visible = False
         self._send_btn.visible = True
         self._safe_update(self._abort_btn)
@@ -907,7 +1089,9 @@ class ChatView(ft.Column):
     def clear_messages(self) -> None:
         self._messages_list.controls.clear()
         self._current_assistant_msg = None
+        self._welcome_state.visible = True
         self.hide_plan_progress()
+        self._safe_update(self._welcome_state)
         self._safe_update(self._messages_list)
 
     def set_loading(self, loading: bool) -> None:
@@ -977,6 +1161,15 @@ class ChatView(ft.Column):
     async def _handle_abort(self, e: Any) -> None:
         if self._on_abort:
             await self._on_abort()
+
+    def _prefill_input(self, value: str) -> None:
+        self._input.value = value
+        self._safe_update(self._input)
+        try:
+            if self._input.page:
+                self._input.focus()
+        except Exception:
+            pass
 
     async def _scroll_to_bottom(self, e: Any = None) -> None:
         self._messages_list.auto_scroll = True
@@ -1064,15 +1257,75 @@ class SettingsView(ft.Column):
             width=400,
         )
 
+        self._temperature = ft.Slider(
+            min=0.0,
+            max=2.0,
+            divisions=20,
+            value=float(cfg.get("temperature", 0.7)),
+            label="{value}",
+            width=420,
+        )
+        self._context_turns = ft.Slider(
+            min=1,
+            max=50,
+            divisions=49,
+            value=float(cfg.get("context_turns", 12)),
+            label="{value}",
+            width=420,
+        )
+        self._stream_output = ft.Switch(
+            label=t("settings.stream_output", default="Streaming output"),
+            value=bool(cfg.get("stream_output", True)),
+        )
+        raw_max_tokens = int(cfg.get("max_tokens", 0) or 0)
+        self._max_tokens_enabled = ft.Switch(
+            label=t("settings.max_tokens_enabled", default="Enable max tokens"),
+            value=raw_max_tokens > 0,
+        )
+        self._max_tokens_enabled.on_change = self._handle_max_tokens_toggle
+        self._max_tokens = ft.TextField(
+            label=t("settings.max_tokens", default="Max tokens"),
+            value=str(raw_max_tokens) if raw_max_tokens > 0 else "4096",
+            width=200,
+            disabled=raw_max_tokens <= 0,
+        )
+
+        self._show_prompt = ft.Switch(
+            label=t("settings.show_prompt", default="Show prompts"),
+            value=bool(cfg.get("show_prompt", True)),
+        )
+        self._serif_font = ft.Switch(
+            label=t("settings.serif_font", default="Use serif font"),
+            value=bool(cfg.get("serif_font", False)),
+        )
+        self._collapse_thinking = ft.Switch(
+            label=t("settings.collapse_thinking", default="Auto-collapse thinking"),
+            value=bool(cfg.get("collapse_thinking", True)),
+        )
+        self._message_outline = ft.Switch(
+            label=t("settings.message_outline", default="Show message outline"),
+            value=bool(cfg.get("message_outline", False)),
+        )
+        self._message_style = ft.Dropdown(
+            label=t("settings.message_style", default="Message style"),
+            value=str(cfg.get("message_style", "standard")),
+            width=240,
+            options=[
+                ft.dropdown.Option("concise", t("settings.message_style.concise", default="Concise")),
+                ft.dropdown.Option("standard", t("settings.message_style.standard", default="Standard")),
+                ft.dropdown.Option("detailed", t("settings.message_style.detailed", default="Detailed")),
+            ],
+        )
+
         self._theme_toggle = ft.Switch(
             label=t("settings.dark_mode"),
-            value=True,
+            value=bool(cfg.get("dark_mode", True)),
         )
         self._theme_toggle.on_change = self._handle_theme_change
 
         self._locale_dropdown = ft.Dropdown(
             label=t("settings.language"),
-            value="en",
+            value=str(cfg.get("locale", "en")),
             options=[
                 ft.dropdown.Option("en", "English"),
                 ft.dropdown.Option("zh-CN", "简体中文"),
@@ -1085,7 +1338,7 @@ class SettingsView(ft.Column):
 
         self._seed_color_field = ft.TextField(
             label=t("settings.seed_color", default="Theme Color"),
-            value="#6366f1",
+            value=str(cfg.get("seed_color", "#6366f1")),
             width=150,
         )
         self._seed_color_field.on_submit = self._handle_seed_color_change
@@ -1124,7 +1377,15 @@ class SettingsView(ft.Column):
 
         self._gateway_url = ft.TextField(
             label=t("settings.gateway_url", default="Gateway URL"),
-            value=cfg.get("gateway_url") or "ws://127.0.0.1:18789/",
+            value=cfg.get("gateway_url") or DEFAULT_GATEWAY_WS_URL_SLASH,
+            width=400,
+        )
+
+        self._auth_token = ft.TextField(
+            label=t("settings.auth_token", default="Auth Token"),
+            value=cfg.get("auth_token") or "",
+            password=True,
+            can_reveal_password=True,
             width=400,
         )
 
@@ -1134,22 +1395,157 @@ class SettingsView(ft.Column):
             on_click=self._handle_save,
         )
 
+        temp_slider = slider_input(
+            t("settings.temperature", default="Temperature"),
+            0.0,
+            2.0,
+            float(self._temperature.value or 0.7),
+            step=0.1,
+            tooltip=t(
+                "settings.temperature_tooltip",
+                default="Controls response creativity. 0 = deterministic, 2 = random.",
+            ),
+            on_change=lambda v: setattr(self._temperature, "value", v),
+        )
+        context_slider = slider_input(
+            t("settings.context_turns", default="Context turns"),
+            1.0,
+            50.0,
+            float(self._context_turns.value or 12.0),
+            step=1.0,
+            tooltip=t(
+                "settings.context_turns_tooltip",
+                default="How many recent turns are kept in context.",
+            ),
+            on_change=lambda v: setattr(self._context_turns, "value", v),
+        )
+        stream_switch = switch_with_info(
+            t("settings.stream_output", default="Streaming output"),
+            bool(self._stream_output.value),
+            description=t(
+                "settings.stream_output_tooltip",
+                default="Show reply token-by-token while generating.",
+            ),
+            on_change=lambda v: setattr(self._stream_output, "value", v),
+        )
+        max_tokens_switch = switch_with_info(
+            t("settings.max_tokens_enabled", default="Enable max tokens"),
+            bool(self._max_tokens_enabled.value),
+            description=t(
+                "settings.max_tokens_tooltip",
+                default="Limit maximum tokens generated per response.",
+            ),
+            on_change=lambda v: _fire_async(self._sync_max_tokens_enabled, v),
+        )
+        show_prompt_switch = switch_with_info(
+            t("settings.show_prompt", default="Show prompts"),
+            bool(self._show_prompt.value),
+            description=t(
+                "settings.show_prompt_tooltip",
+                default="Display system prompts used by the current agent.",
+            ),
+            on_change=lambda v: setattr(self._show_prompt, "value", v),
+        )
+        serif_switch = switch_with_info(
+            t("settings.serif_font", default="Use serif font"),
+            bool(self._serif_font.value),
+            description=t(
+                "settings.serif_font_tooltip",
+                default="Improves long-form reading comfort.",
+            ),
+            on_change=lambda v: setattr(self._serif_font, "value", v),
+        )
+        collapse_switch = switch_with_info(
+            t("settings.collapse_thinking", default="Auto-collapse thinking"),
+            bool(self._collapse_thinking.value),
+            description=t(
+                "settings.collapse_thinking_tooltip",
+                default="Collapse assistant reasoning blocks by default.",
+            ),
+            on_change=lambda v: setattr(self._collapse_thinking, "value", v),
+        )
+        outline_switch = switch_with_info(
+            t("settings.message_outline", default="Show message outline"),
+            bool(self._message_outline.value),
+            description=t(
+                "settings.message_outline_tooltip",
+                default="Show an outline navigation for long messages.",
+            ),
+            on_change=lambda v: setattr(self._message_outline, "value", v),
+        )
+
+        assistant_section = expandable_section(
+            t("settings.section.assistant", default="Assistant"),
+            ft.Icons.SMART_TOY_OUTLINED,
+            ft.Column(
+                [
+                    self._provider,
+                    self._model,
+                    self._api_key,
+                    self._base_url,
+                    temp_slider,
+                    context_slider,
+                    stream_switch,
+                    max_tokens_switch,
+                    self._max_tokens,
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+            initially_expanded=True,
+        )
+        message_section = expandable_section(
+            t("settings.section.message", default="Message"),
+            ft.Icons.FORUM_OUTLINED,
+            ft.Column(
+                [
+                    show_prompt_switch,
+                    serif_switch,
+                    collapse_switch,
+                    outline_switch,
+                    self._message_style,
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+            initially_expanded=True,
+        )
+        connection_section = expandable_section(
+            t("settings.section.connection", default="Connection"),
+            ft.Icons.CABLE,
+            ft.Column(
+                [
+                    self._gateway_url,
+                    self._auth_token,
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+            initially_expanded=False,
+        )
+        appearance_section = expandable_section(
+            t("settings.section.appearance", default="Appearance"),
+            ft.Icons.PALETTE_OUTLINED,
+            ft.Column(
+                [
+                    ft.Row([self._theme_toggle, self._locale_dropdown], spacing=16),
+                    self._seed_color_field,
+                    self._color_swatches,
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+            initially_expanded=False,
+        )
+
         super().__init__(
             controls=[
                 page_header(ft.Icons.SETTINGS, t("settings.title", default="Settings")),
                 ft.Divider(),
-                ft.Text(t("settings.model_config"), size=16, weight=ft.FontWeight.W_500),
-                self._provider,
-                self._model,
-                self._api_key,
-                self._base_url,
-                ft.Container(height=16),
-                ft.Text(t("settings.gateway", default="Gateway"), size=16, weight=ft.FontWeight.W_500),
-                self._gateway_url,
-                ft.Container(height=16),
-                ft.Text(t("settings.appearance"), size=16, weight=ft.FontWeight.W_500),
-                ft.Row([self._theme_toggle, self._locale_dropdown, self._seed_color_field], spacing=16),
-                self._color_swatches,
+                assistant_section,
+                message_section,
+                connection_section,
+                appearance_section,
                 ft.Container(height=16),
                 save_btn,
             ],
@@ -1160,12 +1556,32 @@ class SettingsView(ft.Column):
         )
 
     def get_config(self) -> dict[str, str | None]:
+        max_tokens_value = 0
+        if self._max_tokens_enabled.value:
+            try:
+                max_tokens_value = int((self._max_tokens.value or "0").strip() or "0")
+            except ValueError:
+                max_tokens_value = 0
+
         return {
             "provider": self._provider.value,
             "model": self._model.value,
             "api_key": self._api_key.value,
             "base_url": self._base_url.value or None,
             "gateway_url": self._gateway_url.value or None,
+            "auth_token": self._auth_token.value or None,
+            "temperature": round(float(self._temperature.value or 0.7), 2),
+            "context_turns": int(self._context_turns.value or 12),
+            "stream_output": bool(self._stream_output.value),
+            "max_tokens": max_tokens_value,
+            "show_prompt": bool(self._show_prompt.value),
+            "serif_font": bool(self._serif_font.value),
+            "collapse_thinking": bool(self._collapse_thinking.value),
+            "message_outline": bool(self._message_outline.value),
+            "message_style": self._message_style.value or "standard",
+            "dark_mode": bool(self._theme_toggle.value),
+            "locale": self._locale_dropdown.value or "en",
+            "seed_color": self._seed_color_field.value or "#6366f1",
         }
 
     def _build_model_options(self, provider: str) -> list[Any]:
@@ -1231,6 +1647,15 @@ class SettingsView(ft.Column):
         else:
             self._api_key.hint_text = ""
         self._safe_update(self._api_key)
+
+    async def _handle_max_tokens_toggle(self, e: Any) -> None:
+        self._max_tokens.disabled = not bool(self._max_tokens_enabled.value)
+        self._safe_update(self._max_tokens)
+
+    async def _sync_max_tokens_enabled(self, value: bool) -> None:
+        self._max_tokens_enabled.value = bool(value)
+        self._max_tokens.disabled = not bool(value)
+        self._safe_update(self._max_tokens)
 
     async def _handle_save(self, e: Any) -> None:
         cfg = self.get_config()
@@ -1320,12 +1745,15 @@ class PyClawApp:
             "model": DEFAULT_MODEL,
             "api_key": None,
             "base_url": None,
-            "gateway_url": "ws://127.0.0.1:18789/",
+            "gateway_url": DEFAULT_GATEWAY_WS_URL_SLASH,
         }
         self._current_session: str | None = None
         self._session_mgr: Any = None
         self._gw: Any = None
         self._gw_connected = False
+        self._gw_state = "offline"
+        self._gw_last_error = ""
+        self._session_paths_by_id: dict[str, str] = {}
 
     async def main(self, page: ft.Page) -> None:
         i18n = I18n("en")
@@ -1414,6 +1842,8 @@ class PyClawApp:
 
         self._overview_panel = build_overview_panel(
             gateway_client=self._gw,
+            get_gateway_client=lambda: self._gw,
+            get_connection_state=lambda: self._gw_state,
             config={"url": self._config.get("gateway_url", ""), "auth_token": self._config.get("auth_token", "")},
             on_connect=self._handle_overview_connect,
             on_refresh=self._refresh_overview,
@@ -1437,7 +1867,11 @@ class PyClawApp:
 
         from pyclaw.ui.skills_panel import build_skills_panel
 
-        self._skills_panel = build_skills_panel(gateway_client=self._gw)
+        self._skills_panel = build_skills_panel(
+            gateway_client=self._gw,
+            get_gateway_client=lambda: self._gw,
+            on_feedback=self._show_snackbar,
+        )
 
         from pyclaw.ui.nodes_panel import build_nodes_panel
 
@@ -1445,7 +1879,11 @@ class PyClawApp:
 
         from pyclaw.ui.config_panel import build_config_panel
 
-        self._config_panel = build_config_panel(gateway_client=self._gw)
+        self._config_panel = build_config_panel(
+            gateway_client=self._gw,
+            get_gateway_client=lambda: self._gw,
+            on_feedback=self._show_snackbar,
+        )
 
         from pyclaw.ui.usage_panel import build_usage_panel
 
@@ -1454,6 +1892,14 @@ class PyClawApp:
         from pyclaw.ui.cron_panel import build_cron_panel
 
         self._cron_panel_v2 = build_cron_panel(gateway_client=self._gw)
+        build_quick_actions_panel = importlib.import_module("pyclaw.ui.quick_actions_panel").build_quick_actions_panel
+
+        self._quick_actions_panel = build_quick_actions_panel(
+            gateway_client=self._gw,
+            get_gateway_client=lambda: self._gw,
+            on_navigate=self._navigate_to,
+            on_feedback=self._show_snackbar,
+        )
 
         nav_items = [
             (ft.Icons.CHAT_BUBBLE_OUTLINE, ft.Icons.CHAT_BUBBLE, t("nav.chat")),
@@ -1473,6 +1919,7 @@ class PyClawApp:
             (ft.Icons.TUNE_OUTLINED, ft.Icons.TUNE, t("nav.config", default="Config")),
             (ft.Icons.MONITOR_HEART_OUTLINED, ft.Icons.MONITOR_HEART, t("nav.system", default="System")),
             (ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS, t("nav.settings")),
+            (ft.Icons.FLASH_ON, ft.Icons.FLASH_ON, t("nav.quick_actions", default="Quick Actions")),
         ]
 
         nav_destinations = [
@@ -1485,6 +1932,19 @@ class PyClawApp:
             destinations=nav_destinations,
             on_change=self._handle_nav_change,
             min_width=72,
+            leading=ft.Container(
+                content=ft.Text(
+                    t("nav.grouped", default="Grouped"),
+                    size=10,
+                    color=get_theme().colors.muted,
+                ),
+                padding=ft.padding.only(top=8, bottom=8),
+            ),
+            trailing=ft.IconButton(
+                icon=ft.Icons.FLASH_ON,
+                tooltip=t("nav.quick_actions", default="Quick Actions"),
+                on_click=lambda e: _fire_async(self._navigate_to, 17),
+            ),
         )
 
         # Mobile bottom nav: 5 core items + "More" drawer
@@ -1576,8 +2036,18 @@ class PyClawApp:
         )
         self._window_controls = window_controls
 
-        # Top bar: menubar (desktop only) + toolbar + gateway indicator + window buttons
+        brand_badge = ft.Column(
+            [
+                ft.Text(t("app.title", default="pyclaw"), size=14, weight=ft.FontWeight.W_700),
+                ft.Text(t("app.subtitle", default="AI Assistant"), size=10, color=theme.colors.muted),
+            ],
+            spacing=0,
+            tight=True,
+        )
+
+        # Top bar: brand + menubar + toolbar + gateway indicator + window buttons
         top_bar_controls: list[ft.Control] = []
+        top_bar_controls.append(brand_badge)
         if self._menubar:
             top_bar_controls.append(self._menubar)
         if self._toolbar:
@@ -1657,14 +2127,41 @@ class PyClawApp:
         """Try connecting to the gateway; fall back to in-process mode."""
         from pyclaw.ui.gateway_client import GatewayClient
 
-        url = self._config.get("gateway_url", "ws://127.0.0.1:18789/")
+        old = self._gw
+        if old is not None:
+            try:
+                await old.disconnect()
+            except Exception:
+                pass
+
+        url = self._config.get("gateway_url", DEFAULT_GATEWAY_WS_URL_SLASH)
         self._gw = GatewayClient(url=url, auth_token=self._config.get("auth_token"))
+        self._gw.on_connection_state(self._handle_gateway_state_change)
         try:
             await asyncio.wait_for(self._gw.connect(), timeout=5.0)
             self._gw_connected = self._gw.connected
+            self._gw_state = "connected" if self._gw.connected else "reconnecting"
         except Exception:
             logger.info("Gateway not available, running in local mode")
             self._gw_connected = False
+            self._gw_state = "offline"
+        self._update_gw_indicator()
+
+    def _handle_gateway_state_change(self, state: str, meta: dict[str, Any]) -> None:
+        self._gw_state = state
+        self._gw_connected = state == "connected" and bool(self._gw and self._gw.connected)
+        error = meta.get("error")
+        if isinstance(error, str):
+            self._gw_last_error = error
+        if state == "connected":
+            self._gw_last_error = ""
+        self._update_gw_indicator()
+        if hasattr(self, "_overview_panel") and hasattr(self._overview_panel, "refresh"):
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._overview_panel.refresh())
+            except RuntimeError:
+                pass
 
     # ─── Navigation ──────────────────────────────────────────────────
 
@@ -1686,6 +2183,7 @@ class PyClawApp:
         14: "_config_panel",
         15: "_system_panel",
         16: "_settings_view",
+        17: "_quick_actions_panel",
     }
 
     _NAV_REFRESH_MAP: dict[int, str] = {
@@ -1740,18 +2238,41 @@ class PyClawApp:
     def _show_more_drawer(self) -> None:
         """Open a bottom sheet with all navigation items for mobile."""
         theme = get_theme()
+        grouped_indices: list[tuple[str, list[int]]] = [
+            (t("nav.group.communication", default="Communication"), [3, 5, 17]),
+            (t("nav.group.capability", default="Capabilities"), [2, 9, 8, 7]),
+            (t("nav.group.monitoring", default="Monitoring"), [6, 12, 15]),
+            (t("nav.group.advanced", default="Advanced"), [4, 10, 11, 13, 14, 16]),
+        ]
+
+        idx_to_item = {idx: item for idx, item in enumerate(self._all_nav_items)}
         items: list[ft.Control] = []
-        for nav_idx, (ic, _sel, lbl) in enumerate(self._all_nav_items):
-            if nav_idx in self._MOBILE_NAV_INDICES:
+        for group_label, indices in grouped_indices:
+            group_tiles: list[ft.Control] = []
+            for nav_idx in indices:
+                if nav_idx in self._MOBILE_NAV_INDICES:
+                    continue
+                item = idx_to_item.get(nav_idx)
+                if not item:
+                    continue
+                ic, _sel, lbl = item
+                group_tiles.append(
+                    ft.ListTile(
+                        leading=ft.Icon(ic, size=20),
+                        title=ft.Text(lbl, size=14),
+                        data=nav_idx,
+                        on_click=self._handle_more_item_click,
+                    )
+                )
+            if not group_tiles:
                 continue
             items.append(
-                ft.ListTile(
-                    leading=ft.Icon(ic, size=20),
-                    title=ft.Text(lbl, size=14),
-                    data=nav_idx,
-                    on_click=self._handle_more_item_click,
+                ft.Container(
+                    content=ft.Text(group_label, size=12, weight=ft.FontWeight.W_600, color=theme.colors.muted),
+                    padding=ft.padding.only(left=16, top=12, bottom=6),
                 )
             )
+            items.extend(group_tiles)
 
         sheet = ft.BottomSheet(
             content=ft.Container(
@@ -1818,7 +2339,11 @@ class PyClawApp:
         self._update_gw_indicator()
 
     async def _refresh_overview(self) -> None:
-        pass
+        if hasattr(self, "_overview_panel") and hasattr(self._overview_panel, "refresh"):
+            try:
+                await self._overview_panel.refresh()
+            except Exception:
+                pass
 
     def _update_gw_indicator(self) -> None:
         theme = get_theme()
@@ -1827,10 +2352,22 @@ class PyClawApp:
             if isinstance(row, ft.Row) and len(row.controls) >= 2:
                 dot = row.controls[0]
                 label = row.controls[1]
+                state = (self._gw_state or "offline").lower()
+                color = theme.colors.error
+                text = "Offline"
+                if state == "connected":
+                    color = theme.colors.success
+                    text = "Gateway"
+                elif state in {"connecting", "reconnecting"}:
+                    color = theme.colors.warning
+                    text = "Reconnecting"
+                elif state == "error":
+                    color = theme.colors.error
+                    text = "Gateway Error"
                 if isinstance(dot, ft.Container):
-                    dot.bgcolor = theme.colors.success if self._gw_connected else theme.colors.error
+                    dot.bgcolor = color
                 if isinstance(label, ft.Text):
-                    label.value = "Gateway" if self._gw_connected else "Offline"
+                    label.value = text
             self._safe_update(self._gw_indicator)
 
     # ─── Chat handlers ───────────────────────────────────────────────
@@ -1865,6 +2402,8 @@ class PyClawApp:
         except GatewayError as exc:
             if exc.code == "not_connected":
                 self._gw_connected = False
+                self._gw_state = "offline"
+                self._gw_last_error = str(exc)
                 self._update_gw_indicator()
                 self._chat_view.finish_streaming(
                     error=t("chat.gateway_disconnected", default="Gateway connection lost")
@@ -1942,6 +2481,14 @@ class PyClawApp:
     # ─── Settings ────────────────────────────────────────────────────
 
     async def _handle_save_settings(self, config: dict[str, Any]) -> None:
+        prev_gateway_url = self._config.get("gateway_url")
+        prev_auth_token = self._config.get("auth_token")
+
+        normalized_gateway_url = (config.get("gateway_url") or DEFAULT_GATEWAY_WS_URL_SLASH).strip()
+        if not normalized_gateway_url:
+            normalized_gateway_url = DEFAULT_GATEWAY_WS_URL_SLASH
+        config["gateway_url"] = normalized_gateway_url
+
         self._config.update(config)
 
         provider = config.get("provider") or DEFAULT_PROVIDER
@@ -1950,10 +2497,21 @@ class PyClawApp:
             self._toolbar_obj.update_provider(provider, model)
 
         gw_url = config.get("gateway_url")
-        if gw_url and gw_url != (self._gw._url if self._gw else ""):
+        auth_token = config.get("auth_token")
+        should_reconnect = False
+        if gw_url != prev_gateway_url:
             self._config["gateway_url"] = gw_url
+            should_reconnect = True
+        if auth_token != prev_auth_token:
+            self._config["auth_token"] = auth_token
+            should_reconnect = True
+        if should_reconnect:
             await self._connect_gateway()
             self._update_gw_indicator()
+
+        if self._page:
+            self._page.theme_mode = ft.ThemeMode.DARK if config.get("dark_mode", True) else ft.ThemeMode.LIGHT
+            self._page.update()
 
         if self._gw_connected and self._gw:
             try:
@@ -2099,7 +2657,10 @@ class PyClawApp:
 
         if self._gw_connected and self._gw:
             try:
-                result = await self._gw.call("sessions.preview", {"path": session_id, "limit": 100})
+                result = await self._gw.call(
+                    "sessions.preview",
+                    {"path": self._resolve_session_path(session_id), "limit": 100},
+                )
                 messages = result.get("messages", [])
                 for msg in messages:
                     raw_content = msg.get("content", "")
@@ -2130,7 +2691,7 @@ class PyClawApp:
             if not sessions_dir.is_dir():
                 continue
             for jsonl in sessions_dir.glob("*.jsonl"):
-                if session_id in jsonl.stem:
+                if jsonl.stem == session_id:
                     mgr = SessionManager.open(jsonl)
                     for msg in mgr.messages:
                         content = msg.content if isinstance(msg.content, str) else ""
@@ -2149,7 +2710,7 @@ class PyClawApp:
     async def _handle_delete_session(self, session_id: str) -> None:
         if self._gw_connected and self._gw:
             try:
-                await self._gw.call("sessions.delete", {"path": session_id})
+                await self._gw.call("sessions.delete", {"path": self._resolve_session_path(session_id)})
             except Exception:
                 self._delete_session_file(session_id)
         else:
@@ -2171,7 +2732,7 @@ class PyClawApp:
             if not sessions_dir.is_dir():
                 continue
             for jsonl in sessions_dir.glob("*.jsonl"):
-                if session_id in jsonl.stem:
+                if jsonl.stem == session_id:
                     jsonl.unlink(missing_ok=True)
                     return
 
@@ -2181,9 +2742,13 @@ class PyClawApp:
                 result = await self._gw.call("sessions.list")
                 sessions_data = result.get("sessions", [])
                 sessions: list[dict[str, str]] = []
+                self._session_paths_by_id.clear()
                 now = datetime.now(UTC)
                 for s in sessions_data[:30]:
                     sid = s.get("id", s.get("path", ""))
+                    raw_path = s.get("path", "")
+                    if isinstance(sid, str) and isinstance(raw_path, str) and sid:
+                        self._session_paths_by_id[sid] = raw_path
                     name = s.get("name", sid[:16])
                     mtime = s.get("modified", "")
                     group = self._session_date_group(mtime, now) if mtime else ""
@@ -2200,6 +2765,7 @@ class PyClawApp:
 
         agents_dir = resolve_agents_dir()
         sessions: list[dict[str, str]] = []
+        self._session_paths_by_id.clear()
         now = datetime.now(UTC)
 
         main_sessions = agents_dir / "main" / "sessions"
@@ -2229,6 +2795,9 @@ class PyClawApp:
                 sessions.append({"id": f.stem, "name": f.stem[:16], "age": age, "group": group})
 
         self._session_sidebar.update_sessions(sessions)
+
+    def _resolve_session_path(self, session_id: str) -> str:
+        return self._session_paths_by_id.get(session_id, session_id)
 
     # ─── UI state helpers ────────────────────────────────────────────────
 
@@ -2399,7 +2968,7 @@ def run_app() -> None:
     ft.run(app.main)
 
 
-def run_web(port: int = 8550) -> None:
+def run_web(port: int = DEFAULT_UI_WEB_PORT) -> None:
     """Launch the Flet web application."""
     app = PyClawApp()
     ft.run(app.main, view=ft.AppView.WEB_BROWSER, port=port)

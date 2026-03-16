@@ -14,6 +14,13 @@ import socket
 from dataclasses import dataclass
 from typing import Any
 
+from pyclaw.constants.env import (
+    ENV_CLAWDBOT_MDNS_HOSTNAME,
+    ENV_PYCLAW_DISABLE_BONJOUR,
+    ENV_PYCLAW_MDNS_HOSTNAME,
+    ENV_PYCLAW_TEST,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +89,7 @@ async def start_gateway_bonjour_advertiser(
     Falls back to a no-op advertiser if ``zeroconf`` is not installed or
     mDNS is disabled via environment variable.
     """
-    if os.environ.get("PYCLAW_DISABLE_BONJOUR") or os.environ.get("PYCLAW_TEST"):
+    if os.environ.get(ENV_PYCLAW_DISABLE_BONJOUR) or os.environ.get(ENV_PYCLAW_TEST):
         logger.debug("Bonjour disabled via environment")
         return BonjourAdvertiser()
 
@@ -92,7 +99,7 @@ async def start_gateway_bonjour_advertiser(
         logger.warning("zeroconf not installed; Bonjour advertising disabled")
         return BonjourAdvertiser()
 
-    mdns_hostname = os.environ.get("PYCLAW_MDNS_HOSTNAME") or os.environ.get("CLAWDBOT_MDNS_HOSTNAME") or "pyclaw"
+    mdns_hostname = os.environ.get(ENV_PYCLAW_MDNS_HOSTNAME) or os.environ.get(ENV_CLAWDBOT_MDNS_HOSTNAME) or "pyclaw"
     mdns_hostname = mdns_hostname.replace(".local", "").split(".")[0]
 
     instance_name = opts.instance_name or f"{socket.gethostname().split('.')[0]} (pyclaw)"

@@ -7,6 +7,7 @@ across all panels, backported from Flutter reference design patterns.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from typing import Any
 
 import flet as ft
@@ -26,12 +27,23 @@ def _fire_async(handler: Any, *args: Any) -> None:
 
 def error_state(message: str, on_retry: Any = None) -> ft.Container:
     """Standard error state: icon + message + optional retry button."""
+    from pyclaw.ui.i18n import t
+
     return ft.Container(
         content=ft.Column(
             [
                 ft.Icon(ft.Icons.ERROR_OUTLINE, size=48, color=ft.Colors.ERROR),
                 ft.Text(message, size=14, color=ft.Colors.ERROR),
-                *([ft.ElevatedButton("重试", on_click=lambda e: _fire_async(on_retry))] if on_retry else []),
+                *(
+                    [
+                        ft.ElevatedButton(
+                            t("common.retry", default="Retry"),
+                            on_click=lambda e: _fire_async(on_retry),
+                        )
+                    ]
+                    if on_retry
+                    else []
+                ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
@@ -161,6 +173,204 @@ def status_chip(
         bgcolor=ft.Colors.with_opacity(0.15, color),
         padding=ft.padding.symmetric(horizontal=8, vertical=3),
         border_radius=ft.border_radius.all(8),
+    )
+
+
+def slider_input(
+    label: str,
+    min_val: float,
+    max_val: float,
+    value: float,
+    *,
+    step: float = 0.1,
+    unit: str = "",
+    tooltip: str = "",
+    on_change: Callable[[float], Any] | None = None,
+) -> ft.Column:
+    """Slider + numeric input combo with optional tooltip."""
+    theme = get_theme()
+    value_field = ft.TextField(
+        value=f"{value:g}{unit}",
+        width=96,
+        dense=True,
+        text_align=ft.TextAlign.RIGHT,
+    )
+
+    def _sync_from_slider(e: ft.ControlEvent) -> None:
+        current = float(e.control.value or value)
+        value_field.value = f"{current:g}{unit}"
+        if value_field.page:
+            value_field.update()
+        if on_change:
+            on_change(current)
+
+    def _sync_from_text(e: ft.ControlEvent) -> None:
+        text = (e.control.value or "").strip().replace(unit, "").strip()
+        try:
+            parsed = float(text)
+        except ValueError:
+            return
+        parsed = max(min_val, min(max_val, parsed))
+        slider.value = parsed
+        if slider.page:
+            slider.update()
+        if on_change:
+            on_change(parsed)
+
+    divisions = int(round((max_val - min_val) / step)) if step > 0 else None
+    slider = ft.Slider(
+        min=min_val,
+        max=max_val,
+        value=value,
+        divisions=divisions,
+        on_change=_sync_from_slider,
+        expand=True,
+    )
+    value_field.on_submit = _sync_from_text
+    value_field.on_blur = _sync_from_text
+
+    title_controls: list[ft.Control] = [ft.Text(label, size=13, weight=ft.FontWeight.W_500)]
+    if tooltip:
+        title_controls.append(
+            ft.Icon(ft.Icons.INFO_OUTLINE, size=14, color=theme.colors.muted, tooltip=tooltip),
+        )
+    title_controls.extend([ft.Container(expand=True), value_field])
+
+    return ft.Column(
+        controls=[
+            ft.Row(title_controls, spacing=6),
+            slider,
+        ],
+        spacing=6,
+        tight=True,
+    )
+
+
+def switch_with_info(
+    label: str,
+    value: bool,
+    *,
+    description: str = "",
+    tooltip: str = "",
+    on_change: Callable[[bool], Any] | None = None,
+) -> ft.Row:
+    """Switch row with supporting description and info tooltip."""
+    theme = get_theme()
+
+    def _on_toggle(e: ft.ControlEvent) -> None:
+        if on_change:
+            on_change(bool(e.control.value))
+
+    switch = ft.Switch(value=value, on_change=_on_toggle)
+    title_row_controls: list[ft.Control] = [ft.Text(label, size=13, weight=ft.FontWeight.W_500)]
+    if tooltip:
+        title_row_controls.append(
+            ft.Icon(ft.Icons.INFO_OUTLINE, size=14, color=theme.colors.muted, tooltip=tooltip),
+        )
+
+    text_controls: list[ft.Control] = [ft.Row(title_row_controls, spacing=6)]
+    if description:
+        text_controls.append(
+            ft.Text(description, size=11, color=theme.colors.muted),
+        )
+
+    return ft.Row(
+        controls=[
+            switch,
+            ft.Column(text_controls, spacing=2, tight=True, expand=True),
+        ],
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        vertical_alignment=ft.CrossAxisAlignment.START,
+        spacing=10,
+    )
+
+
+def expandable_section(
+    title: str,
+    icon: str,
+    content: ft.Control,
+    *,
+    initially_expanded: bool = False,
+    on_expand: Callable[[bool], Any] | None = None,
+) -> ft.Container:
+    """Collapsible section container used by Settings."""
+    theme = get_theme()
+    expanded_state = {"value": initially_expanded}
+
+    arrow = ft.Icon(
+        ft.Icons.EXPAND_LESS if initially_expanded else ft.Icons.EXPAND_MORE,
+        size=20,
+        color=theme.colors.muted,
+    )
+    body = ft.Container(content=content, visible=initially_expanded, padding=ft.padding.all(12))
+
+    def _toggle(_e: ft.ControlEvent) -> None:
+        expanded_state["value"] = not expanded_state["value"]
+        body.visible = expanded_state["value"]
+        arrow.icon = ft.Icons.EXPAND_LESS if expanded_state["value"] else ft.Icons.EXPAND_MORE
+        if body.page:
+            body.update()
+        if arrow.page:
+            arrow.update()
+        if on_expand:
+            on_expand(expanded_state["value"])
+
+    header = ft.Container(
+        content=ft.Row(
+            [
+                arrow,
+                ft.Icon(icon, size=18, color=theme.colors.primary),
+                ft.Text(title, size=14, weight=ft.FontWeight.W_600),
+            ],
+            spacing=8,
+        ),
+        padding=ft.padding.symmetric(horizontal=12, vertical=10),
+        on_click=_toggle,
+    )
+
+    return ft.Container(
+        content=ft.Column([header, body], spacing=0, tight=True),
+        border=ft.border.all(0.5, theme.colors.border),
+        border_radius=10,
+    )
+
+
+def quick_action_card(
+    icon: str,
+    title: str,
+    description: str,
+    actions: list[dict[str, Any]],
+    *,
+    on_click: Any = None,
+) -> ft.Container:
+    """Quick action card with one-line action chips."""
+    theme = get_theme()
+    action_controls = [
+        ft.OutlinedButton(
+            a.get("label", ""),
+            icon=a.get("icon"),
+            on_click=a.get("on_click"),
+        )
+        for a in actions
+    ]
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Row(
+                    [ft.Icon(icon, size=20, color=theme.colors.primary), ft.Text(title, weight=ft.FontWeight.W_600)]
+                ),
+                ft.Text(description, size=12, color=theme.colors.muted),
+                ft.Row(action_controls, spacing=8, wrap=True),
+            ],
+            spacing=8,
+            tight=True,
+        ),
+        padding=ft.padding.all(12),
+        border=ft.border.all(0.5, theme.colors.border),
+        border_radius=12,
+        bgcolor=theme.colors.surface_container,
+        on_click=on_click,
+        animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
     )
 
 

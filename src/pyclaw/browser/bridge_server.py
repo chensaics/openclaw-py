@@ -23,6 +23,7 @@ from pyclaw.browser.relay import (
     RelayConfig,
     RelayMessage,
 )
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 class BridgeConfig:
     """Configuration for the bridge server."""
 
-    host: str = "127.0.0.1"
+    host: str = DEFAULT_GATEWAY_BIND
     port: int = 9222
     auth_token: str = ""
     auto_generate_token: bool = True

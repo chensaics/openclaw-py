@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import typer
@@ -12,6 +13,7 @@ from pyclaw.terminal.palette import PALETTE
 
 def config_get(key: str) -> None:
     """Get a configuration value by dotted key path."""
+    from pyclaw.config.io import load_config_raw
     from pyclaw.config.paths import resolve_config_path
 
     p = PALETTE
@@ -20,7 +22,7 @@ def config_get(key: str) -> None:
         typer.echo(f"{p.error}Config not found. Run 'pyclaw setup --wizard'.{p.reset}")
         raise typer.Exit(1)
 
-    raw = json.loads(config_path.read_text(encoding="utf-8"))
+    raw = load_config_raw(config_path)
     value = _get_nested(raw, key)
     if value is None:
         typer.echo(f"{p.warn}Key '{key}' not found.{p.reset}")
@@ -34,6 +36,7 @@ def config_get(key: str) -> None:
 
 def config_set(key: str, value: str) -> None:
     """Set a configuration value by dotted key path."""
+    from pyclaw.config.io import load_config_raw
     from pyclaw.config.paths import resolve_config_path
 
     p = PALETTE
@@ -42,7 +45,7 @@ def config_set(key: str, value: str) -> None:
         typer.echo(f"{p.error}Config not found. Run 'pyclaw setup --wizard'.{p.reset}")
         raise typer.Exit(1)
 
-    raw = json.loads(config_path.read_text(encoding="utf-8"))
+    raw = load_config_raw(config_path)
 
     # Parse value: try JSON first, then string
     parsed: Any
@@ -52,7 +55,7 @@ def config_set(key: str, value: str) -> None:
         parsed = value
 
     _set_nested(raw, key, parsed)
-    config_path.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
+    _write_raw_config(config_path, raw)
     typer.echo(f"{p.success}Set {key} = {value}{p.reset}")
 
 
@@ -81,6 +84,7 @@ def config_validate() -> None:
 
 def config_list() -> None:
     """List all configuration values."""
+    from pyclaw.config.io import load_config_raw
     from pyclaw.config.paths import resolve_config_path
 
     p = PALETTE
@@ -89,8 +93,13 @@ def config_list() -> None:
         typer.echo(f"{p.warn}Config not found.{p.reset}")
         return
 
-    raw = json.loads(config_path.read_text(encoding="utf-8"))
+    raw = load_config_raw(config_path)
     _print_flat(raw, "")
+
+
+def _write_raw_config(config_path: Path, raw: dict[str, Any]) -> None:
+    """Persist a raw config dict as normalized JSON text."""
+    config_path.write_text(json.dumps(raw, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _get_nested(data: dict[str, Any], key: str) -> Any:

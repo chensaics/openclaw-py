@@ -16,6 +16,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, cast
 
+from pyclaw.constants.env import ENV_PYCLAW_TEST_TAILSCALE_BINARY
+
 logger = logging.getLogger(__name__)
 
 _cached_binary: str | None = None
@@ -74,7 +76,7 @@ def _parse_noisy_json(raw: str) -> dict[str, Any]:
 
 async def find_tailscale_binary() -> str | None:
     """Find the tailscale CLI binary. Returns path or None."""
-    env_override = os.environ.get("PYCLAW_TEST_TAILSCALE_BINARY")
+    env_override = os.environ.get(ENV_PYCLAW_TEST_TAILSCALE_BINARY)
     if env_override:
         return env_override
 

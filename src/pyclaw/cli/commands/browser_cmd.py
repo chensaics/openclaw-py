@@ -5,10 +5,14 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import typer
+
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL, STATUS_RUNNING, STATUS_STOPPED
+from pyclaw.constants.storage import BROWSER_PROFILES_DIRNAME
 
 
 def browser_status_command(
@@ -323,6 +327,39 @@ def browser_delete_profile_command(
     _emit(payload, output_json=output_json, text=f"Profile '{name}' deleted.")
 
 
+def browser_lifecycle_audit_command(*, output_json: bool) -> None:
+    """Audit browser profile lifecycle metadata from local persisted profiles."""
+    from pyclaw.config.paths import resolve_state_dir
+
+    profiles_dir = resolve_state_dir() / BROWSER_PROFILES_DIRNAME
+    rows: list[dict[str, Any]] = []
+    for item in sorted(profiles_dir.glob("*.json")):
+        stat = item.stat()
+        rows.append(
+            {
+                "profile": item.stem,
+                "path": str(item),
+                "size": stat.st_size,
+                "modifiedAt": datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
+            }
+        )
+
+    payload = {
+        "profilesDir": str(profiles_dir),
+        "count": len(rows),
+        "profiles": rows,
+    }
+    if output_json:
+        _emit(payload, output_json=True, text="")
+        return
+    if not rows:
+        typer.echo(f"No browser profile snapshots found in {profiles_dir}")
+        return
+    typer.echo(f"Browser profile lifecycle audit ({len(rows)}):")
+    for row in rows:
+        typer.echo(f"- {row['profile']} size={row['size']} modified={row['modifiedAt']}")
+
+
 def browser_focus_command(
     *,
     tab_id: str,
@@ -366,7 +403,7 @@ def browser_close_command(
 
 
 def _format_status(payload: dict[str, Any]) -> str:
-    started = "running" if payload.get("started") else "stopped"
+    started = STATUS_RUNNING if payload.get("started") else STATUS_STOPPED
     profile = payload.get("profile", "pyclaw")
     tab_count = payload.get("tabCount", 0)
     active_url = payload.get("activeUrl", "")
@@ -495,7 +532,7 @@ async def _connect(
 
 
 def _ws_candidates(url: str) -> list[str]:
-    base = (url or "ws://127.0.0.1:18789").strip()
+    base = (url or DEFAULT_GATEWAY_WS_URL).strip()
     if base.startswith("http://"):
         base = "ws://" + base[len("http://") :]
     elif base.startswith("https://"):
@@ -505,7 +542,7 @@ def _ws_candidates(url: str) -> list[str]:
 
     candidates = [base]
     if base.endswith("/ws"):
-        candidates.append(base[: -len("/ws")] or "ws://127.0.0.1:18789")
+        candidates.append(base[: -len("/ws")] or DEFAULT_GATEWAY_WS_URL)
     else:
         candidates.append(base.rstrip("/") + "/ws")
     # de-duplicate while preserving order

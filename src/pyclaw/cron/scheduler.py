@@ -20,6 +20,8 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_OK
+
 logger = logging.getLogger("pyclaw.cron")
 
 
@@ -255,7 +257,7 @@ class CronScheduler:
         try:
             if self._handler:
                 handler_result = await self._handler(job)
-                result_text = str(handler_result) if handler_result is not None else "ok"
+                result_text = str(handler_result) if handler_result is not None else STATUS_OK
         except Exception as e:
             logger.exception("Cron job failed: %s", job.id)
             error_text = str(e)

@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND
+
 
 @dataclass
 class SSHHostConfig:
@@ -94,7 +96,7 @@ class TunnelConfig:
 
     ssh_host: str
     local_port: int
-    remote_host: str = "127.0.0.1"
+    remote_host: str = DEFAULT_GATEWAY_BIND
     remote_port: int = 0
     reverse: bool = False
     ssh_user: str = ""

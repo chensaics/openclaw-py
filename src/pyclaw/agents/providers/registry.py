@@ -15,6 +15,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from pyclaw.constants.runtime import STATUS_INACTIVE, STATUS_MISSING, STATUS_OK
+
 from .cn_providers import ALL_CN_PROVIDERS, build_cn_config
 from .openai_compat import (
     PRECONFIGURED_PROVIDERS,
@@ -87,6 +89,33 @@ class ProviderRegistry:
         for name, provider in self._providers.items():
             result[name] = provider.list_models()
         return result
+
+    def capability_registry(self) -> dict[str, dict[str, Any]]:
+        """Return a capability snapshot for provider governance checks."""
+        snapshot: dict[str, dict[str, Any]] = {}
+        for name, info in self._info.items():
+            snapshot[name] = {
+                "category": info.category,
+                "requires_api_key": info.requires_api_key,
+                "requires_oauth": info.requires_oauth,
+                "model_count": len(info.models),
+                "has_active_client": name in self._providers,
+            }
+        return snapshot
+
+    def health_probe(self, name: str) -> dict[str, Any]:
+        """Provide a lightweight provider health probe result."""
+        info = self._info.get(name)
+        active = self._providers.get(name)
+        if info is None:
+            return {"provider": name, "status": STATUS_MISSING, "active": False, "models": 0}
+        return {
+            "provider": name,
+            "status": STATUS_OK if active is not None else STATUS_INACTIVE,
+            "active": active is not None,
+            "models": len(info.models),
+            "category": info.category,
+        }
 
     def resolve_model(self, qualified_name: str) -> tuple[str, str]:
         """Resolve ``provider/model`` to (provider_name, model_id).

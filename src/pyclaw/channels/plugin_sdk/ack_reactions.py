@@ -14,6 +14,8 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 
+from pyclaw.constants.runtime import STATUS_DONE, STATUS_ERROR
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,8 +34,8 @@ class StatusType(str, Enum):
 
     THINKING = "thinking"
     TOOL_USE = "tool-use"
-    ERROR = "error"
-    DONE = "done"
+    ERROR = STATUS_ERROR
+    DONE = STATUS_DONE
     QUEUED = "queued"
 
 

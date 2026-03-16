@@ -17,6 +17,7 @@ from pyclaw.acp.session import create_in_memory_session_store
 from pyclaw.acp.session_mapper import SessionLabelMap, parse_session_meta, resolve_session_key
 from pyclaw.acp.types import AcpAgentInfo, AcpSessionMeta
 from pyclaw.config.paths import resolve_state_dir
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class AcpGatewayAgent:
     def __init__(
         self,
         *,
-        gateway_url: str = "ws://127.0.0.1:18789/ws",
+        gateway_url: str = DEFAULT_GATEWAY_WS_URL_PATH,
         auth_token: str | None = None,
         auth_password: str | None = None,
         default_session_key: str = "",
@@ -288,7 +289,7 @@ class AcpGatewayAgent:
 
 async def serve_acp_gateway(
     *,
-    gateway_url: str = "ws://127.0.0.1:18789/ws",
+    gateway_url: str = DEFAULT_GATEWAY_WS_URL_PATH,
     auth_token: str | None = None,
     auth_password: str | None = None,
     default_session_key: str = "",
@@ -386,7 +387,7 @@ def _read_file_secret(path: str) -> str:
 
 def _parse_cli_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="python -m pyclaw.acp.server")
-    parser.add_argument("--gateway-url", default="ws://127.0.0.1:18789/ws")
+    parser.add_argument("--gateway-url", default=DEFAULT_GATEWAY_WS_URL_PATH)
     parser.add_argument("--auth-token", default="")
     parser.add_argument("--auth-password", default="")
     parser.add_argument("--token-file", default="", help="Read auth token from file (overrides --auth-token)")

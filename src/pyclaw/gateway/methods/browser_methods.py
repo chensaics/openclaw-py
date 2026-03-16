@@ -22,6 +22,7 @@ from pyclaw.browser.session_manager import (
     list_profiles,
     profile_path,
 )
+from pyclaw.constants.storage import BROWSER_PROFILES_DIRNAME
 
 if TYPE_CHECKING:
     from pyclaw.gateway.server import GatewayConnection, MethodHandler
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 def _profiles_dir() -> Path:
     from pyclaw.config.paths import resolve_state_dir
 
-    d = resolve_state_dir() / "browser-profiles"
+    d = resolve_state_dir() / BROWSER_PROFILES_DIRNAME
     d.mkdir(parents=True, exist_ok=True)
     return d
 

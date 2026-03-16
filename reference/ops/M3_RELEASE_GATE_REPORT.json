@@ -1,0 +1,70 @@
+{
+  "milestone": "M3",
+  "generated_at": "2026-03-15T09:15:51.445285+00:00",
+  "version": "1.2.3",
+  "checks": [
+    {
+      "name": "project_version_available",
+      "passed": true,
+      "detail": "pyproject version=1.2.3",
+      "required": true
+    },
+    {
+      "name": "version_consistency",
+      "passed": true,
+      "detail": "expected=1.2.3 pyproject=1.2.3",
+      "required": true
+    },
+    {
+      "name": "release_notes_present",
+      "passed": true,
+      "detail": "release_notes non-empty",
+      "required": true
+    },
+    {
+      "name": "rollback_notes_present",
+      "passed": true,
+      "detail": "rollback_notes non-empty",
+      "required": true
+    },
+    {
+      "name": "artifacts_present",
+      "passed": true,
+      "detail": "artifacts=1 in /tmp/pytest-of-cs/pytest-55/test_ops_release_gate_enforces0/dist",
+      "required": true
+    },
+    {
+      "name": "artifact_naming_rule",
+      "passed": false,
+      "detail": "invalid: linuxx-1.2.3-build42.tar.gz",
+      "required": true
+    },
+    {
+      "name": "sha256_archive_generated",
+      "passed": true,
+      "detail": "/tmp/pytest-of-cs/pytest-55/test_ops_release_gate_enforces0/dist/SHA256SUMS.txt",
+      "required": true
+    },
+    {
+      "name": "working_tree_clean",
+      "passed": true,
+      "detail": "clean",
+      "required": true
+    }
+  ],
+  "failed_required": [
+    "artifact_naming_rule"
+  ],
+  "manual_checks_pending": [
+    "android_signing_and_manifest_review",
+    "apple_provisioning_entitlements_signing",
+    "desktop_cold_start_validation",
+    "web_route_and_static_asset_validation",
+    "gate_record_traceability_to_tag"
+  ],
+  "release_notes": "notes",
+  "rollback_notes": "rollback",
+  "artifacts_dir": "/tmp/pytest-of-cs/pytest-55/test_ops_release_gate_enforces0/dist",
+  "sha256_file": "/tmp/pytest-of-cs/pytest-55/test_ops_release_gate_enforces0/dist/SHA256SUMS.txt",
+  "decision": "hold"
+}

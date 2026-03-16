@@ -7,6 +7,7 @@ from typing import Any
 
 import flet as ft
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_SLASH
 from pyclaw.ui.components import card_tile, page_header, status_chip
 from pyclaw.ui.i18n import t
 from pyclaw.ui.theme import get_theme
@@ -24,6 +25,8 @@ def _fire_async(handler: Any, *args: Any) -> None:
 def build_overview_panel(
     *,
     gateway_client: Any = None,
+    get_gateway_client: Any = None,
+    get_connection_state: Any = None,
     config: dict | None = None,
     on_connect: Any = None,
     on_refresh: Any = None,
@@ -31,7 +34,7 @@ def build_overview_panel(
     theme = get_theme()
     url_field = ft.TextField(
         label=t("overview.url", default="Gateway URL"),
-        value=(config or {}).get("url", "ws://127.0.0.1:18789/"),
+        value=(config or {}).get("url", DEFAULT_GATEWAY_WS_URL_SLASH),
         dense=True,
         expand=True,
     )
@@ -46,28 +49,33 @@ def build_overview_panel(
     version_text = ft.Text("", size=12, color=theme.colors.muted)
     uptime_text = ft.Text("", size=12, color=theme.colors.muted)
 
+    def _resolve_gateway_client() -> Any:
+        if callable(get_gateway_client):
+            try:
+                return get_gateway_client()
+            except Exception:
+                return None
+        return gateway_client
+
     async def _fetch_status() -> None:
-        if not gateway_client or not gateway_client.connected:
+        gw = _resolve_gateway_client()
+        if not gw or not getattr(gw, "connected", False):
             return
         try:
-            health = await gateway_client.call("health", timeout=10.0)
+            health = await gw.call("health", timeout=10.0)
             version_text.value = f"Version: {health.get('version', 'N/A')}"
             uptime_sec = health.get("uptime_seconds", 0)
             if uptime_sec:
                 uptime_text.value = f"Uptime: {uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m"
             else:
                 uptime_text.value = ""
-            if version_text.page:
-                version_text.update()
-            if uptime_text.page:
-                uptime_text.update()
+            _safe_update(version_text)
+            _safe_update(uptime_text)
         except Exception:
             version_text.value = ""
             uptime_text.value = ""
-            if version_text.page:
-                version_text.update()
-            if uptime_text.page:
-                uptime_text.update()
+            _safe_update(version_text)
+            _safe_update(uptime_text)
 
     def _safe_update(control: ft.Control) -> None:
         try:
@@ -78,16 +86,34 @@ def build_overview_panel(
 
     def _update_status_display() -> None:
         status_info.controls.clear()
-        connected = gateway_client and gateway_client.connected
-        status_label = (
-            t("overview.connected", default="Connected") if connected else t("overview.offline", default="Offline")
-        )
-        status_color = theme.colors.success if connected else theme.colors.error
+        gw = _resolve_gateway_client()
+        state = "offline"
+        if callable(get_connection_state):
+            try:
+                state = str(get_connection_state() or "offline")
+            except Exception:
+                state = "offline"
+        elif gw and getattr(gw, "connected", False):
+            state = "connected"
+
+        state_lower = state.lower()
+        if state_lower == "connected":
+            status_label = t("overview.connected", default="Connected")
+            status_color = theme.colors.success
+        elif state_lower in {"connecting", "reconnecting"}:
+            status_label = t("overview.reconnecting", default="Reconnecting")
+            status_color = theme.colors.warning
+        elif state_lower == "error":
+            status_label = t("overview.error", default="Error")
+            status_color = theme.colors.error
+        else:
+            status_label = t("overview.offline", default="Offline")
+            status_color = theme.colors.error
         status_info.controls.append(status_chip(status_label, status_color))
         status_info.controls.append(version_text)
         status_info.controls.append(uptime_text)
         _safe_update(status_info)
-        if connected:
+        if gw and getattr(gw, "connected", False):
             _fire_async(_fetch_status)
 
     connect_btn = ft.ElevatedButton(
@@ -108,9 +134,10 @@ def build_overview_panel(
             await on_connect(cfg)
 
     async def _handle_refresh() -> None:
-        await _fetch_status()
         if on_refresh:
             await on_refresh()
+            return
+        await _fetch_status()
 
     status_card = card_tile(
         content=ft.Column(
@@ -248,7 +275,13 @@ def build_overview_panel(
         )
         panel.controls[1].content.controls.append(local_card)
 
-    if gateway_client:
+    if gateway_client or callable(get_gateway_client):
         _update_status_display()
+
+    async def _refresh_panel() -> None:
+        _update_status_display()
+        await _fetch_status()
+
+    panel.refresh = _refresh_panel  # type: ignore[attr-defined]
 
     return panel

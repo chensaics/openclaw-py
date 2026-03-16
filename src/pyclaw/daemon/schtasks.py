@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from pyclaw.constants.runtime import STATUS_RUNNING, STATUS_STOPPED
 from pyclaw.daemon.service import GatewayServiceInstallArgs, GatewayServiceRuntime
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class SchtasksService:
             line = line.strip()
             if "Status:" in line:
                 status_val = line.split(":", 1)[1].strip()
-                runtime.status = "running" if status_val == "Running" else "stopped"
+                runtime.status = STATUS_RUNNING if status_val == "Running" else STATUS_STOPPED
             elif "Last Result:" in line:
                 try:
                     runtime.last_exit_code = int(line.split(":", 1)[1].strip())

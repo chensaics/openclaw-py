@@ -6,7 +6,18 @@ pyclaw 通过一个 JSON5 配置文件管理所有设置。本文档介绍配置
 
 ## 配置文件
 
-配置文件位于 `~/.pyclaw/pyclaw.json`，使用 **JSON5** 格式（支持注释和尾逗号）。
+默认配置文件位于 `~/.pyclaw/pyclaw.json`，使用 **JSON5** 格式（支持注释和尾逗号）。
+
+为兼容 openclaw 生态，也支持以下位置/命名：
+
+- `~/.openclaw/openclaw.json`
+- `OPENCLAW_CONFIG_PATH` / `OPENCLAW_STATE_DIR`（与 `PYCLAW_*` 对等）
+
+解析优先级：
+
+1. `PYCLAW_CONFIG_PATH` / `PYCLAW_STATE_DIR`
+2. `OPENCLAW_CONFIG_PATH` / `OPENCLAW_STATE_DIR`
+3. 自动探测现有状态目录（`.pyclaw` 优先，其次 `.openclaw`）
 
 如果文件不存在，pyclaw 使用安全的默认值运行。通常需要配置的场景：
 
@@ -20,7 +31,7 @@ pyclaw 通过一个 JSON5 配置文件管理所有设置。本文档介绍配置
 ## 最小示例
 
 ```json5
-// ~/.pyclaw/pyclaw.json
+// ~/.pyclaw/pyclaw.json 或 ~/.openclaw/openclaw.json
 {
   // 模型提供商
   models: {
@@ -50,8 +61,10 @@ pyclaw setup --wizard
 pyclaw config get agents.defaults.model
 pyclaw config set agents.defaults.model "gpt-4o"
 
-# 3. 直接编辑文件
+# 3. 直接编辑文件（按你当前生效路径）
 vim ~/.pyclaw/pyclaw.json
+# 或
+vim ~/.openclaw/openclaw.json
 
 # 4. Gateway RPC（程序化更新）
 # 通过 WebSocket 调用 config.get / config.set / config.patch
@@ -268,6 +281,10 @@ pyclaw 按以下优先级读取环境变量：
 | `PYCLAW_GATEWAY_PORT` | Gateway 端口 | `18789` |
 | `PYCLAW_STATE_DIR` | 状态目录 | `~/.pyclaw` |
 | `PYCLAW_CONFIG_PATH` | 配置文件路径 | `~/.pyclaw/pyclaw.json` |
+| `OPENCLAW_AUTH_TOKEN` | Gateway 认证 Token（兼容） | — |
+| `OPENCLAW_GATEWAY_PORT` | Gateway 端口（兼容） | `18789` |
+| `OPENCLAW_STATE_DIR` | 状态目录（兼容） | `~/.openclaw` |
+| `OPENCLAW_CONFIG_PATH` | 配置文件路径（兼容） | `~/.openclaw/openclaw.json` |
 
 ### 配置中引用环境变量
 
@@ -309,8 +326,8 @@ Gateway 会监控配置文件变化并自动应用更新。大部分设置无需
 ## 状态目录结构
 
 ```
-~/.pyclaw/
-├── pyclaw.json          # 主配置（JSON5）
+~/.pyclaw/ 或 ~/.openclaw/
+├── pyclaw.json / openclaw.json  # 主配置（JSON5）
 ├── auth-profiles.json   # API Key 与 OAuth 凭证
 ├── credentials/         # Web Provider 凭证文件
 ├── sessions/            # Agent 会话记录（JSONL）
@@ -336,6 +353,16 @@ pyclaw config list
 # 检查单个字段
 pyclaw config get gateway.port
 ```
+
+## Skills 来源与发现顺序
+
+`pyclaw` 会按以下顺序加载技能（后者覆盖前者同名技能）：
+
+1. `bundled`：包内 `pyclaw/bundled_skills`（源码来源为仓库根 `skills/`）
+2. `global`：`~/.pyclaw/skills`、`~/.pyclaw/workspace/skills`（兼容 `~/.openclaw/*`）
+3. `workspace`：`<workspace>/.skills`、`<workspace>/.cursor/skills`、`<workspace>/.agents/skills`
+
+可通过环境变量 `PYCLAW_BUNDLED_SKILLS` 覆盖内置技能目录（用于开发调试）。
 
 ## 顶层配置节一览
 

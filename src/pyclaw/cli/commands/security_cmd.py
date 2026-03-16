@@ -11,6 +11,8 @@ import typer
 
 from pyclaw.config.io import load_config_raw
 from pyclaw.config.paths import resolve_config_path, resolve_state_dir
+from pyclaw.constants.env import AUTH_TOKEN_ENV_VARS
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND
 
 
 @dataclass
@@ -113,7 +115,7 @@ def _audit_config(raw: dict[str, Any], findings: list[AuditFinding], *, deep: bo
                 category="gateway",
                 severity="warning",
                 message="Gateway bound to all interfaces (0.0.0.0).",
-                fix_hint="Bind to 127.0.0.1 unless remote access is intended.",
+                fix_hint=f"Bind to {DEFAULT_GATEWAY_BIND} unless remote access is intended.",
             )
         )
 
@@ -170,7 +172,7 @@ def _audit_environment(findings: list[AuditFinding]) -> None:
         "OPENAI_API_KEY",
         "GOOGLE_API_KEY",
         "OPENROUTER_API_KEY",
-        "PYCLAW_AUTH_TOKEN",
+        *AUTH_TOKEN_ENV_VARS,
     ]
     for var in sensitive_vars:
         val = os.environ.get(var, "")
@@ -220,9 +222,9 @@ def _apply_fixes(findings: list[AuditFinding], config_path: Path) -> None:
             try:
                 text = config_path.read_text(encoding="utf-8")
                 if '"0.0.0.0"' in text:
-                    text = text.replace('"0.0.0.0"', '"127.0.0.1"')
+                    text = text.replace('"0.0.0.0"', f'"{DEFAULT_GATEWAY_BIND}"')
                     config_path.write_text(text, encoding="utf-8")
-                    f.message += " [FIXED: rebound to 127.0.0.1]"
+                    f.message += f" [FIXED: rebound to {DEFAULT_GATEWAY_BIND}]"
                     fixed += 1
             except OSError:
                 pass

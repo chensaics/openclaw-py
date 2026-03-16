@@ -6,9 +6,11 @@ import asyncio
 
 import typer
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_PATH
+
 
 def node_run(
-    gateway_url: str = "ws://127.0.0.1:18789/ws",
+    gateway_url: str = DEFAULT_GATEWAY_WS_URL_PATH,
     auth_token: str | None = None,
     node_id: str = "",
 ) -> None:

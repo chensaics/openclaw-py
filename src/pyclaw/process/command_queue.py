@@ -18,13 +18,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_ACTIVE, STATUS_STOPPED
+
 logger = logging.getLogger(__name__)
 
 
 class QueueState(str, Enum):
-    ACTIVE = "active"
+    ACTIVE = STATUS_ACTIVE
     DRAINING = "draining"
-    STOPPED = "stopped"
+    STOPPED = STATUS_STOPPED
 
 
 class CommandLaneClearedError(Exception):

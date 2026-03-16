@@ -9,7 +9,7 @@ from typing import Any
 
 import flet as ft
 
-from pyclaw.ui.components import card_tile, empty_state_simple, error_state, page_header
+from pyclaw.ui.components import card_tile, empty_state, error_state, page_header
 from pyclaw.ui.i18n import t
 from pyclaw.ui.theme import get_theme
 
@@ -70,9 +70,11 @@ def build_sessions_panel(*, gateway_client: Any = None) -> ft.Column:
         """Render session tiles into the session_list."""
         if not sessions:
             session_list.controls.append(
-                empty_state_simple(
-                    t("sessions.empty", default="No sessions."),
-                    icon=ft.Icons.CHAT_BUBBLE_OUTLINE,
+                empty_state(
+                    ft.Icons.CHAT_BUBBLE_OUTLINE,
+                    t("sessions.empty_hint", default="Send a message to create your first session."),
+                    action_label=t("sessions.new", default="New Session"),
+                    on_action=lambda e: _fire_async(_refresh),
                 )
             )
             return

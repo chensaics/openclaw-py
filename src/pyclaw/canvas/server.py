@@ -15,6 +15,7 @@ from pyclaw.canvas.handler import (
     inject_canvas_live_reload,
     resolve_file_within_root,
 )
+from pyclaw.constants.runtime import DEFAULT_BRIDGE_PORT, DEFAULT_GATEWAY_BIND
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ class CanvasHostServer:
         self,
         canvas_root: Path | None = None,
         a2ui_root: Path | None = None,
-        host: str = "127.0.0.1",
-        port: int = 18790,
+        host: str = DEFAULT_GATEWAY_BIND,
+        port: int = DEFAULT_BRIDGE_PORT,
     ) -> None:
         self._canvas_root = canvas_root
         self._a2ui_root = a2ui_root
@@ -135,8 +136,8 @@ class CanvasHostServer:
 async def start_canvas_host(
     canvas_root: Path | None = None,
     a2ui_root: Path | None = None,
-    host: str = "127.0.0.1",
-    port: int = 18790,
+    host: str = DEFAULT_GATEWAY_BIND,
+    port: int = DEFAULT_BRIDGE_PORT,
 ) -> CanvasHostServer:
     server = CanvasHostServer(canvas_root=canvas_root, a2ui_root=a2ui_root, host=host, port=port)
     await server.start()

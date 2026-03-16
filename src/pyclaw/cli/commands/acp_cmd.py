@@ -9,6 +9,9 @@ from pathlib import Path
 
 import typer
 
+from pyclaw.constants.env import GATEWAY_PASSWORD_ENV_VARS, GATEWAY_TOKEN_FALLBACK_ENV_VARS
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_PATH
+
 
 def _read_secret_file(path: str | None) -> str | None:
     if not path:
@@ -21,7 +24,7 @@ def _read_secret_file(path: str | None) -> str | None:
 
 def acp_run_command(
     *,
-    url: str = "ws://127.0.0.1:18789/ws",
+    url: str = DEFAULT_GATEWAY_WS_URL_PATH,
     token: str | None = None,
     token_file: str | None = None,
     password: str | None = None,
@@ -38,9 +41,15 @@ def acp_run_command(
     resolved_token = token or _read_secret_file(token_file)
     resolved_password = password or _read_secret_file(password_file)
     if not resolved_token:
-        resolved_token = os.environ.get("PYCLAW_GATEWAY_TOKEN") or os.environ.get("PYCLAW_AUTH_TOKEN")
+        resolved_token = next(
+            (os.environ.get(name) for name in GATEWAY_TOKEN_FALLBACK_ENV_VARS if os.environ.get(name)),
+            None,
+        )
     if not resolved_password:
-        resolved_password = os.environ.get("PYCLAW_GATEWAY_PASSWORD")
+        resolved_password = next(
+            (os.environ.get(name) for name in GATEWAY_PASSWORD_ENV_VARS if os.environ.get(name)),
+            None,
+        )
 
     asyncio.run(
         serve_acp_gateway(
@@ -62,7 +71,7 @@ def acp_client_command(
     cwd: str = "",
     server: str = "pyclaw",
     server_args: list[str] | None = None,
-    url: str = "ws://127.0.0.1:18789/ws",
+    url: str = DEFAULT_GATEWAY_WS_URL_PATH,
     token: str | None = None,
     token_file: str | None = None,
     password: str | None = None,
@@ -81,9 +90,15 @@ def acp_client_command(
     resolved_token = token or _read_secret_file(token_file)
     resolved_password = password or _read_secret_file(password_file)
     if not resolved_token:
-        resolved_token = os.environ.get("PYCLAW_GATEWAY_TOKEN") or os.environ.get("PYCLAW_AUTH_TOKEN")
+        resolved_token = next(
+            (os.environ.get(name) for name in GATEWAY_TOKEN_FALLBACK_ENV_VARS if os.environ.get(name)),
+            None,
+        )
     if not resolved_password:
-        resolved_password = os.environ.get("PYCLAW_GATEWAY_PASSWORD")
+        resolved_password = next(
+            (os.environ.get(name) for name in GATEWAY_PASSWORD_ENV_VARS if os.environ.get(name)),
+            None,
+        )
 
     async def _run() -> None:
         client = await create_acp_client(

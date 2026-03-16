@@ -16,6 +16,7 @@ from pyclaw.config.paths import (
     resolve_credentials_dir,
     resolve_state_dir,
 )
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
 from pyclaw.terminal.palette import PALETTE
 
 
@@ -126,7 +127,7 @@ def _check_config(issues: list[str], warnings: list[str], info: list[str]) -> No
             warnings.append(f"Deprecated top-level config key: '{key}' (move to models.providers)")
 
     # Gateway config
-    if cfg.gateway and cfg.gateway.port and cfg.gateway.port != 18789:
+    if cfg.gateway and cfg.gateway.port and cfg.gateway.port != DEFAULT_GATEWAY_PORT:
         info.append(f"Custom gateway port: {cfg.gateway.port}")
 
 
@@ -219,7 +220,7 @@ def _check_memory(issues: list[str], warnings: list[str], info: list[str]) -> No
 
 def _check_gateway(issues: list[str], warnings: list[str], info: list[str]) -> None:
     config_path = resolve_config_path()
-    port = 18789
+    port = DEFAULT_GATEWAY_PORT
     if config_path.exists():
         try:
             cfg = load_config(config_path)
@@ -231,7 +232,7 @@ def _check_gateway(issues: list[str], warnings: list[str], info: list[str]) -> N
     import urllib.request
 
     try:
-        resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
+        resp = urllib.request.urlopen(f"http://{DEFAULT_GATEWAY_BIND}:{port}/health", timeout=2)
         if resp.status == 200:
             info.append(f"Gateway: running on port {port}")
         else:

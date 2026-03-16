@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_PORT
+
 logger = logging.getLogger(__name__)
 
 
@@ -235,7 +237,7 @@ class GatewaySetupGuide:
 
     mode: str = "local"  # local | remote
     bind: str = "loopback"
-    port: int = 18789
+    port: int = DEFAULT_GATEWAY_PORT
     auto_start: bool = True
 
     def to_config_dict(self) -> dict[str, Any]:

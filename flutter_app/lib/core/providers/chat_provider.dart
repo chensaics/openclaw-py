@@ -34,22 +34,27 @@ class ChatState {
 class ChatNotifier extends StateNotifier<ChatState> {
   final GatewayClient _client;
   String? _currentSessionId;
+  String _currentAgentId = 'main';
 
   ChatNotifier(this._client) : super(const ChatState()) {
     _client.on('chat.message_update', _onMessageUpdate);
     _client.on('chat.tool_start', _onToolStart);
     _client.on('chat.tool_end', _onToolEnd);
     _client.on('chat.error', _onError);
-    _client.on('chat.done', _onDone);
+    _client.on('chat.agent_end', _onDone);
   }
 
   String? get currentSessionId => _currentSessionId;
 
   /// Load messages for a session.
-  Future<void> loadSession(String sessionId) async {
+  Future<void> loadSession(String sessionId, {String agentId = 'main'}) async {
     _currentSessionId = sessionId;
+    _currentAgentId = agentId;
     try {
-      final result = await _client.call('chat.history', {'session_id': sessionId});
+      final result = await _client.call('chat.history', {
+        'sessionId': sessionId,
+        'agentId': agentId,
+      });
       final msgs = (result['messages'] as List?)
               ?.map((m) => Message.fromJson(m as Map<String, dynamic>))
               .toList() ??
@@ -67,7 +72,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   /// Send a message and begin streaming.
-  Future<void> send(String text, {String? agentId, String? provider, String? model}) async {
+  Future<void> send(String text,
+      {String? agentId, String? provider, String? model}) async {
     final userMsg = Message(
       id: _uuid.v4().substring(0, 12),
       role: MessageRole.user,
@@ -89,14 +95,20 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
 
     try {
-      final params = <String, dynamic>{'message': text};
-      if (_currentSessionId != null) params['session_id'] = _currentSessionId;
-      if (agentId != null) params['agent_id'] = agentId;
+      final effectiveAgentId = agentId ?? _currentAgentId;
+      final params = <String, dynamic>{
+        'message': text,
+        'agentId': effectiveAgentId,
+      };
+      if (_currentSessionId != null) params['sessionId'] = _currentSessionId;
       if (provider != null) params['provider'] = provider;
       if (model != null) params['model'] = model;
 
-      final result = await _client.call('chat.send', params, const Duration(seconds: 120));
-      _currentSessionId ??= result['session_id'] as String?;
+      final result =
+          await _client.call('chat.send', params, const Duration(seconds: 120));
+      _currentSessionId ??=
+          result['sessionId'] as String? ?? result['session_id'] as String?;
+      _currentAgentId = effectiveAgentId;
     } catch (e) {
       state = state.copyWith(isGenerating: false, error: e.toString());
     }
@@ -104,9 +116,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Abort current generation.
   Future<void> abort() async {
-    if (!state.isGenerating) return;
+    if (!state.isGenerating || _currentSessionId == null) return;
     try {
-      await _client.call('chat.abort');
+      await _client.call('chat.abort', {
+        'sessionId': _currentSessionId,
+        'agentId': _currentAgentId,
+      });
     } catch (_) {}
     state = state.copyWith(isGenerating: false);
     _finishStreaming();
@@ -116,9 +131,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<void> editMessage(String messageId, String newContent) async {
     try {
       await _client.call('chat.edit', {
-        'message_id': messageId,
-        'content': newContent,
-        if (_currentSessionId != null) 'session_id': _currentSessionId,
+        // Kept for forward compatibility with servers that support targeted edit.
+        'messageId': messageId,
+        'message': newContent,
+        if (_currentSessionId != null) 'sessionId': _currentSessionId,
+        'agentId': _currentAgentId,
       });
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -129,7 +146,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<void> resend() async {
     try {
       await _client.call('chat.resend', {
-        if (_currentSessionId != null) 'session_id': _currentSessionId,
+        if (_currentSessionId != null) 'sessionId': _currentSessionId,
+        'agentId': _currentAgentId,
       });
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -153,8 +171,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void _onToolStart(dynamic payload) {
     if (payload is! Map) return;
     final toolCall = ToolCall(
-      id: payload['call_id'] as String? ?? '',
-      name: payload['tool'] as String? ?? '',
+      id: payload['toolCallId'] as String? ??
+          payload['call_id'] as String? ??
+          '',
+      name: payload['name'] as String? ?? payload['tool'] as String? ?? '',
       arguments: payload['arguments'] as String? ?? '',
       isRunning: true,
       startedAt: DateTime.now(),
@@ -172,7 +192,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   void _onToolEnd(dynamic payload) {
     if (payload is! Map) return;
-    final callId = payload['call_id'] as String?;
+    final callId =
+        payload['toolCallId'] as String? ?? payload['call_id'] as String?;
     if (callId == null) return;
 
     final msgs = [...state.messages];
@@ -194,7 +215,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   void _onError(dynamic payload) {
-    final errorMsg = payload is Map ? (payload['message'] as String? ?? 'Unknown error') : payload.toString();
+    final errorMsg = payload is Map
+        ? (payload['message'] as String? ?? 'Unknown error')
+        : payload.toString();
     state = state.copyWith(isGenerating: false, error: errorMsg);
     _finishStreaming();
   }
@@ -218,7 +241,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _client.off('chat.tool_start', _onToolStart);
     _client.off('chat.tool_end', _onToolEnd);
     _client.off('chat.error', _onError);
-    _client.off('chat.done', _onDone);
+    _client.off('chat.agent_end', _onDone);
     super.dispose();
   }
 }

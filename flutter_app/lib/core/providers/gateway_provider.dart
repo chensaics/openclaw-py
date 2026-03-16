@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pyclaw/core/gateway_client.dart';
+import 'package:pyclaw/core/storage/local_cache.dart';
 
 /// Global gateway client singleton.
 final gatewayClientProvider = Provider<GatewayClient>((ref) {
@@ -16,6 +17,10 @@ class GatewayNotifier extends StateNotifier<GatewayState> {
 
   GatewayNotifier(this._client) : super(GatewayState.disconnected) {
     _sub = _client.stateStream.listen((s) => state = s);
+    final cachedUrl = LocalCache.getCachedGatewayUrl();
+    if (cachedUrl != null && cachedUrl.trim().isNotEmpty) {
+      _client.url = cachedUrl.trim();
+    }
   }
 
   Future<void> connect() async {
@@ -30,10 +35,8 @@ class GatewayNotifier extends StateNotifier<GatewayState> {
 
   /// Update the gateway URL and reconnect.
   Future<void> setUrl(String url) async {
-    await _client.disconnect();
-    // Note: in a real implementation you'd recreate the client;
-    // for now we reconnect to the existing URL.
-    await _client.connect();
+    await _client.updateEndpoint(newUrl: url, reconnect: true);
+    await LocalCache.cacheGatewayUrl(_client.url);
   }
 
   @override

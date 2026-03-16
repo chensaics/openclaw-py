@@ -10,6 +10,8 @@ from pathlib import Path
 
 import typer
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_PATH
+
 secrets_app = typer.Typer(name="secrets", help="Manage external secret references.")
 
 
@@ -89,7 +91,7 @@ def apply(
 
 @secrets_app.command()
 def reload(
-    gateway_url: str = typer.Option("ws://127.0.0.1:18789/ws", help="Gateway WebSocket URL."),
+    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL_PATH, help="Gateway WebSocket URL."),
 ) -> None:
     """Reload secrets on the running gateway (re-resolve all SecretRefs)."""
     import asyncio

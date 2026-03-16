@@ -11,12 +11,21 @@ from typing import Any, cast
 import typer
 
 from pyclaw.config.paths import resolve_config_path
+from pyclaw.constants.env import ENV_PYCLAW_GATEWAY_URL
+from pyclaw.constants.runtime import (
+    DEFAULT_BRIDGE_PORT,
+    DEFAULT_GATEWAY_BIND,
+    DEFAULT_GATEWAY_PORT,
+    DEFAULT_GATEWAY_WS_URL,
+    STATUS_RUNNING,
+    STATUS_STOPPED,
+)
 
 
 def gateway_run_command(
     *,
-    port: int = 18789,
-    bind: str = "127.0.0.1",
+    port: int = DEFAULT_GATEWAY_PORT,
+    bind: str = DEFAULT_GATEWAY_BIND,
     auth_token: str | None = None,
 ) -> None:
     """Start the pyclaw gateway server."""
@@ -80,7 +89,7 @@ def gateway_probe_command(
         {"target": gw_url, **_probe_gateway(gw_url, token=token, password=password, timeout_s=timeout_ms / 1000)}
     )
 
-    loopback = "ws://127.0.0.1:18789"
+    loopback = DEFAULT_GATEWAY_WS_URL
     if gw_url != loopback and loopback not in gw_url:
         results.append(
             {
@@ -155,11 +164,11 @@ def gateway_discover_command(
 
     # Attempt to discover via a quick socket scan on common local ports.
     beacons: list[dict[str, Any]] = []
-    for port in (18789, 18790):
-        if _port_open("127.0.0.1", port, timeout_s=timeout_ms / 1000):
+    for port in (DEFAULT_GATEWAY_PORT, DEFAULT_BRIDGE_PORT):
+        if _port_open(DEFAULT_GATEWAY_BIND, port, timeout_s=timeout_ms / 1000):
             svc = DiscoveredService(
                 name="local-gateway",
-                host="127.0.0.1",
+                host=DEFAULT_GATEWAY_BIND,
                 port=port,
                 method=DiscoveryMethod.LOCAL,
             )
@@ -195,7 +204,7 @@ def _default_gateway_url() -> str:
     """Resolve gateway URL from config or environment."""
     import os
 
-    env_url = os.environ.get("PYCLAW_GATEWAY_URL", "")
+    env_url = os.environ.get(ENV_PYCLAW_GATEWAY_URL, "")
     if env_url:
         return env_url
 
@@ -204,20 +213,20 @@ def _default_gateway_url() -> str:
         try:
             raw = json.loads(config_path.read_text(encoding="utf-8"))
             gw = raw.get("gateway", {})
-            port = gw.get("port", 18789)
-            return f"ws://127.0.0.1:{port}"
+            port = gw.get("port", DEFAULT_GATEWAY_PORT)
+            return f"ws://{DEFAULT_GATEWAY_BIND}:{port}"
         except Exception:
             pass
 
-    return "ws://127.0.0.1:18789"
+    return DEFAULT_GATEWAY_WS_URL
 
 
 def _service_status(*, deep: bool = False) -> dict[str, Any]:
     """Check local gateway service status."""
-    port = 18789
-    listening = _port_open("127.0.0.1", port, timeout_s=2.0)
+    port = DEFAULT_GATEWAY_PORT
+    listening = _port_open(DEFAULT_GATEWAY_BIND, port, timeout_s=2.0)
     result: dict[str, Any] = {
-        "status": "running" if listening else "stopped",
+        "status": STATUS_RUNNING if listening else STATUS_STOPPED,
         "port": port,
     }
     if deep:
@@ -338,7 +347,7 @@ async def _rpc_call(
 
 
 def _ws_candidates(url: str) -> list[str]:
-    base = (url or "ws://127.0.0.1:18789").strip()
+    base = (url or DEFAULT_GATEWAY_WS_URL).strip()
     if base.startswith("http://"):
         base = "ws://" + base[len("http://") :]
     elif base.startswith("https://"):
@@ -348,7 +357,7 @@ def _ws_candidates(url: str) -> list[str]:
 
     candidates = [base]
     if base.endswith("/ws"):
-        candidates.append(base[: -len("/ws")] or "ws://127.0.0.1:18789")
+        candidates.append(base[: -len("/ws")] or DEFAULT_GATEWAY_WS_URL)
     else:
         candidates.append(f"{base}/ws")
     return candidates

@@ -7,11 +7,13 @@ import sys
 
 import typer
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT, DEFAULT_SERVICE_LABEL
+
 
 def service_install(
-    label: str = "ai.pyclaw.gateway",
-    port: int = 18789,
-    bind: str = "127.0.0.1",
+    label: str = DEFAULT_SERVICE_LABEL,
+    port: int = DEFAULT_GATEWAY_PORT,
+    bind: str = DEFAULT_GATEWAY_BIND,
 ) -> None:
     """Install the gateway as a system service."""
     from pyclaw.daemon.service import GatewayServiceInstallArgs, resolve_gateway_service
@@ -27,7 +29,7 @@ def service_install(
     typer.echo(f"Service installed: {label}")
 
 
-def service_uninstall(label: str = "ai.pyclaw.gateway") -> None:
+def service_uninstall(label: str = DEFAULT_SERVICE_LABEL) -> None:
     """Uninstall the gateway service."""
     from pyclaw.daemon.service import resolve_gateway_service
 
@@ -36,7 +38,7 @@ def service_uninstall(label: str = "ai.pyclaw.gateway") -> None:
     typer.echo(f"Service uninstalled: {label}")
 
 
-def service_status(label: str = "ai.pyclaw.gateway") -> None:
+def service_status(label: str = DEFAULT_SERVICE_LABEL) -> None:
     """Show gateway service status."""
     from pyclaw.daemon.service import resolve_gateway_service
 
@@ -50,7 +52,7 @@ def service_status(label: str = "ai.pyclaw.gateway") -> None:
         typer.echo(f"  Last exit code: {runtime.last_exit_code}")
 
 
-def service_restart(label: str = "ai.pyclaw.gateway") -> None:
+def service_restart(label: str = DEFAULT_SERVICE_LABEL) -> None:
     """Restart the gateway service."""
     from pyclaw.daemon.service import resolve_gateway_service
 
@@ -59,7 +61,7 @@ def service_restart(label: str = "ai.pyclaw.gateway") -> None:
     typer.echo(f"Service restarted: {label}")
 
 
-def service_stop(label: str = "ai.pyclaw.gateway") -> None:
+def service_stop(label: str = DEFAULT_SERVICE_LABEL) -> None:
     """Stop the gateway service."""
     from pyclaw.daemon.service import resolve_gateway_service
 

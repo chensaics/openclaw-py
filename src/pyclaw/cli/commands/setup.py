@@ -15,6 +15,7 @@ import typer
 from pyclaw.cli.commands.auth_providers import PROVIDER_SPECS, AuthMethod
 from pyclaw.config.defaults import get_provider_defaults
 from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir, resolve_state_dir
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_PORT
 
 _SELF_HOSTED_PROVIDERS = {"ollama", "vllm", "litellm"}
 
@@ -184,7 +185,7 @@ def _run_wizard(config_path: Path) -> None:
 
     config["models"] = {"providers": {provider_id: provider_cfg}}
 
-    config["gateway"] = {"port": 18789}
+    config["gateway"] = {"port": DEFAULT_GATEWAY_PORT}
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config, indent=2) + "\n")
@@ -200,7 +201,7 @@ def _run_non_interactive(config_path: Path, *, accept_risk: bool = False) -> Non
         typer.echo("Error: --non-interactive requires --accept-risk flag.")
         raise typer.Exit(1)
 
-    config: dict[str, Any] = {"gateway": {"port": 18789}}
+    config: dict[str, Any] = {"gateway": {"port": DEFAULT_GATEWAY_PORT}}
 
     for spec in PROVIDER_SPECS.values():
         if spec.env_var and os.environ.get(spec.env_var, "").strip():

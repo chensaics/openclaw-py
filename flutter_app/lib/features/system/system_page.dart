@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pyclaw/core/gateway_client.dart';
 import 'package:pyclaw/core/providers/gateway_provider.dart';
 import 'package:pyclaw/core/theme/colors.dart';
 
@@ -10,8 +9,8 @@ final _systemInfoProvider =
   return await client.call('system.info');
 });
 
-final _doctorProvider =
-    FutureProvider.autoDispose.family<Map<String, dynamic>, void>((ref, _) async {
+final _doctorProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, void>((ref, _) async {
   final client = ref.watch(gatewayClientProvider);
   return await client.call('doctor.run');
 });
@@ -30,7 +29,8 @@ class SystemPage extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
+            border: Border(
+                bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
           ),
           child: Row(
             children: [
@@ -61,30 +61,26 @@ class SystemPage extends ConsumerWidget {
                 _InfoCard(
                   title: 'Runtime',
                   items: {
-                    'Version': info['version']?.toString() ?? 'unknown',
-                    'Python': info['python_version']?.toString() ?? '',
-                    'Uptime': info['uptime']?.toString() ?? '',
-                    'PID': info['pid']?.toString() ?? '',
+                    'Platform': info['platform']?.toString() ?? 'unknown',
+                    'Python': info['python']?.toString() ?? '',
+                    'Uptime(s)': _fmtUptime(info['uptime']),
+                    'Started At': _fmtStartedAt(info['startedAt']),
                   },
                 ),
                 const SizedBox(height: 12),
-                _InfoCard(
+                const _InfoCard(
                   title: 'Resources',
                   items: {
-                    'CPU': '${info['cpu_percent'] ?? '?'}%',
-                    'Memory': '${info['memory_mb'] ?? '?'} MB',
-                    'Active Sessions': info['active_sessions']?.toString() ?? '0',
-                    'Connected Channels': info['connected_channels']?.toString() ?? '0',
+                    'Health': 'Available',
+                    'Gateway': 'Connected',
                   },
                 ),
                 const SizedBox(height: 12),
-                _InfoCard(
+                const _InfoCard(
                   title: 'Configuration',
                   items: {
-                    'Provider': info['default_provider']?.toString() ?? '',
-                    'Model': info['default_model']?.toString() ?? '',
-                    'Tools': info['tool_count']?.toString() ?? '0',
-                    'Agents': info['agent_count']?.toString() ?? '0',
+                    'Source': 'Gateway RPC',
+                    'Feature Set': 'system.info / doctor.run',
                   },
                 ),
               ],
@@ -100,6 +96,20 @@ class SystemPage extends ConsumerWidget {
       context: context,
       builder: (_) => _DoctorDialog(ref: ref),
     );
+  }
+
+  String _fmtUptime(dynamic val) {
+    if (val is num) return val.toStringAsFixed(0);
+    return val?.toString() ?? '';
+  }
+
+  String _fmtStartedAt(dynamic val) {
+    if (val is num) {
+      final dt = DateTime.fromMillisecondsSinceEpoch((val * 1000).toInt(),
+          isUtc: true);
+      return dt.toIso8601String();
+    }
+    return val?.toString() ?? '';
   }
 }
 
@@ -125,8 +135,12 @@ class _InfoCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(e.key, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
-                      Text(e.value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                      Text(e.key,
+                          style: TextStyle(
+                              color: scheme.onSurfaceVariant, fontSize: 13)),
+                      Text(e.value,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w500, fontSize: 13)),
                     ],
                   ),
                 )),
@@ -167,16 +181,20 @@ class _DoctorDialog extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: checks.map((c) {
                 final check = c as Map<String, dynamic>;
-                final ok = check['ok'] as bool? ?? false;
+                final severity =
+                    (check['severity'] as String? ?? '').toLowerCase();
+                final ok = severity == 'ok';
                 return ListTile(
                   leading: Icon(
                     ok ? Icons.check_circle : Icons.error,
                     color: ok ? AppColors.success : AppColors.error,
                     size: 20,
                   ),
-                  title: Text(check['name'] as String? ?? '', style: const TextStyle(fontSize: 14)),
-                  subtitle: check['detail'] != null
-                      ? Text(check['detail'] as String, style: const TextStyle(fontSize: 12))
+                  title: Text(check['name'] as String? ?? '',
+                      style: const TextStyle(fontSize: 14)),
+                  subtitle: check['message'] != null
+                      ? Text(check['message'] as String,
+                          style: const TextStyle(fontSize: 12))
                       : null,
                   dense: true,
                   contentPadding: EdgeInsets.zero,

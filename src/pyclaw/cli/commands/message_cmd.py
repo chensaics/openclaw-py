@@ -9,12 +9,14 @@ from typing import Any
 
 import typer
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL
+
 
 def message_send(
     text: str,
     channel: str = "default",
     recipient: str = "",
-    gateway_url: str = "ws://127.0.0.1:18789",
+    gateway_url: str = DEFAULT_GATEWAY_WS_URL,
     auth_token: str | None = None,
 ) -> None:
     """Send a message through the gateway or directly to a channel."""

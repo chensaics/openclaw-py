@@ -13,14 +13,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_COMPLETED, STATUS_FAILED
+
 logger = logging.getLogger(__name__)
 
 
 class ProgressStatus(str, Enum):
     STARTED = "started"
     PROGRESS = "progress"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
 
 
 @dataclass

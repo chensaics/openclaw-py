@@ -51,6 +51,8 @@ skills-lock.json
 
 # Agent workspace (exclude all except workflows)
 .agent/*
+.cursor/*
+.claude/*
 !.agent/workflows/
 .agent/workflows/flows/*/state/*
 !.agent/workflows/flows/*/state/.gitkeep

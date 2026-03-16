@@ -14,16 +14,25 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from pyclaw.constants.runtime import (
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_PENDING,
+    STATUS_RUNNING,
+    STATUS_SKIPPED,
+    STATUS_TIMEOUT,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class ExecutionStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    TIMEOUT = "timeout"
-    SKIPPED = "skipped"
+    PENDING = STATUS_PENDING
+    RUNNING = STATUS_RUNNING
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
+    TIMEOUT = STATUS_TIMEOUT
+    SKIPPED = STATUS_SKIPPED
 
 
 @dataclass
@@ -156,7 +165,7 @@ class HistoryStore:
                         id=item.get("id", ""),
                         job_id=item.get("jobId", ""),
                         job_title=item.get("jobTitle", ""),
-                        status=ExecutionStatus(item.get("status", "completed")),
+                        status=ExecutionStatus(item.get("status", STATUS_COMPLETED)),
                         started_at=item.get("startedAt", 0.0),
                         ended_at=item.get("endedAt", 0.0),
                         output=item.get("output", ""),

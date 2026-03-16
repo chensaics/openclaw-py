@@ -15,12 +15,16 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final _gatewayUrlController = TextEditingController(text: 'ws://127.0.0.1:18789/');
+  final _gatewayUrlController =
+      TextEditingController(text: 'ws://127.0.0.1:18789/');
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(configProvider.notifier).load());
+    Future.microtask(() {
+      ref.read(configProvider.notifier).load();
+      _gatewayUrlController.text = ref.read(gatewayClientProvider).url;
+    });
   }
 
   @override
@@ -42,7 +46,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
+            border: Border(
+                bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
           ),
           child: Row(
             children: [
@@ -81,7 +86,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 const SizedBox(width: 8),
                                 FilledButton.tonal(
                                   onPressed: () {
-                                    ref.read(gatewayProvider.notifier)
+                                    ref
+                                        .read(gatewayProvider.notifier)
                                         .setUrl(_gatewayUrlController.text);
                                   },
                                   child: const Text('Connect'),
@@ -93,22 +99,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _sectionTitle(context, 'Model'),
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: ModelSelector(
                           models: config.models,
-                          selectedModel: config.config['model'] as String?,
+                          selectedModel: _readString(config.config,
+                                  ['agents', 'defaults', 'model']) ??
+                              _readString(config.config, ['model']),
                           onChanged: (v) {
-                            if (v != null) ref.read(configProvider.notifier).set('model', v);
+                            if (v != null) {
+                              ref
+                                  .read(configProvider.notifier)
+                                  .set('agents.defaults.model', v);
+                            }
                           },
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _sectionTitle(context, 'Appearance'),
                     Card(
                       child: Padding(
@@ -123,7 +133,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _sectionTitle(context, 'System'),
                     Card(
                       child: Padding(
@@ -178,12 +187,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final mode = ref.watch(themeModeProvider);
     return SegmentedButton<ThemeMode>(
       segments: const [
-        ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.brightness_auto)),
-        ButtonSegment(value: ThemeMode.light, label: Text('Light'), icon: Icon(Icons.light_mode)),
-        ButtonSegment(value: ThemeMode.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode)),
+        ButtonSegment(
+            value: ThemeMode.system,
+            label: Text('System'),
+            icon: Icon(Icons.brightness_auto)),
+        ButtonSegment(
+            value: ThemeMode.light,
+            label: Text('Light'),
+            icon: Icon(Icons.light_mode)),
+        ButtonSegment(
+            value: ThemeMode.dark,
+            label: Text('Dark'),
+            icon: Icon(Icons.dark_mode)),
       ],
       selected: {mode},
-      onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).state = s.first,
+      onSelectionChanged: (s) =>
+          ref.read(themeModeProvider.notifier).state = s.first,
     );
+  }
+
+  String? _readString(Map<String, dynamic> obj, List<String> keys) {
+    dynamic cursor = obj;
+    for (final key in keys) {
+      if (cursor is Map && cursor.containsKey(key)) {
+        cursor = cursor[key];
+      } else {
+        return null;
+      }
+    }
+    return cursor is String ? cursor : null;
   }
 }

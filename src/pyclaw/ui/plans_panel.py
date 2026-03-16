@@ -8,7 +8,7 @@ from typing import Any
 
 import flet as ft
 
-from pyclaw.ui.components import card_tile, empty_state_simple, error_state, page_header, status_chip
+from pyclaw.ui.components import card_tile, empty_state, error_state, page_header, status_chip
 from pyclaw.ui.i18n import t
 from pyclaw.ui.theme import StatusColors, get_theme
 
@@ -69,10 +69,16 @@ def build_plans_panel(*, gateway_client: Any = None) -> ft.Column:
             plan_list.controls.clear()
             if not plans:
                 plan_list.controls.append(
-                    empty_state_simple("暂无执行计划", icon=ft.Icons.CHECKLIST),
+                    empty_state(
+                        ft.Icons.CHECKLIST,
+                        t("plans.empty", default="No execution plans."),
+                        action_label=t("channels.refresh", default="Refresh"),
+                        on_action=lambda e: _fire_async(_refresh),
+                    ),
                 )
             cur_theme = get_theme()
             for p in plans:
+                plan_id = p.get("id")
                 status = p.get("status", "pending")
                 color = {
                     "completed": StatusColors.SUCCESS,
@@ -92,7 +98,7 @@ def build_plans_panel(*, gateway_client: Any = None) -> ft.Column:
                             icon=ft.Icons.PLAY_ARROW,
                             icon_size=16,
                             tooltip="Resume",
-                            data=p.get("id"),
+                            data=plan_id,
                             on_click=lambda e: _fire_async(_resume_plan, e.control.data),
                         )
                     )
@@ -101,7 +107,7 @@ def build_plans_panel(*, gateway_client: Any = None) -> ft.Column:
                         icon=ft.Icons.DELETE_OUTLINE,
                         icon_size=16,
                         tooltip="Delete",
-                        data=p.get("id"),
+                        data=plan_id,
                         on_click=lambda e: _fire_async(_delete_plan, e.control.data),
                     )
                 )
@@ -133,20 +139,20 @@ def build_plans_panel(*, gateway_client: Any = None) -> ft.Column:
         except Exception:
             logger.warning("_refresh_plans failed", exc_info=True)
             plan_list.controls = [
-                error_state("加载失败", on_retry=_refresh),
+                error_state(t("plans.load_failed", default="Failed to load plans."), on_retry=_refresh)
             ]
             _safe_update(plan_list)
 
-    async def _resume_plan(plan_id: str) -> None:
-        if gw:
+    async def _resume_plan(plan_id: str | None) -> None:
+        if gw and plan_id:
             try:
                 await gw.call("plan.resume", {"planId": plan_id})
                 await _refresh()
             except Exception:
                 logger.warning("_resume_plan failed", exc_info=True)
 
-    async def _delete_plan(plan_id: str) -> None:
-        if gw:
+    async def _delete_plan(plan_id: str | None) -> None:
+        if gw and plan_id:
             try:
                 await gw.call("plan.delete", {"planId": plan_id})
                 await _refresh()

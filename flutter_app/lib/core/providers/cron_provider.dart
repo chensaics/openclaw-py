@@ -62,7 +62,7 @@ class CronNotifier extends StateNotifier<CronState> {
 
   Future<void> loadHistory(String jobId) async {
     try {
-      final result = await _client.call('cron.history', {'job_id': jobId});
+      final result = await _client.call('cron.history', {'jobId': jobId});
       final records = (result['records'] as List?)
               ?.map((r) => ExecutionRecord.fromJson(r as Map<String, dynamic>))
               .toList() ??
@@ -88,7 +88,7 @@ class CronNotifier extends StateNotifier<CronState> {
       jobs: state.jobs.where((j) => j.id != jobId).toList(),
     );
     try {
-      await _client.call('cron.remove', {'job_id': jobId});
+      await _client.call('cron.remove', {'id': jobId});
     } catch (e) {
       state = state.copyWith(jobs: previous, error: e.toString());
     }

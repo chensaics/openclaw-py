@@ -10,6 +10,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_RUNNING, STATUS_STOPPED
 from pyclaw.daemon.service import GatewayServiceInstallArgs, GatewayServiceRuntime
 
 logger = logging.getLogger(__name__)
@@ -101,10 +102,10 @@ class LaunchdService:
 
         runtime = GatewayServiceRuntime()
         if proc.returncode != 0:
-            runtime.status = "stopped"
+            runtime.status = STATUS_STOPPED
             return runtime
 
-        runtime.status = "running"
+        runtime.status = STATUS_RUNNING
         for line in output.splitlines():
             line = line.strip()
             if line.startswith("pid = "):

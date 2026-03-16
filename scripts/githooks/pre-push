@@ -11,7 +11,12 @@ if [ "$skip_tests" = 1 ]; then
     exit 0
 fi
 echo "Running pre-push tests..."
-python3 -m pytest tests/ -x -q --tb=line 2>/dev/null
+# 全量：默认。增量：export PYCLAW_PRE_PUSH_TEST_MODE=incremental
+if [ "${PYCLAW_PRE_PUSH_TEST_MODE:-full}" = "incremental" ]; then
+  python3 scripts/pytest_scope.py run --mode incremental --base "${PYCLAW_TEST_BASE:-origin/master}" -- -x -q --tb=line
+else
+  python3 -m pytest tests/ -x -q --tb=line
+fi
 if [ $? -ne 0 ]; then
     echo "Tests failed. Push aborted."
     exit 1

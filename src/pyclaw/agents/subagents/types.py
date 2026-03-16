@@ -6,13 +6,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_ABORTED, STATUS_COMPLETED, STATUS_FAILED, STATUS_PENDING, STATUS_RUNNING
+
 
 class SubagentState(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    ABORTED = "aborted"
+    PENDING = STATUS_PENDING
+    RUNNING = STATUS_RUNNING
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
+    ABORTED = STATUS_ABORTED
 
 
 @dataclass

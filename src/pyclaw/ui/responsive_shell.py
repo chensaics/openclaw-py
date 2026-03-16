@@ -15,10 +15,11 @@ from pyclaw.ui.theme import get_theme
 class ResponsiveShell:
     """Manages the responsive layout skeleton of the application.
 
-    Three layout modes based on window width:
+    Four layout modes based on window width:
     - **Mobile** (< breakpoint_mobile):  Bottom NavigationBar, no rail/sidebar
     - **Tablet** (< breakpoint_tablet):  Collapsed NavigationRail, no sidebar
-    - **Desktop** (>= breakpoint_tablet): Full NavigationRail + SessionSidebar
+    - **Desktop** (< breakpoint_desktop): Full NavigationRail + SessionSidebar
+    - **Large Desktop** (>= breakpoint_desktop): Wide sidebar + roomy layout
     """
 
     def __init__(
@@ -45,7 +46,7 @@ class ResponsiveShell:
 
     @property
     def current_mode(self) -> str:
-        """Current layout mode: 'mobile', 'tablet', or 'desktop'."""
+        """Current layout mode: 'mobile', 'tablet', 'desktop', or 'large_desktop'."""
         return self._current_mode
 
     def build(self) -> ft.Column:
@@ -71,13 +72,16 @@ class ResponsiveShell:
         theme = get_theme()
         bp_mobile = theme.breakpoint_mobile
         bp_tablet = theme.breakpoint_tablet
+        bp_desktop = theme.breakpoint_desktop
 
         if width < bp_mobile:
             self._apply_mobile()
         elif width < bp_tablet:
             self._apply_tablet()
-        else:
+        elif width < bp_desktop:
             self._apply_desktop()
+        else:
+            self._apply_large_desktop()
 
     def _apply_mobile(self) -> None:
         self._current_mode = "mobile"
@@ -108,8 +112,25 @@ class ResponsiveShell:
         self._current_mode = "desktop"
         self._nav_rail.visible = True
         self._nav_rail.label_type = ft.NavigationRailLabelType.ALL
+        self._nav_rail.extended = False
         self._divider1.visible = True
         self._session_sidebar.visible = True
+        self._session_sidebar.width = 240
+        self._divider2.visible = True
+        self._bottom_nav.visible = False
+        if self._top_bar:
+            self._top_bar.visible = True
+        if self._menubar:
+            self._menubar.visible = True
+
+    def _apply_large_desktop(self) -> None:
+        self._current_mode = "large_desktop"
+        self._nav_rail.visible = True
+        self._nav_rail.label_type = ft.NavigationRailLabelType.ALL
+        self._nav_rail.extended = True
+        self._divider1.visible = True
+        self._session_sidebar.visible = True
+        self._session_sidebar.width = 300
         self._divider2.visible = True
         self._bottom_nav.visible = False
         if self._top_bar:

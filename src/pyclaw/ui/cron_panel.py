@@ -7,7 +7,7 @@ from typing import Any
 
 import flet as ft
 
-from pyclaw.ui.components import card_tile, empty_state_simple, error_state, page_header, status_chip
+from pyclaw.ui.components import card_tile, empty_state, error_state, page_header, status_chip
 from pyclaw.ui.i18n import t
 from pyclaw.ui.theme import StatusColors, get_theme
 
@@ -110,9 +110,11 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
 
             if not filtered_jobs:
                 cron_list.controls.append(
-                    empty_state_simple(
+                    empty_state(
+                        ft.Icons.SCHEDULE,
                         t("cron.empty", default="No scheduled tasks."),
-                        icon=ft.Icons.SCHEDULE,
+                        action_label=t("channels.refresh", default="Refresh"),
+                        on_action=lambda e: _fire_async(_refresh),
                     )
                 )
             else:
@@ -248,12 +250,13 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
         except Exception:
             pass
 
+    filter_enabled_dropdown.on_select = lambda e: _fire_async(_refresh)
     filter_enabled_dropdown.on_change = lambda e: _fire_async(_refresh)
 
     add_btn = ft.ElevatedButton(
         t("cron.add", default="Add Job"),
         icon=ft.Icons.ADD,
-        on_click=lambda e: _fire_async(_add_job),
+        on_click=lambda e: _fire_async(_add_job, e),
     )
     refresh_btn = ft.IconButton(
         icon=ft.Icons.REFRESH,

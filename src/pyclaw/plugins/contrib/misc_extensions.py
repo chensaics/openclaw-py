@@ -18,6 +18,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import (
+    STATUS_APPROVED,
+    STATUS_AWAITING_APPROVAL,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_PENDING,
+    STATUS_REJECTED,
+    STATUS_RUNNING,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,13 +37,13 @@ logger = logging.getLogger(__name__)
 
 
 class PipelineState(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    AWAITING_APPROVAL = "awaiting_approval"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    PENDING = STATUS_PENDING
+    RUNNING = STATUS_RUNNING
+    AWAITING_APPROVAL = STATUS_AWAITING_APPROVAL
+    APPROVED = STATUS_APPROVED
+    REJECTED = STATUS_REJECTED
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
 
 
 @dataclass

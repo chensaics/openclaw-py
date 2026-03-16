@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_PORT
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +49,7 @@ class OnboardingState:
     current_step: OnboardingStep = OnboardingStep.RISK_ACK
     completed_steps: list[str] = field(default_factory=list)
     selected_provider: str = ""
-    gateway_port: int = 18789
+    gateway_port: int = DEFAULT_GATEWAY_PORT
     gateway_bind: str = "loopback"
     skills_installed: list[str] = field(default_factory=list)
     channels_configured: list[str] = field(default_factory=list)
@@ -103,7 +105,7 @@ def handle_risk_ack(state: OnboardingState, *, acknowledged: bool = False) -> St
 def handle_gateway_config(
     state: OnboardingState,
     *,
-    port: int = 18789,
+    port: int = DEFAULT_GATEWAY_PORT,
     bind: str = "loopback",
 ) -> StepResult:
     """Handle gateway configuration step."""
@@ -233,7 +235,7 @@ def run_non_interactive(
     *,
     provider: str,
     api_key: str,
-    port: int = 18789,
+    port: int = DEFAULT_GATEWAY_PORT,
     bind: str = "loopback",
     skills: list[str] | None = None,
 ) -> OnboardingState:

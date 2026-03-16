@@ -29,10 +29,15 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
 
     final filtered = _query.isEmpty
         ? state.sessions
-        : state.sessions.where((s) =>
-            s.title.toLowerCase().contains(_query.toLowerCase()) ||
-            (s.preview ?? '').toLowerCase().contains(_query.toLowerCase()),
-          ).toList();
+        : state.sessions
+            .where(
+              (s) =>
+                  s.title.toLowerCase().contains(_query.toLowerCase()) ||
+                  (s.preview ?? '')
+                      .toLowerCase()
+                      .contains(_query.toLowerCase()),
+            )
+            .toList();
 
     final grouped = _groupByDate(filtered);
 
@@ -43,7 +48,8 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
+            border: Border(
+                bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
           ),
           child: Row(
             children: [
@@ -58,8 +64,10 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
                     hintText: 'Search...',
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20)),
                   ),
                   onChanged: (v) => setState(() => _query = v),
                 ),
@@ -74,7 +82,8 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
               ? const Center(child: CircularProgressIndicator())
               : filtered.isEmpty
                   ? Center(
-                      child: Text('No sessions', style: TextStyle(color: scheme.onSurfaceVariant)),
+                      child: Text('No sessions',
+                          style: TextStyle(color: scheme.onSurfaceVariant)),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
@@ -88,7 +97,10 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
                               padding: const EdgeInsets.only(top: 8, bottom: 4),
                               child: Text(
                                 group.label,
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
                                       color: scheme.onSurfaceVariant,
                                     ),
                               ),
@@ -96,11 +108,14 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
                             ...group.sessions.map((s) => SessionTile(
                                   session: s,
                                   onTap: () {
-                                    ref.read(chatProvider.notifier).loadSession(s.id);
+                                    ref.read(chatProvider.notifier).loadSession(
+                                        s.id,
+                                        agentId: s.agentId ?? 'main');
                                     context.go('/chat');
                                   },
-                                  onDelete: () =>
-                                      ref.read(sessionProvider.notifier).delete(s.id),
+                                  onDelete: () => ref
+                                      .read(sessionProvider.notifier)
+                                      .delete(s.id),
                                 )),
                           ],
                         );

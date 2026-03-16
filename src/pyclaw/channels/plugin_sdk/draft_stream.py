@@ -19,15 +19,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_ERROR, STATUS_FINALIZING, STATUS_IDLE, STATUS_STOPPED, STATUS_STREAMING
+
 logger = logging.getLogger(__name__)
 
 
 class DraftState(str, Enum):
-    IDLE = "idle"
-    STREAMING = "streaming"
-    FINALIZING = "finalizing"
-    STOPPED = "stopped"
-    ERROR = "error"
+    IDLE = STATUS_IDLE
+    STREAMING = STATUS_STREAMING
+    FINALIZING = STATUS_FINALIZING
+    STOPPED = STATUS_STOPPED
+    ERROR = STATUS_ERROR
 
 
 @dataclass

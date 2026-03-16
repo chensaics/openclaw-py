@@ -6,6 +6,7 @@ import asyncio
 import logging
 from pathlib import Path
 
+from pyclaw.constants.runtime import STATUS_ACTIVE, STATUS_RUNNING, STATUS_STOPPED
 from pyclaw.daemon.service import GatewayServiceInstallArgs, GatewayServiceRuntime
 
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ class SystemdService:
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
-        return stdout.decode().strip() == "active"
+        return stdout.decode().strip() == STATUS_ACTIVE
 
     async def read_runtime(self, label: str) -> GatewayServiceRuntime:
         proc = await asyncio.create_subprocess_shell(
@@ -96,7 +97,7 @@ class SystemdService:
         for line in output.splitlines():
             if line.startswith("ActiveState="):
                 state = line.split("=")[1]
-                runtime.status = "running" if state == "active" else "stopped"
+                runtime.status = STATUS_RUNNING if state == STATUS_ACTIVE else STATUS_STOPPED
             elif line.startswith("MainPID="):
                 try:
                     runtime.pid = int(line.split("=")[1])

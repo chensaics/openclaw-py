@@ -73,6 +73,9 @@ def resolve_skills_prompt_for_run(
 
 def _is_eligible(entry: SkillEntry) -> bool:
     """Check if a skill is eligible for the current platform."""
+    if not entry.runtime_contract.is_compatible:
+        return False
+
     if entry.metadata.os_filter:
         current_os = platform.system().lower()
         os_map = {"darwin": "macos", "linux": "linux", "windows": "windows"}

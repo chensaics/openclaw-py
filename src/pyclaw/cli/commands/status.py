@@ -11,6 +11,8 @@ import typer
 
 from pyclaw.config.io import load_config
 from pyclaw.config.paths import resolve_agents_dir, resolve_config_path, resolve_state_dir
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
+from pyclaw.constants.storage import SESSIONS_DIRNAME
 from pyclaw.terminal.palette import PALETTE
 from pyclaw.terminal.table import TableColumn, render_table
 
@@ -37,7 +39,7 @@ class StatusSummary:
     config_valid: bool = False
     providers: list[str] = field(default_factory=list)
     default_model: str = ""
-    gateway_port: int = 18789
+    gateway_port: int = DEFAULT_GATEWAY_PORT
     gateway_running: bool = False
     channels: list[dict[str, str]] = field(default_factory=list)
     sessions: list[SessionStatus] = field(default_factory=list)
@@ -76,7 +78,7 @@ def scan_status(*, output_json: bool = False, deep: bool = False) -> StatusSumma
         summary.agent_count = len(agent_dirs)
 
         for agent_dir in agent_dirs:
-            sessions_dir = agent_dir / "sessions"
+            sessions_dir = agent_dir / SESSIONS_DIRNAME
             if not sessions_dir.is_dir():
                 continue
             for session_file in sorted(sessions_dir.glob("*.jsonl"))[:10]:
@@ -106,7 +108,7 @@ def _probe_gateway(port: int) -> bool:
     import urllib.request
 
     try:
-        resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
+        resp = urllib.request.urlopen(f"http://{DEFAULT_GATEWAY_BIND}:{port}/health", timeout=2)
         return cast(bool, resp.status == 200)
     except Exception:
         return False

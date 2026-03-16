@@ -13,9 +13,11 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_SLASH
+
 logger = logging.getLogger(__name__)
 
-_DEFAULT_URL = "ws://127.0.0.1:18789/"
+_DEFAULT_URL = DEFAULT_GATEWAY_WS_URL_SLASH
 _HEARTBEAT_INTERVAL = 30.0
 _RECONNECT_BASE_DELAY = 1.0
 _RECONNECT_MAX_DELAY = 30.0
@@ -48,6 +50,9 @@ class GatewayClient:
         self._pending: dict[str, asyncio.Future[dict[str, Any]]] = {}
         self._event_listeners: dict[str, list[Callable[..., Any]]] = {}
         self._global_listeners: list[Callable[..., Any]] = []
+        self._state_listeners: list[Callable[[str, dict[str, Any]], Any]] = []
+        self._connection_state = "offline"
+        self._last_error = ""
 
         self._recv_task: asyncio.Task[None] | None = None
         self._heartbeat_task: asyncio.Task[None] | None = None
@@ -59,8 +64,25 @@ class GatewayClient:
     def connected(self) -> bool:
         return self._connected
 
+    @property
+    def connection_state(self) -> str:
+        return self._connection_state
+
+    @property
+    def last_error(self) -> str:
+        return self._last_error
+
+    def on_connection_state(self, callback: Callable[[str, dict[str, Any]], Any]) -> None:
+        self._state_listeners.append(callback)
+
+    def off_connection_state(self, callback: Callable[[str, dict[str, Any]], Any]) -> None:
+        if callback in self._state_listeners:
+            self._state_listeners.remove(callback)
+
     async def connect(self) -> None:
         """Connect to the gateway and perform the v3 handshake."""
+        self._should_reconnect = True
+        self._set_connection_state("connecting")
         try:
             import websockets
         except ImportError:
@@ -70,6 +92,7 @@ class GatewayClient:
             self._ws = await websockets.connect(self._url)
         except Exception as exc:
             logger.warning("Failed to connect to gateway: %s", exc)
+            self._set_connection_state("reconnecting", error=str(exc))
             self._schedule_reconnect()
             return
 
@@ -92,9 +115,11 @@ class GatewayClient:
             )
             self._connected = True
             self._reconnect_delay = _RECONNECT_BASE_DELAY
+            self._set_connection_state("connected")
             logger.info("Connected to gateway (protocol=%s)", result.get("protocol"))
         except Exception as exc:
             logger.error("Handshake failed: %s", exc)
+            self._set_connection_state("error", error=str(exc))
             await self.disconnect()
             raise
 
@@ -102,6 +127,7 @@ class GatewayClient:
         """Disconnect from the gateway."""
         self._should_reconnect = False
         self._connected = False
+        self._set_connection_state("offline")
         for task in (self._recv_task, self._heartbeat_task, self._reconnect_task):
             if task and not task.done():
                 task.cancel()
@@ -167,6 +193,7 @@ class GatewayClient:
     def clear_all_listeners(self) -> None:
         self._event_listeners.clear()
         self._global_listeners.clear()
+        self._state_listeners.clear()
 
     async def _recv_loop(self) -> None:
         """Background loop that reads and dispatches incoming frames."""
@@ -188,6 +215,7 @@ class GatewayClient:
             logger.warning("WebSocket recv error: %s", exc)
         finally:
             self._connected = False
+            self._set_connection_state("offline")
             if self._should_reconnect:
                 self._schedule_reconnect()
 
@@ -247,19 +275,36 @@ class GatewayClient:
             return
         if self._reconnect_task and not self._reconnect_task.done():
             return
+        self._set_connection_state("reconnecting")
         self._reconnect_task = asyncio.create_task(self._reconnect_loop())
 
     async def _reconnect_loop(self) -> None:
         while self._should_reconnect and not self._connected:
             logger.info("Reconnecting in %.1fs ...", self._reconnect_delay)
+            self._set_connection_state("reconnecting", retry_in=self._reconnect_delay)
             await asyncio.sleep(self._reconnect_delay)
             self._reconnect_delay = min(self._reconnect_delay * 2, _RECONNECT_MAX_DELAY)
             try:
                 await self.connect()
                 if self._connected:
                     return
+            except Exception as exc:
+                self._set_connection_state("error", error=str(exc))
+
+    def _set_connection_state(self, state: str, **meta: Any) -> None:
+        self._connection_state = state
+        error = meta.get("error")
+        if isinstance(error, str):
+            self._last_error = error
+        if state == "connected":
+            self._last_error = ""
+        for cb in list(self._state_listeners):
+            try:
+                result = cb(state, meta)
+                if asyncio.iscoroutine(result):
+                    asyncio.create_task(result)
             except Exception:
-                pass
+                logger.exception("Error in connection state listener")
 
 
 # Convenience helpers for common RPC patterns

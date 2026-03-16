@@ -20,6 +20,8 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 
+from pyclaw.constants.runtime import STATUS_FAILED, STATUS_RUNNING, STATUS_STOPPED
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,10 +36,10 @@ class ProcessScope(str, Enum):
 
 class ProcessState(str, Enum):
     PENDING = "pending"
-    RUNNING = "running"
+    RUNNING = STATUS_RUNNING
     STOPPING = "stopping"
-    STOPPED = "stopped"
-    FAILED = "failed"
+    STOPPED = STATUS_STOPPED
+    FAILED = STATUS_FAILED
     RESTARTING = "restarting"
 
 

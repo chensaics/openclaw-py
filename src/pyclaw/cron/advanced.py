@@ -22,16 +22,25 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import (
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_PENDING,
+    STATUS_RUNNING,
+    STATUS_SKIPPED,
+    STATUS_TIMEOUT,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class TaskState(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    TIMEOUT = "timeout"
-    FAILED = "failed"
-    SKIPPED = "skipped"
+    PENDING = STATUS_PENDING
+    RUNNING = STATUS_RUNNING
+    COMPLETED = STATUS_COMPLETED
+    TIMEOUT = STATUS_TIMEOUT
+    FAILED = STATUS_FAILED
+    SKIPPED = STATUS_SKIPPED
 
 
 @dataclass

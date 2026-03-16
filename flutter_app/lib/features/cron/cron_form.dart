@@ -33,11 +33,13 @@ class _CronFormState extends State<CronForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('New Scheduled Task', style: Theme.of(context).textTheme.titleMedium),
+          Text('New Scheduled Task',
+              style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.label)),
+            decoration: const InputDecoration(
+                labelText: 'Name', prefixIcon: Icon(Icons.label)),
           ),
           const SizedBox(height: 12),
           SegmentedButton<ScheduleType>(
@@ -76,8 +78,10 @@ class _CronFormState extends State<CronForm> {
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : const Text('Create'),
           ),
@@ -87,16 +91,20 @@ class _CronFormState extends State<CronForm> {
   }
 
   Future<void> _submit() async {
-    if (_nameCtrl.text.trim().isEmpty || _promptCtrl.text.trim().isEmpty) return;
+    if (_nameCtrl.text.trim().isEmpty || _promptCtrl.text.trim().isEmpty) {
+      return;
+    }
     setState(() => _submitting = true);
     try {
       await widget.onSubmit({
         'name': _nameCtrl.text.trim(),
-        'schedule_type': _type.name,
+        'scheduleType': _type.name,
         'schedule': _scheduleCtrl.text.trim(),
-        'prompt': _promptCtrl.text.trim(),
+        'message': _promptCtrl.text.trim(),
       });
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +112,9 @@ class _CronFormState extends State<CronForm> {
         );
       }
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 }

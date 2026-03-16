@@ -9,6 +9,7 @@ import typer
 from pyclaw.config.io import load_config, load_config_raw, save_config
 from pyclaw.config.paths import resolve_config_path
 from pyclaw.config.schema import PyClawConfig
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
 from pyclaw.terminal.palette import PALETTE
 from pyclaw.terminal.table import TableColumn, render_table
 
@@ -61,7 +62,7 @@ def channels_status() -> None:
     p = PALETTE
 
     config_path = resolve_config_path()
-    port = 18789
+    port = DEFAULT_GATEWAY_PORT
     if config_path.exists():
         try:
             cfg = load_config(config_path)
@@ -73,7 +74,7 @@ def channels_status() -> None:
     import urllib.request
 
     try:
-        urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2)
+        urllib.request.urlopen(f"http://{DEFAULT_GATEWAY_BIND}:{port}/health", timeout=2)
         typer.echo(f"  {p.success}Gateway running on port {port}{p.reset}")
         typer.echo(f"  {p.muted}Use the gateway WebSocket API for detailed channel status.{p.reset}")
     except Exception:

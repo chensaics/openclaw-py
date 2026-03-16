@@ -20,6 +20,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from pyclaw.config.paths import resolve_config_path, resolve_credentials_dir, resolve_memory_dir, resolve_state_dir
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
+from pyclaw.constants.storage import SESSIONS_DIRNAME
+
 
 class Severity(str, Enum):
     OK = "ok"
@@ -128,7 +132,7 @@ class DiagnosticRegistry:
 
 def check_config() -> DiagnosticResult:
     """Check config file exists and is valid JSON."""
-    config_path = Path.home() / ".pyclaw" / "config.json"
+    config_path = resolve_config_path()
     if not config_path.exists():
         return DiagnosticResult(
             check_name="config_file",
@@ -153,13 +157,13 @@ def check_config() -> DiagnosticResult:
             category="config",
             severity=Severity.ERROR,
             message=f"Config file has invalid JSON: {e}",
-            fix_hint="Fix the JSON syntax in ~/.pyclaw/config.json",
+            fix_hint=f"Fix the JSON syntax in {config_path}",
         )
 
 
 def check_auth() -> DiagnosticResult:
     """Check that at least one LLM provider is configured."""
-    creds_dir = Path.home() / ".pyclaw" / "credentials"
+    creds_dir = resolve_credentials_dir()
     if not creds_dir.exists():
         return DiagnosticResult(
             check_name="auth_credentials",
@@ -187,7 +191,7 @@ def check_auth() -> DiagnosticResult:
 
 def check_sandbox() -> DiagnosticResult:
     """Check sandbox directory access."""
-    home = Path.home() / ".pyclaw"
+    home = resolve_state_dir()
     if not home.exists():
         return DiagnosticResult(
             check_name="sandbox_dir",
@@ -216,11 +220,11 @@ def check_gateway_connectivity() -> DiagnosticResult:
     """Check if gateway port is reachable on localhost."""
     import socket as sock
 
-    port = 18789
+    port = DEFAULT_GATEWAY_PORT
     try:
         s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         s.settimeout(2)
-        result = s.connect_ex(("127.0.0.1", port))
+        result = s.connect_ex((DEFAULT_GATEWAY_BIND, port))
         s.close()
         if result == 0:
             return DiagnosticResult(
@@ -266,7 +270,7 @@ def check_workspace() -> DiagnosticResult:
 
 def check_memory() -> DiagnosticResult:
     """Check memory store accessibility."""
-    mem_dir = Path.home() / ".pyclaw" / "memory"
+    mem_dir = resolve_memory_dir()
     if not mem_dir.exists():
         return DiagnosticResult(
             check_name="memory_store",
@@ -285,7 +289,7 @@ def check_memory() -> DiagnosticResult:
 
 def check_state() -> DiagnosticResult:
     """Check session state directory."""
-    sessions_dir = Path.home() / ".pyclaw" / "sessions"
+    sessions_dir = resolve_state_dir() / SESSIONS_DIRNAME
     if not sessions_dir.exists():
         return DiagnosticResult(
             check_name="session_state",
@@ -326,7 +330,7 @@ def check_platform() -> DiagnosticResult:
 
 def check_security() -> DiagnosticResult:
     """Basic security audit."""
-    config_path = Path.home() / ".pyclaw" / "config.json"
+    config_path = resolve_config_path()
     if not config_path.exists():
         return DiagnosticResult(
             check_name="security_audit",

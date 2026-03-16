@@ -6,13 +6,14 @@ import json
 import logging
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_PATH
 from pyclaw.node_host.invoke import InvokeRequest, handle_invoke
 
 logger = logging.getLogger(__name__)
 
 
 async def run_node_host(
-    gateway_url: str = "ws://127.0.0.1:18789/ws",
+    gateway_url: str = DEFAULT_GATEWAY_WS_URL_PATH,
     auth_token: str | None = None,
     node_id: str = "",
 ) -> None:

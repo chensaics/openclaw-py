@@ -24,7 +24,8 @@ class BackupPage extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
+            border: Border(
+                bottom: BorderSide(color: scheme.outlineVariant, width: 0.5)),
           ),
           child: Row(
             children: [
@@ -54,9 +55,11 @@ class BackupPage extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.cloud_off, size: 48, color: scheme.primary.withAlpha(100)),
+                        Icon(Icons.cloud_off,
+                            size: 48, color: scheme.primary.withAlpha(100)),
                         const SizedBox(height: 12),
-                        Text('No backups yet', style: TextStyle(color: scheme.onSurfaceVariant)),
+                        Text('No backups yet',
+                            style: TextStyle(color: scheme.onSurfaceVariant)),
                         const SizedBox(height: 8),
                         FilledButton.tonal(
                           onPressed: () => _export(context, ref),
@@ -73,18 +76,21 @@ class BackupPage extends ConsumerWidget {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           leading: CircleAvatar(
                             backgroundColor: AppColors.info.withAlpha(30),
-                            child: const Icon(Icons.archive, color: AppColors.info, size: 20),
+                            child: const Icon(Icons.archive,
+                                color: AppColors.info, size: 20),
                           ),
                           title: Text(
-                            b['filename'] as String? ?? 'backup',
+                            _basename(b['path'] as String?) ?? 'backup',
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           subtitle: Text(
-                            '${b['size_mb'] ?? '?'} MB  •  ${b['created_at'] ?? ''}',
-                            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                            '${_sizeMbText(b['size'])} MB',
+                            style: TextStyle(
+                                fontSize: 12, color: scheme.onSurfaceVariant),
                           ),
                         ),
                       );
@@ -113,5 +119,20 @@ class BackupPage extends ConsumerWidget {
         );
       }
     }
+  }
+
+  String? _basename(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return path.split('/').last;
+  }
+
+  String _sizeMbText(dynamic bytes) {
+    if (bytes is int) {
+      return (bytes / (1024 * 1024)).toStringAsFixed(2);
+    }
+    if (bytes is double) {
+      return (bytes / (1024 * 1024)).toStringAsFixed(2);
+    }
+    return '?';
   }
 }

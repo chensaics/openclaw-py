@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
 from pyclaw.security.audit import AuditFinding, AuditResult, AuditSeverity
 
 logger = logging.getLogger(__name__)
@@ -30,12 +31,12 @@ def audit_gateway_http(config: dict[str, Any]) -> list[AuditFinding]:
     gateway = config.get("gateway", {})
 
     bind = gateway.get("bind", "loopback")
-    port = gateway.get("port", 18789)
+    port = gateway.get("port", DEFAULT_GATEWAY_PORT)
     tls = gateway.get("tls", {})
     tls_enabled = tls.get("enabled", False)
 
     # Non-loopback without TLS
-    if bind not in ("loopback", "127.0.0.1", "localhost") and not tls_enabled:
+    if bind not in ("loopback", DEFAULT_GATEWAY_BIND, "localhost") and not tls_enabled:
         findings.append(
             AuditFinding(
                 id="gateway-no-tls-nonlocal",
@@ -168,7 +169,7 @@ def audit_hooks(config: dict[str, Any]) -> list[AuditFinding]:
 
         # Check for external URLs in hooks
         url = hook_config.get("url", "")
-        if url and not url.startswith(("http://localhost", "http://127.0.0.1", "https://")):
+        if url and not url.startswith(("http://localhost", f"http://{DEFAULT_GATEWAY_BIND}", "https://")):
             findings.append(
                 AuditFinding(
                     id=f"hook-insecure-url-{hook_name}",

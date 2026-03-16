@@ -70,6 +70,18 @@ void main() {
       final s2 = Session.fromJson({'id': 'sess-2'});
       expect(s2.id, 'sess-2');
     });
+
+    test('fromJson parses gateway path-based session list', () {
+      final s = Session.fromJson({
+        'agentId': 'main',
+        'file': 'abc123.jsonl',
+        'path': '/tmp/main/sessions/abc123.jsonl',
+      });
+      expect(s.id, 'abc123');
+      expect(s.title, 'abc123');
+      expect(s.path, '/tmp/main/sessions/abc123.jsonl');
+      expect(s.agentId, 'main');
+    });
   });
 
   group('Plan', () {
@@ -78,9 +90,12 @@ void main() {
         id: 'p1',
         goal: 'Deploy',
         steps: [
-          const PlanStep(index: 0, description: 'Build', status: StepStatus.done),
-          const PlanStep(index: 1, description: 'Test', status: StepStatus.done),
-          const PlanStep(index: 2, description: 'Deploy', status: StepStatus.pending),
+          const PlanStep(
+              index: 0, description: 'Build', status: StepStatus.done),
+          const PlanStep(
+              index: 1, description: 'Test', status: StepStatus.done),
+          const PlanStep(
+              index: 2, description: 'Deploy', status: StepStatus.pending),
         ],
         createdAt: DateTime.now(),
       );
@@ -107,6 +122,18 @@ void main() {
       expect(j.scheduleType, ScheduleType.every);
       expect(j.enabled, isTrue);
     });
+
+    test('fromJson parses camelCase fields', () {
+      final j = CronJob.fromJson({
+        'id': 'c2',
+        'name': 'Hourly',
+        'scheduleType': 'every',
+        'schedule': '1h',
+        'message': 'status',
+      });
+      expect(j.scheduleType, ScheduleType.every);
+      expect(j.prompt, 'status');
+    });
   });
 
   group('Agent', () {
@@ -119,6 +146,16 @@ void main() {
       expect(a.name, 'coder');
       expect(a.tools, hasLength(2));
       expect(a.isDefault, isTrue);
+    });
+
+    test('fromJson reads provider/model from config object', () {
+      final a = Agent.fromJson({
+        'id': 'main',
+        'config': {'provider': 'openai', 'model': 'gpt-4.1-mini'},
+      });
+      expect(a.name, 'main');
+      expect(a.provider, 'openai');
+      expect(a.model, 'gpt-4.1-mini');
     });
   });
 
@@ -137,6 +174,13 @@ void main() {
     test('handles unknown state', () {
       final c = Channel.fromJson({'id': 'x', 'type': 't', 'state': 'bogus'});
       expect(c.state, ChannelState.offline);
+    });
+
+    test('maps running status to online', () {
+      final c = Channel.fromJson(
+          {'id': 'ch', 'name': 'telegram', 'status': 'running'});
+      expect(c.state, ChannelState.online);
+      expect(c.type, 'telegram');
     });
   });
 }

@@ -24,6 +24,7 @@ from typing import Any
 from pyclaw.agents.session import AgentMessage, SessionManager, TimelineKind
 from pyclaw.agents.stream import build_tool_definitions, stream_llm
 from pyclaw.agents.types import AgentEvent, AgentTool, ModelConfig, ToolCall, ToolResult
+from pyclaw.constants.runtime import STATUS_COMPLETED
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +257,7 @@ async def _agent_loop(
     if plan and not plan.is_complete:
         from pyclaw.agents.planner import PlanStatus
 
-        if all(s.status.value == "completed" for s in plan.steps):
+        if all(s.status.value == STATUS_COMPLETED for s in plan.steps):
             plan.status = PlanStatus.COMPLETED
 
     yield AgentEvent(type="agent_end")

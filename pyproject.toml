@@ -132,10 +132,14 @@ exclude = ["flutter_app", "build", ".venv"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pyclaw"]
+force-include = { "skills" = "pyclaw/bundled_skills" }
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
+test-full = "pytest {args:tests}"
+test-inc = "python scripts/pytest_scope.py run --mode incremental -- {args}"
 cov = "pytest --cov=pyclaw --cov-report=term-missing --cov-report=html {args:tests}"
+cov-inc = "python scripts/pytest_scope.py run --mode incremental -- --cov=pyclaw --cov-report=term-missing --cov-report=html {args}"
 lint = "ruff check src tests"
 fmt = "ruff format src tests"
 typecheck = "mypy src/pyclaw"
@@ -158,7 +162,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["F841", "SIM"]
+"tests/**" = ["F841", "SIM"]
 "src/pyclaw/ui/*" = ["B008"]
 "src/pyclaw/cli/*" = ["B008", "E402"]
 

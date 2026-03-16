@@ -696,6 +696,9 @@ pytest
 # Run tests with coverage
 pytest --cov=pyclaw --cov-report=term-missing
 
+# 增量测试（相对 origin/master，仅相关包/改动测试文件）— 见 docs/testing-incremental.md
+hatch run test-inc -- -q
+
 # Lint
 ruff check src/ tests/
 

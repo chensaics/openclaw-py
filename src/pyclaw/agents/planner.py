@@ -16,22 +16,30 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from pyclaw.constants.runtime import (
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_PAUSED,
+    STATUS_PENDING,
+    STATUS_RUNNING,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class PlanStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    PENDING = STATUS_PENDING
+    RUNNING = STATUS_RUNNING
+    PAUSED = STATUS_PAUSED
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
 
 
 class StepStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    PENDING = STATUS_PENDING
+    RUNNING = STATUS_RUNNING
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
 
 
 @dataclass
@@ -134,7 +142,7 @@ class Plan:
                 Step(
                     id=s["id"],
                     description=s["description"],
-                    status=StepStatus(s.get("status", "pending")),
+                    status=StepStatus(s.get("status", STATUS_PENDING)),
                     result=s.get("result", ""),
                     progress=StepProgress(
                         current=prog.get("current", 0),
@@ -147,7 +155,7 @@ class Plan:
         return cls(
             id=data["id"],
             goal=data["goal"],
-            status=PlanStatus(data.get("status", "pending")),
+            status=PlanStatus(data.get("status", STATUS_PENDING)),
             steps=steps,
             current_step_index=data.get("currentStepIndex", 0),
             iteration_count=data.get("iterationCount", 0),

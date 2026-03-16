@@ -47,7 +47,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
 
   Future<Plan?> get(String planId) async {
     try {
-      final result = await _client.call('plan.get', {'plan_id': planId});
+      final result = await _client.call('plan.get', {'planId': planId});
       return Plan.fromJson(result);
     } catch (_) {
       return null;
@@ -56,7 +56,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
 
   Future<void> resume(String planId) async {
     try {
-      await _client.call('plan.resume', {'plan_id': planId});
+      await _client.call('plan.resume', {'planId': planId});
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
@@ -64,7 +64,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
 
   Future<void> delete(String planId) async {
     try {
-      await _client.call('plan.delete', {'plan_id': planId});
+      await _client.call('plan.delete', {'planId': planId});
       state = state.copyWith(
         plans: state.plans.where((p) => p.id != planId).toList(),
       );

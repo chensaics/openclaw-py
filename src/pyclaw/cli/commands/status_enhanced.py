@@ -16,8 +16,16 @@ import sys
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Any
+
+from pyclaw.config.paths import (
+    resolve_config_path,
+    resolve_credentials_dir,
+    resolve_memory_dir,
+    resolve_state_dir,
+)
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
+from pyclaw.constants.storage import SESSIONS_DIRNAME
 
 
 class StatusLevel(str, Enum):
@@ -80,18 +88,18 @@ def collect_gateway_status(*, deep: bool = False) -> SubsystemStatus:
     """Collect gateway status."""
     import socket
 
-    port = 18789
+    port = DEFAULT_GATEWAY_PORT
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(2)
-        result = s.connect_ex(("127.0.0.1", port))
+        result = s.connect_ex((DEFAULT_GATEWAY_BIND, port))
         s.close()
         if result == 0:
             return SubsystemStatus(
                 name="Gateway",
                 level=StatusLevel.OK,
                 message=f"Running on port {port}",
-                details={"port": port, "host": "127.0.0.1"},
+                details={"port": port, "host": DEFAULT_GATEWAY_BIND},
             )
         return SubsystemStatus(
             name="Gateway",
@@ -108,7 +116,7 @@ def collect_gateway_status(*, deep: bool = False) -> SubsystemStatus:
 
 def collect_config_status() -> SubsystemStatus:
     """Collect config status."""
-    config_path = Path.home() / ".pyclaw" / "config.json"
+    config_path = resolve_config_path()
     if config_path.exists():
         size = config_path.stat().st_size
         return SubsystemStatus(
@@ -126,7 +134,7 @@ def collect_config_status() -> SubsystemStatus:
 
 def collect_auth_status() -> SubsystemStatus:
     """Collect auth/credentials status."""
-    creds_dir = Path.home() / ".pyclaw" / "credentials"
+    creds_dir = resolve_credentials_dir()
     if not creds_dir.exists():
         return SubsystemStatus(
             name="Auth",
@@ -172,7 +180,7 @@ def collect_daemon_status() -> SubsystemStatus:
 
 def collect_sessions_status() -> SubsystemStatus:
     """Collect sessions status."""
-    sessions_dir = Path.home() / ".pyclaw" / "sessions"
+    sessions_dir = resolve_state_dir() / SESSIONS_DIRNAME
     if not sessions_dir.exists():
         return SubsystemStatus(
             name="Sessions",
@@ -190,7 +198,7 @@ def collect_sessions_status() -> SubsystemStatus:
 
 def collect_memory_status() -> SubsystemStatus:
     """Collect memory status."""
-    mem_dir = Path.home() / ".pyclaw" / "memory"
+    mem_dir = resolve_memory_dir()
     if not mem_dir.exists():
         return SubsystemStatus(
             name="Memory",
@@ -208,7 +216,7 @@ def collect_memory_status() -> SubsystemStatus:
 
 def collect_channels_status() -> SubsystemStatus:
     """Collect channels status (config-based)."""
-    config_path = Path.home() / ".pyclaw" / "config.json"
+    config_path = resolve_config_path()
     if not config_path.exists():
         return SubsystemStatus(name="Channels", level=StatusLevel.UNKNOWN, message="No config")
 
@@ -234,7 +242,7 @@ def collect_channels_status() -> SubsystemStatus:
 
 def collect_models_status() -> SubsystemStatus:
     """Collect models/provider status."""
-    creds_dir = Path.home() / ".pyclaw" / "credentials"
+    creds_dir = resolve_credentials_dir()
     if not creds_dir.exists():
         return SubsystemStatus(
             name="Models",

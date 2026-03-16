@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import typer
 
+from pyclaw.constants.env import AUTH_TOKEN_ENV_VARS
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
+
 
 def gateway_command(
-    port: int = typer.Option(18789, help="Port to listen on."),
-    bind: str = typer.Option("127.0.0.1", help="Address to bind to."),
-    auth_token: str | None = typer.Option(None, envvar="PYCLAW_AUTH_TOKEN", help="Auth token."),
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Port to listen on."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Address to bind to."),
+    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Start the pyclaw gateway server."""
     import uvicorn

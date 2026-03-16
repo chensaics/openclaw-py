@@ -1,7 +1,7 @@
 {
   "app.title": "pyclaw",
   "app.subtitle": "AI Assistant",
-  "chat.placeholder": "Type a message...",
+  "chat.placeholder": "Type your message here, press Enter to send...",
   "chat.send": "Send",
   "chat.thinking": "Thinking...",
   "chat.clear": "Clear Chat",
@@ -41,6 +41,7 @@
   "sessions.limit": "Limit",
   "sessions.active_min": "Active (min)",
   "sessions.empty": "No sessions.",
+  "sessions.empty_hint": "Send a message to create your first session.",
   "sessions.offline": "Connect to gateway to view sessions.",
   "sessions.offline_mode": "Offline — showing local session files",
   "onboarding.welcome": "Welcome to pyclaw",
@@ -115,12 +116,54 @@
   "nav.debug": "Debug",
   "nav.config": "Config",
   "nav.more": "More",
+  "nav.quick_actions": "Quick Actions",
+  "nav.grouped": "Grouped",
+  "nav.group.communication": "Communication",
+  "nav.group.capability": "Capabilities",
+  "nav.group.monitoring": "Monitoring",
+  "nav.group.advanced": "Advanced",
   "chat.abort": "Stop",
   "chat.edit": "Edit",
   "chat.search": "Search messages...",
+  "chat.welcome_title": "Start a new chat",
+  "chat.welcome_hint": "Start a conversation below.",
+  "chat.welcome_hint1": "• Ask any question to begin",
+  "chat.welcome_hint2": "• Use quick actions for common tasks",
+  "chat.welcome_hint3": "• Pick a previous session from the left",
+  "chat.welcome_action_publish": "Publish Wizard",
+  "chat.welcome_action_agent": "Select Agent",
+  "chat.welcome_action_settings": "Settings",
+  "chat.welcome_tip": "Tip: Press Ctrl+K to open command palette",
+  "chat.quick_mention": "Mention",
   "sessions.search": "Search sessions...",
   "settings.gateway": "Gateway",
   "settings.gateway_url": "Gateway URL",
+  "settings.auth_token": "Auth Token",
+  "settings.section.assistant": "Assistant",
+  "settings.section.message": "Message",
+  "settings.section.connection": "Connection",
+  "settings.section.appearance": "Appearance",
+  "settings.temperature": "Temperature",
+  "settings.context_turns": "Context turns",
+  "settings.temperature_tooltip": "Controls response creativity. 0 = deterministic, 2 = random.",
+  "settings.context_turns_tooltip": "How many recent turns are kept in context.",
+  "settings.stream_output": "Streaming output",
+  "settings.stream_output_tooltip": "Show reply token-by-token while generating.",
+  "settings.max_tokens_enabled": "Enable max tokens",
+  "settings.max_tokens": "Max tokens",
+  "settings.max_tokens_tooltip": "Limit maximum tokens generated per response.",
+  "settings.show_prompt": "Show prompts",
+  "settings.show_prompt_tooltip": "Display system prompts used by the current agent.",
+  "settings.serif_font": "Use serif font",
+  "settings.serif_font_tooltip": "Improves long-form reading comfort.",
+  "settings.collapse_thinking": "Auto-collapse thinking",
+  "settings.collapse_thinking_tooltip": "Collapse assistant reasoning blocks by default.",
+  "settings.message_outline": "Show message outline",
+  "settings.message_outline_tooltip": "Show an outline navigation for long messages.",
+  "settings.message_style": "Message style",
+  "settings.message_style.concise": "Concise",
+  "settings.message_style.standard": "Standard",
+  "settings.message_style.detailed": "Detailed",
   "settings.seed_color": "Theme Color",
   "tray.new_session": "New Chat",
   "tray.toggle_theme": "Toggle Theme",
@@ -219,6 +262,8 @@
   "nodes.paired_devices": "Paired Devices",
   "nodes.exec_bindings": "Exec Node Bindings",
   "plans.offline": "Connect to gateway to view plans.",
+  "plans.empty": "No execution plans.",
+  "plans.load_failed": "Failed to load plans.",
   "common.retry": "Retry",
   "common.close": "Close",
   "toolbar.attach": "Attach file",
@@ -239,4 +284,29 @@
   "agents.create": "Create Agent",
   "agents.new": "New Agent",
   "onboarding.complete_hint": "Setup complete! Configure your Gateway connection on the Overview page."
+  ,"quick_actions.publish_wizard": "Publish Wizard"
+  ,"quick_actions.publish_wizard_desc": "Quickly publish via configured skills."
+  ,"quick_actions.agent_shortcut": "Agent Shortcut"
+  ,"quick_actions.agent_shortcut_desc": "Create or switch to common agents."
+  ,"quick_actions.agent_select": "Select"
+  ,"quick_actions.agent_launch": "Launch"
+  ,"quick_actions.cron_shortcut": "Cron Shortcut"
+  ,"quick_actions.cron_shortcut_desc": "Manage and run scheduled jobs."
+  ,"quick_actions.cron_run_now": "Run now"
+  ,"quick_actions.status_check": "Status Check"
+  ,"quick_actions.status_check_desc": "Check gateway, agents and cron health."
+  ,"quick_actions.run_check": "Run check"
+  ,"quick_actions.status_gateway": "Gateway: Offline"
+  ,"quick_actions.status_agents": "Agents: Unknown"
+  ,"quick_actions.status_cron": "Cron: Unknown"
+  ,"quick_actions.status_gateway_ok": "Gateway: Healthy"
+  ,"quick_actions.status_agents_count": "Agents: {count}"
+  ,"quick_actions.status_cron_count": "Cron: {count}"
+  ,"quick_actions.last_checked": "Last checked: offline"
+  ,"quick_actions.last_checked_now": "Last checked: just now"
+  ,"quick_actions.offline_hint": "Gateway offline."
+  ,"quick_actions.status_ok": "Status check complete."
+  ,"quick_actions.status_failed": "Status check failed: {error}"
+  ,"quick_actions.wechat_publish": "WeChat Publish"
+  ,"quick_actions.redbook_publish": "Redbook Publish"
 }

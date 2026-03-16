@@ -15,15 +15,34 @@ class ModelSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ids = models
+        .map((m) =>
+            m['model_id'] as String? ??
+            m['id'] as String? ??
+            m['model'] as String? ??
+            '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final effectiveSelected =
+        (selectedModel != null && ids.contains(selectedModel))
+            ? selectedModel
+            : null;
+
     return DropdownButtonFormField<String>(
-      value: selectedModel,
+      value: effectiveSelected,
       decoration: const InputDecoration(
         labelText: 'Model',
         prefixIcon: Icon(Icons.psychology),
       ),
       items: models.map((m) {
-        final id = m['id'] as String? ?? m['model'] as String? ?? '';
-        final label = m['label'] as String? ?? id;
+        final id = m['model_id'] as String? ??
+            m['id'] as String? ??
+            m['model'] as String? ??
+            '';
+        final provider = m['provider'] as String? ?? '';
+        final label = m['display_name'] as String? ??
+            m['label'] as String? ??
+            (provider.isNotEmpty ? '$provider/$id' : id);
         return DropdownMenuItem(value: id, child: Text(label));
       }).toList(),
       onChanged: onChanged,

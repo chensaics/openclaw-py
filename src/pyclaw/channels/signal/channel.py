@@ -9,10 +9,11 @@ import uuid
 from typing import Any
 
 from pyclaw.channels.base import ChannelMessage, ChannelPlugin, ChannelReply
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_BASE_URL = "http://127.0.0.1:8080"
+_DEFAULT_BASE_URL = f"http://{DEFAULT_GATEWAY_BIND}:8080"
 
 
 class SignalChannel(ChannelPlugin):

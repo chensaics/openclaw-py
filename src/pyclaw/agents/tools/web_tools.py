@@ -8,12 +8,13 @@ from urllib.parse import urlparse
 
 from pyclaw.agents.tools.base import BaseTool
 from pyclaw.agents.types import ToolResult
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND
 
 _MAX_RESPONSE_BYTES = 512 * 1024  # 512 KiB
 _FETCH_TIMEOUT = 30  # seconds
 
 # SSRF protection: block private/reserved IP ranges
-_BLOCKED_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "[::1]"}
+_BLOCKED_HOSTS = {"localhost", DEFAULT_GATEWAY_BIND, "0.0.0.0", "[::1]"}
 
 
 def _is_url_safe(url: str) -> str | None:

@@ -6,6 +6,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from pyclaw import __version__
+from pyclaw.constants.runtime import STATUS_OK
 from pyclaw.gateway.protocol.frames import PROTOCOL_VERSION
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ def create_health_handlers() -> dict[str, MethodHandler]:
         await conn.send_ok(
             "health",
             {
-                "status": "ok",
+                "status": STATUS_OK,
                 "version": __version__,
                 "protocol": PROTOCOL_VERSION,
                 "uptime_seconds": int(time.time() - _start_time),
@@ -30,7 +31,7 @@ def create_health_handlers() -> dict[str, MethodHandler]:
         await conn.send_ok(
             "status",
             {
-                "status": "ok",
+                "status": STATUS_OK,
                 "connections": len(conn.server.connections),
                 "version": __version__,
             },

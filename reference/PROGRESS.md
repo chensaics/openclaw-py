@@ -1,6 +1,6 @@
 # OpenClaw-Py 执行进度（里程碑驱动）
 
-> 最后更新：2026-03-14  
+> 最后更新：2026-03-15  
 > 项目路径：`/mnt/g/chensai/openclaw-py`  
 > 本文定位：**执行视角**（里程碑、看板、风险、退出条件）  
 > 决策矩阵与能力对照：见 `reference/REFERENCE_TABLES.md`
@@ -35,11 +35,11 @@
 
 | 里程碑 | 周期（建议） | 目标 | 进度 | 退出条件（DoD） |
 |---|---|---|---|---|
-| M0 | 1-2 周 | 文档重建与执行基线统一 | 进行中 | 两份核心文档完成重排，形成执行/决策分工 |
-| M1 | 2-4 周 | Skills 运行时契约 + 首批内置技能 | 未开始 | Skill Contract 落地，6-8 个内置技能可运行可测 |
-| M2 | 3-6 周 | 双轨客户端打通（Flet 稳定、Flutter 恢复） | 未开始 | Flet/Flutter 共享 Gateway 能力基线并通过回归 |
-| M3 | 2-4 周 | 多平台构建发布与质量门禁 | 未开始 | 各目标平台 build 流水线 + 发布检查表稳定执行 |
-| M4 | 持续 | 上游 OpenClaw 对齐闭环 | 未开始 | release/docs 差距追踪制度化并可周更 |
+| M0 | 1-2 周 | 文档重建与执行基线统一 | 已完成 | 两份核心文档完成重排，形成执行/决策分工 |
+| M1 | 2-4 周 | Skills 运行时契约 + 首批内置技能 | 进行中 | Skill Contract 落地，6-8 个内置技能可运行可测 |
+| M2 | 3-6 周 | 双轨客户端打通（Flet 稳定、Flutter 恢复） | 进行中 | Flet/Flutter 共享 Gateway 能力基线并通过回归 |
+| M3 | 2-4 周 | 多平台构建发布与质量门禁 | 进行中 | 各目标平台 build 流水线 + 发布检查表稳定执行 |
+| M4 | 持续 | 上游 OpenClaw 对齐闭环 | 进行中 | release/docs 差距追踪制度化并可周更 |
 
 ---
 
@@ -104,6 +104,15 @@
 - Skill Contract 被配置/加载/执行链路共同消费。
 - 至少 6 个内置技能具备安装、验证、回滚、测试样例。
 - 高风险技能全部经过审批策略与审计日志链路。
+
+### 4.5 当前落地进展（2026-03）
+
+- 内置技能目录已统一到仓库根 `skills/`，并通过打包映射到 `pyclaw/bundled_skills`。
+- `loader` 已支持 `PYCLAW_BUNDLED_SKILLS` 覆盖与开发态 `skills/` 兜底发现。
+- 已新增 `pyclaw skills run <skill_key>` 统一执行入口，覆盖 `repo-review/docs-sync/release-helper/incident-triage/channel-ops/node-toolchain/mcp-admin/office-reader` 路径。
+- `pyclaw skills run` 已新增执行前契约门禁：默认阻断缺失依赖与 `userInvocable: false` 技能，返回结构化 `blocking_items`（支持 `ignore_runtime_contract=true` 诊断绕过）。
+- M1 技能相关测试已迁移到 `tests/pyclaw/agents/skills` 与 `tests/pyclaw/cli`。
+- P0/P1 治理脚手架已补齐：`reference/ops` 周报与审计模板、配置文档契约测试、Provider capability registry 与 browser 生命周期审计命令。
 
 ---
 
@@ -205,10 +214,37 @@
 
 ### 8.2 下周（计划）
 
-- [ ] 产出首批内置技能包候选清单与优先级。
-- [ ] 明确 Flet/Flutter 双端能力基线与回归清单。
-- [ ] 整理多平台打包发布 Gate v1（含签名与权限核对表）。
-- [ ] 建立上游 release/docs 周期跟踪模板。
+- [x] 产出首批内置技能包候选清单与优先级。
+- [x] 明确 Flet/Flutter 双端能力基线与回归清单。
+- [x] 整理多平台打包发布 Gate v1（含签名与权限核对表）。
+- [x] 建立上游 release/docs 周期跟踪模板。
+
+### 8.3 本轮补齐产物（2026-03-15）
+
+- [x] `reference/ops/M1_BUILTIN_SKILLS_CANDIDATES.md`（首批内置技能候选与 DoD）。
+- [x] `reference/ops/M2_CLIENT_BASELINE_CHECKLIST.md`（Flet/Flutter 双端基线与回归清单）。
+- [x] `reference/ops/M3_RELEASE_GATE_V1.md`（多平台发布 Gate v1）。
+- [x] `reference/ops/M4_UPSTREAM_RELEASE_DOCS_TRACKER.md`（上游 release/docs 周跟踪模板）。
+- [x] Skills 运行时桥接：`skills/*/scripts/runtime.py` 骨架 + `pyclaw skills run` 脚本运行路径。
+- [x] Skills 运行前契约门禁：依赖缺失阻断、非用户可调用技能阻断、诊断绕过开关与测试补齐。
+
+### 8.4 本轮 Code Review 与修复（2026-03-15）
+
+- 发现并修复：`skills run` 未在执行前强制消费 `runtime_contract` 与调用策略，导致“声明缺依赖但仍可执行”的治理缺口。
+- 已修复行为：
+  - 缺依赖技能默认返回 `needs_attention` + `missing_dep:*`。
+  - `userInvocable: false` 技能默认返回 `invalid`。
+  - 保留诊断路径：支持 `ignore_runtime_contract=true`（仅建议诊断场景使用）。
+  - `mcp-admin/node-toolchain` 作为探测型技能，保留“依赖缺失仍可运行并给出诊断”的行为。
+- 验证结果：`tests/pyclaw/cli/test_skills_run.py`、`tests/pyclaw/agents/skills/test_runtime_contract.py`、`tests/pyclaw/cli/test_browser_audit.py` 目标回归集已通过。
+
+### 8.5 本轮待开发事项清零（2026-03-15）
+
+- [x] M3 发布 Gate 自动化命令：`pyclaw ops release-gate`（版本一致性、产物命名规则、`SHA256SUMS` 生成、报告落盘）。
+- [x] M2 基线自动化子集命令：`pyclaw ops m2-baseline`（gateway 可见性、`skills run` 成功与失败结构化链路）。
+- [x] M4 周期巡检快照命令：`pyclaw ops m4-snapshot`（周窗口与结论自动留痕到 tracker）。
+- [x] 对应 CLI 与测试补齐：`tests/pyclaw/cli/test_ops_cmd.py` 新增覆盖。
+- [x] 目标回归集通过：`test_ops_cmd` + `test_skills_run` + `test_runtime_contract` + `test_browser_audit`。
 
 ---
 
@@ -227,3 +263,16 @@
 
 - Phase 39–43 已完成；历史 phase 级新增文件与长篇进度明细：请以 Git 历史版本中的 `reference/PROGRESS.md` 为准（已转入存档语义）。
 - 当前唯一“矩阵化真源”：`reference/REFERENCE_TABLES.md`。
+
+---
+
+## 11) Flet UI/UX 质量升级（本轮落地）
+
+- [x] 连接状态统一：`GatewayClient` 增加 `connecting/reconnecting/connected/offline/error` 生命周期事件，UI 指示器与 Overview 统一消费。
+- [x] 修复已复现异常：`overview` 状态刷新路径移除对未挂载控件 `page` 属性的直接访问，避免 `Control must be added to the page first`。
+- [x] 聊天流式性能优化：流式阶段轻量文本渲染 + 节流，结束后一次性 markdown 还原。
+- [x] 会话语义收敛：会话 `id -> path` 映射缓存，预览/删除优先使用真实 path；本地删除改为精确匹配，避免误删。
+- [x] 反馈闭环：`skills/config` 面板操作失败不再静默，统一通过 snackbar 暴露错误与成功反馈。
+- [x] 自动化测试扩展：新增 UI 状态与流式测试、UI-Gateway 契约测试、真实 Web smoke E2E（环境开关控制）。
+- [x] 长时重连稳定性回归：补充 `GatewayClient` 重连循环恢复测试（多次失败后恢复）。
+- [x] CI 门禁升级：新增 `ui-smoke` 作业（UI 变更触发）与 `ui-e2e-nightly` 夜间真实 E2E 作业。

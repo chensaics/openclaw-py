@@ -18,18 +18,29 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import (
+    STATUS_ABORTED,
+    STATUS_COMPACTING,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_IDLE,
+    STATUS_RUNNING,
+    STATUS_TIMEOUT,
+    STATUS_TOOL_EXEC,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class RunState(str, Enum):
-    IDLE = "idle"
-    RUNNING = "running"
-    TOOL_EXEC = "tool_exec"
-    COMPACTING = "compacting"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    ABORTED = "aborted"
-    TIMEOUT = "timeout"
+    IDLE = STATUS_IDLE
+    RUNNING = STATUS_RUNNING
+    TOOL_EXEC = STATUS_TOOL_EXEC
+    COMPACTING = STATUS_COMPACTING
+    COMPLETED = STATUS_COMPLETED
+    FAILED = STATUS_FAILED
+    ABORTED = STATUS_ABORTED
+    TIMEOUT = STATUS_TIMEOUT
 
 
 @dataclass

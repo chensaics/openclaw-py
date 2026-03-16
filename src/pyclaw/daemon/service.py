@@ -9,10 +9,12 @@ import platform
 from dataclasses import dataclass, field
 from typing import Protocol
 
+from pyclaw.constants.runtime import DEFAULT_SERVICE_LABEL, STATUS_UNKNOWN
+
 
 @dataclass
 class GatewayServiceInstallArgs:
-    label: str = "ai.pyclaw.gateway"
+    label: str = DEFAULT_SERVICE_LABEL
     program: str = ""
     arguments: list[str] = field(default_factory=list)
     working_directory: str = ""
@@ -22,7 +24,7 @@ class GatewayServiceInstallArgs:
 
 @dataclass
 class GatewayServiceRuntime:
-    status: str = "unknown"  # "running" | "stopped" | "unknown"
+    status: str = STATUS_UNKNOWN  # runtime status, prefer STATUS_* constants
     pid: int | None = None
     last_exit_code: int | None = None
 

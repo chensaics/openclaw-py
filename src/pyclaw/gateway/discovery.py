@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +38,7 @@ class DiscoveryConfig:
     tailscale_enabled: bool = False
     service_name: str = "pyclaw-gateway"
     service_type: str = "_pyclaw._tcp.local."
-    port: int = 18789
+    port: int = DEFAULT_GATEWAY_PORT
     hostname: str = ""
     metadata: dict[str, str] = field(default_factory=dict)
 
@@ -148,7 +150,7 @@ def resolve_gateway_url(
     config_url: str = "",
     env_url: str = "",
     discovered: list[DiscoveredService] | None = None,
-    default_port: int = 18789,
+    default_port: int = DEFAULT_GATEWAY_PORT,
 ) -> str:
     """Resolve the best gateway URL from multiple sources.
 
@@ -164,7 +166,7 @@ def resolve_gateway_url(
         sorted_services = sorted(discovered, key=lambda s: priority.get(s.method, 99))
         if sorted_services:
             return sorted_services[0].url
-    return f"http://127.0.0.1:{default_port}"
+    return f"http://{DEFAULT_GATEWAY_BIND}:{default_port}"
 
 
 class ServiceDiscoveryManager:

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from pyclaw.constants.runtime import STATUS_CRITICAL, STATUS_ERROR, STATUS_OK, STATUS_WARNING
 from pyclaw.infra.system_events import (
     EventBus,
     EventType,
@@ -236,11 +238,11 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
                 entry["fixHint"] = r.fix_hint
             checks.append(entry)
 
-            if r.severity.value == "ok":
+            if r.severity.value == STATUS_OK:
                 passed += 1
-            elif r.severity.value in ("error", "critical"):
+            elif r.severity.value in (STATUS_ERROR, STATUS_CRITICAL):
                 failed += 1
-            elif r.severity.value == "warning":
+            elif r.severity.value == STATUS_WARNING:
                 warns += 1
 
         await conn.send_ok(
@@ -260,25 +262,41 @@ def create_extended_handlers() -> dict[str, MethodHandler]:
     async def handle_skills_list(params: dict[str, Any] | None, conn: GatewayConnection) -> None:
         skills: list[dict[str, Any]] = []
         try:
-            from pathlib import Path
+            from pyclaw.agents.skills.loader import load_workspace_skill_entries
+            from pyclaw.config.io import load_config_raw
 
-            from pyclaw.agents.skills import load_skill_entries
-            from pyclaw.config.paths import resolve_state_dir
+            runtime_config: dict[str, Any] | None = None
+            server = getattr(conn, "server", None)
+            config_path = getattr(server, "config_path", None)
+            if config_path:
+                cfg_path = Path(config_path)
+                if cfg_path.exists():
+                    runtime_config = load_config_raw(cfg_path)
 
-            for source_dir, source_label in [
-                (Path.cwd(), "workspace"),
-                (resolve_state_dir() / "skills", "global"),
-            ]:
-                if source_dir.is_dir():
-                    for sk in load_skill_entries(source_dir, source=source_label):
-                        skills.append(
-                            {
-                                "name": getattr(sk, "name", ""),
-                                "source": source_label,
-                                "description": getattr(sk, "description", ""),
-                                "enabled": True,
-                            }
-                        )
+            entries = load_workspace_skill_entries(Path.cwd(), config=runtime_config)
+            for sk in entries:
+                meta = getattr(sk, "metadata", None)
+                contract = getattr(sk, "runtime_contract", None)
+                install_cmd = ""
+                if meta and isinstance(getattr(meta, "install", None), dict):
+                    install_cmd = str(meta.install.get("command", "") or "")
+
+                skills.append(
+                    {
+                        "id": getattr(sk, "name", ""),
+                        "name": getattr(sk, "name", ""),
+                        "source": getattr(sk, "source", "workspace"),
+                        "description": str(getattr(sk, "frontmatter", {}).get("description", "") or ""),
+                        "enabled": True,
+                        "runtime": getattr(contract, "runtime", "python-native") if contract else "python-native",
+                        "launcher": getattr(contract, "launcher", "python-native") if contract else "python-native",
+                        "securityLevel": getattr(contract, "security_level", "standard") if contract else "standard",
+                        "deps": list(getattr(contract, "deps", []) or []) if contract else [],
+                        "missingDeps": list(getattr(contract, "missing_deps", []) or []) if contract else [],
+                        "compatible": bool(getattr(contract, "is_compatible", True)) if contract else True,
+                        "installCommand": install_cmd,
+                    }
+                )
         except ImportError:
             pass
         except Exception as exc:

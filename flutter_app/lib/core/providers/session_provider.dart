@@ -67,7 +67,18 @@ class SessionNotifier extends StateNotifier<SessionState> {
       sessions: state.sessions.where((s) => s.id != sessionId).toList(),
     );
     try {
-      await _client.call('sessions.delete', {'session_id': sessionId});
+      Session? target;
+      for (final s in previous) {
+        if (s.id == sessionId) {
+          target = s;
+          break;
+        }
+      }
+      if (target == null || target.path == null || target.path!.isEmpty) {
+        throw GatewayError(
+            'invalid_session', 'Session path is required for deletion');
+      }
+      await _client.call('sessions.delete', {'path': target.path});
     } catch (e) {
       state = state.copyWith(sessions: previous, error: e.toString());
     }
@@ -75,7 +86,18 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   Future<void> reset(String sessionId) async {
     try {
-      await _client.call('sessions.reset', {'session_id': sessionId});
+      Session? target;
+      for (final s in state.sessions) {
+        if (s.id == sessionId) {
+          target = s;
+          break;
+        }
+      }
+      if (target == null || target.path == null || target.path!.isEmpty) {
+        throw GatewayError(
+            'invalid_session', 'Session path is required for reset');
+      }
+      await _client.call('sessions.reset', {'path': target.path});
       await load();
     } catch (e) {
       state = state.copyWith(error: e.toString());

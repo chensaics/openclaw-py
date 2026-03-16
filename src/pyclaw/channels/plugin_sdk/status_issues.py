@@ -17,13 +17,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from pyclaw.constants.runtime import STATUS_ERROR, STATUS_INFO, STATUS_WARNING
+
 logger = logging.getLogger(__name__)
 
 
 class IssueSeverity(str, Enum):
-    ERROR = "error"
-    WARNING = "warning"
-    INFO = "info"
+    ERROR = STATUS_ERROR
+    WARNING = STATUS_WARNING
+    INFO = STATUS_INFO
 
 
 class IssueCategory(str, Enum):

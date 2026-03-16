@@ -20,8 +20,8 @@ enum GatewayState { disconnected, connecting, connected }
 
 /// WebSocket v3 protocol client for the pyclaw gateway.
 class GatewayClient {
-  final String url;
-  final String? authToken;
+  String url;
+  String? authToken;
   final String clientName;
 
   WebSocketChannel? _channel;
@@ -54,6 +54,7 @@ class GatewayClient {
   /// Connect to the gateway and perform the v3 handshake.
   Future<void> connect() async {
     if (_state == GatewayState.connected) return;
+    _shouldReconnect = true;
     _state = GatewayState.connecting;
     _stateController.add(_state);
 
@@ -242,5 +243,29 @@ class GatewayClient {
     _reconnectTimer?.cancel();
     _channel?.sink.close();
     _stateController.close();
+  }
+
+  /// Update endpoint/auth and reconnect if needed.
+  Future<void> updateEndpoint({
+    required String newUrl,
+    String? newAuthToken,
+    bool reconnect = true,
+  }) async {
+    final normalized = newUrl.trim();
+    if (normalized.isEmpty) {
+      throw GatewayError('invalid_url', 'Gateway URL cannot be empty');
+    }
+
+    final shouldReconnectNow = reconnect && (_channel != null || isConnected);
+    if (shouldReconnectNow) {
+      await disconnect();
+    }
+
+    url = normalized;
+    authToken = newAuthToken;
+
+    if (reconnect) {
+      await connect();
+    }
   }
 }

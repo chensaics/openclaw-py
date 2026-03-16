@@ -11,6 +11,8 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
+from pyclaw.constants.runtime import STATUS_RUNNING, STATUS_STOPPED
+
 if TYPE_CHECKING:
     pass
 
@@ -144,7 +146,7 @@ async def handle_channels_list(params: dict[str, Any] | None, conn: Any) -> None
                 "name": ch_info.get("name", cid),
                 "running": ch_info.get("running", False),
                 "enabled": True,
-                "status": "running" if ch_info.get("running") else "stopped",
+                "status": STATUS_RUNNING if ch_info.get("running") else STATUS_STOPPED,
                 "source": "runtime",
             }
             merged.update(entry_meta)
@@ -193,7 +195,7 @@ async def handle_channels_status(params: dict[str, Any] | None, conn: Any) -> No
                 "channel_id": ch.id,
                 "name": ch.name,
                 "running": ch.is_running,
-                "status": "running" if ch.is_running else "stopped",
+                "status": STATUS_RUNNING if ch.is_running else STATUS_STOPPED,
             }
             result.update(entry_meta)
             if metrics:

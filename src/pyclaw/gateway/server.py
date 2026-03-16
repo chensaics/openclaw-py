@@ -16,6 +16,7 @@ from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
+from pyclaw.constants.runtime import STATUS_OK
 from pyclaw.gateway.protocol.frames import (
     PROTOCOL_VERSION,
     EventFrame,
@@ -112,7 +113,7 @@ class GatewayServer:
             uptime = time.time() - self._started_at if self._started_at else 0
             return JSONResponse(
                 {
-                    "status": "ok",
+                    "status": STATUS_OK,
                     "protocol": PROTOCOL_VERSION,
                     "channels_healthy": channels_healthy,
                     "uptime": round(uptime, 1),

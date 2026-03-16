@@ -58,8 +58,6 @@ DEFAULT_SUBAGENT_MAX_SPAWN_DEPTH = 1
 # Network ports
 # ---------------------------------------------------------------------------
 
-DEFAULT_GATEWAY_PORT = 18789
-DEFAULT_BRIDGE_PORT = 18790
 DEFAULT_BROWSER_PORT = 18791
 DEFAULT_CANVAS_PORT = 18793
 

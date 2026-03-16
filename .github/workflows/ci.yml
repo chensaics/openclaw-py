@@ -5,6 +5,8 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  schedule:
+    - cron: "30 2 * * *"
 
 permissions:
   contents: read
@@ -20,6 +22,7 @@ jobs:
     outputs:
       docs_only: ${{ steps.scope.outputs.docs_only }}
       src_changed: ${{ steps.scope.outputs.src_changed }}
+      ui_changed: ${{ steps.scope.outputs.ui_changed }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@v2
@@ -41,6 +44,7 @@ jobs:
 
           SRC_CHANGED=false
           DOCS_ONLY=true
+          UI_CHANGED=false
 
           for f in $FILES; do
             case "$f" in
@@ -50,16 +54,21 @@ jobs:
             case "$f" in
               src/*|tests/*|pyproject.toml) SRC_CHANGED=true ;;
             esac
+            if [[ "${f#src/pyclaw/ui/}" != "$f" ]] || [[ "${f#tests/pyclaw/ui/}" != "$f" ]] || [[ "${f#tests/pyclaw/contracts/}" != "$f" ]]; then
+              UI_CHANGED=true
+            fi
           done
 
           # Fail-safe: if no files detected, assume full CI needed
           if [ -z "$FILES" ]; then
             DOCS_ONLY=false
             SRC_CHANGED=true
+            UI_CHANGED=true
           fi
 
           echo "docs_only=$DOCS_ONLY" >> "$GITHUB_OUTPUT"
           echo "src_changed=$SRC_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "ui_changed=$UI_CHANGED" >> "$GITHUB_OUTPUT"
 
   # ── Tests ─────────────────────────────────────────────────────────
   test:
@@ -77,6 +86,9 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@v6
+        with:
+          # merge-base / incremental 需要完整历史；全量 pytest 同样兼容
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -102,7 +114,14 @@ jobs:
           ruff check src tests
 
       - name: Test with coverage
-        run: pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/
+        run: |
+          # 默认：全量。在仓库 Variables 中设置 PYCLAW_CI_INCREMENTAL=true 可对 PR 启用增量（缩短时间，偶有漏测风险）
+          if [ "${{ vars.PYCLAW_CI_INCREMENTAL }}" = "true" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
+            python scripts/pytest_scope.py run --mode incremental --base "${{ github.event.pull_request.base.sha }}" \
+              --cov=pyclaw --cov-report=term-missing --cov-report=xml
+          else
+            pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/
+          fi
 
       - name: Upload coverage
         if: matrix.python-version == '3.13'
@@ -179,3 +198,61 @@ jobs:
         run: |
           pip install pip-audit
           pip-audit --require-hashes=false --ignore-vuln GHSA-0000-0000-0000 || true
+
+  # ── UI smoke gate ────────────────────────────────────────────────
+  ui-smoke:
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true' && needs.changes.outputs.ui_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies (with UI extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,ui]"
+
+      - name: Run UI smoke + UI gateway contract tests
+        run: |
+          pytest -q tests/pyclaw/ui/test_ui_components.py tests/pyclaw/ui/test_connection_and_streaming.py tests/pyclaw/contracts/test_ui_gateway_contract.py tests/pyclaw/ui/e2e/test_ui_web_smoke.py
+
+  ui-e2e-nightly:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies (with UI extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,ui]"
+
+      - name: Install Playwright browser
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: Run real UI web smoke E2E
+        env:
+          PYCLAW_RUN_UI_E2E: "true"
+        run: |
+          pytest -q tests/pyclaw/ui/e2e/test_ui_web_smoke.py

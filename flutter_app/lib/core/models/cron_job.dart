@@ -31,23 +31,29 @@ class CronJob extends Equatable {
         id: json['id'] as String? ?? '',
         name: json['name'] as String? ?? '',
         scheduleType: ScheduleType.values.firstWhere(
-          (s) => s.name == (json['schedule_type'] as String? ?? 'cron'),
+          (s) =>
+              s.name ==
+              (json['scheduleType'] as String? ??
+                  json['schedule_type'] as String? ??
+                  'cron'),
           orElse: () => ScheduleType.cron,
         ),
         schedule: json['schedule'] as String? ?? '',
-        prompt: json['prompt'] as String? ?? '',
-        channelId: json['channel_id'] as String?,
+        prompt: json['prompt'] as String? ?? json['message'] as String? ?? '',
+        channelId:
+            json['channelId'] as String? ?? json['channel_id'] as String?,
         enabled: json['enabled'] as bool? ?? true,
-        lastRun: json['last_run'] != null
-            ? DateTime.tryParse(json['last_run'] as String)
+        lastRun: (json['lastRun'] ?? json['last_run']) != null
+            ? DateTime.tryParse((json['lastRun'] ?? json['last_run']) as String)
             : null,
-        nextRun: json['next_run'] != null
-            ? DateTime.tryParse(json['next_run'] as String)
+        nextRun: (json['nextRun'] ?? json['next_run']) != null
+            ? DateTime.tryParse((json['nextRun'] ?? json['next_run']) as String)
             : null,
       );
 
   @override
-  List<Object?> get props => [id, name, scheduleType, schedule, prompt, enabled];
+  List<Object?> get props =>
+      [id, name, scheduleType, schedule, prompt, enabled];
 }
 
 /// A record of a cron job execution.
@@ -68,14 +74,20 @@ class ExecutionRecord extends Equatable {
     this.duration,
   });
 
-  factory ExecutionRecord.fromJson(Map<String, dynamic> json) => ExecutionRecord(
-        jobId: json['job_id'] as String? ?? '',
-        executedAt: DateTime.tryParse(json['executed_at'] as String? ?? '') ?? DateTime.now(),
+  factory ExecutionRecord.fromJson(Map<String, dynamic> json) =>
+      ExecutionRecord(
+        jobId: json['jobId'] as String? ?? json['job_id'] as String? ?? '',
+        executedAt: DateTime.tryParse(json['executedAt'] as String? ??
+                json['executed_at'] as String? ??
+                '') ??
+            DateTime.now(),
         success: json['success'] as bool? ?? false,
         output: json['output'] as String?,
         error: json['error'] as String?,
-        duration: json['duration_ms'] != null
-            ? Duration(milliseconds: json['duration_ms'] as int)
+        duration: (json['durationMs'] ?? json['duration_ms']) != null
+            ? Duration(
+                milliseconds:
+                    (json['durationMs'] ?? json['duration_ms']) as int)
             : null,
       );
 

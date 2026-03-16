@@ -10,6 +10,8 @@ import shlex
 import sys
 from typing import Any
 
+from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_PATH
+
 logger = logging.getLogger(__name__)
 
 
@@ -103,7 +105,7 @@ async def create_acp_client(
     server_verbose: bool = False,
     verbose: bool = False,
     request_timeout_s: float = 30.0,
-    gateway_url: str = "ws://127.0.0.1:18789/ws",
+    gateway_url: str = DEFAULT_GATEWAY_WS_URL_PATH,
     auth_token: str | None = None,
     auth_password: str | None = None,
     session: str = "",

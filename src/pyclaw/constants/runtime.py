@@ -1,0 +1,45 @@
+"""Project-wide runtime defaults (network, labels, statuses)."""
+
+from __future__ import annotations
+
+DEFAULT_GATEWAY_PORT = 18789
+DEFAULT_GATEWAY_BIND = "127.0.0.1"
+DEFAULT_GATEWAY_HTTP_URL = f"http://{DEFAULT_GATEWAY_BIND}:{DEFAULT_GATEWAY_PORT}"
+DEFAULT_GATEWAY_WS_URL = f"ws://{DEFAULT_GATEWAY_BIND}:{DEFAULT_GATEWAY_PORT}"
+DEFAULT_GATEWAY_WS_URL_SLASH = f"{DEFAULT_GATEWAY_WS_URL}/"
+DEFAULT_GATEWAY_WS_URL_PATH = f"{DEFAULT_GATEWAY_WS_URL}/ws"
+DEFAULT_BRIDGE_PORT = 18790
+
+DEFAULT_SERVICE_LABEL = "ai.pyclaw.gateway"
+DEFAULT_UI_WEB_PORT = 8550
+
+STATUS_OK = "ok"
+STATUS_INFO = "info"
+STATUS_ERROR = "error"
+STATUS_WARNING = "warning"
+STATUS_CRITICAL = "critical"
+STATUS_UNKNOWN = "unknown"
+STATUS_MISSING = "missing"
+STATUS_PENDING = "pending"
+STATUS_PAUSED = "paused"
+STATUS_RUNNING = "running"
+STATUS_RESTARTING = "restarting"
+STATUS_STOPPING = "stopping"
+STATUS_STOPPED = "stopped"
+STATUS_COMPLETED = "completed"
+STATUS_FAILED = "failed"
+STATUS_ABORTED = "aborted"
+STATUS_TIMEOUT = "timeout"
+STATUS_SKIPPED = "skipped"
+STATUS_ACTIVE = "active"
+STATUS_INACTIVE = "inactive"
+STATUS_IDLE = "idle"
+STATUS_DRAINING = "draining"
+STATUS_STREAMING = "streaming"
+STATUS_FINALIZING = "finalizing"
+STATUS_TOOL_EXEC = "tool_exec"
+STATUS_COMPACTING = "compacting"
+STATUS_AWAITING_APPROVAL = "awaiting_approval"
+STATUS_APPROVED = "approved"
+STATUS_REJECTED = "rejected"
+STATUS_DONE = "done"
