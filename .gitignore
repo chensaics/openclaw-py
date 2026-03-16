@@ -53,6 +53,8 @@ skills-lock.json
 .agent/*
 .cursor/*
 .claude/*
+.claude
+.cursor
 !.agent/workflows/
 .agent/workflows/flows/*/state/*
 !.agent/workflows/flows/*/state/.gitkeep
