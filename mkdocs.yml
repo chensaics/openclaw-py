@@ -98,8 +98,8 @@ plugins:
       minify_html: true
 
 # 自定义 CSS：在 docs/stylesheets/extra.css 中编写，取消下面注释即可生效
-# extra_css:
-#   - stylesheets/extra.css
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   social:
