@@ -34,13 +34,13 @@ class TestErrorState:
     def test_has_retry_button_when_on_retry(self) -> None:
         ctrl = error_state("err", on_retry=lambda: None)
         col = ctrl.content
-        buttons = [c for c in col.controls if isinstance(c, ft.ElevatedButton)]
+        buttons = [c for c in col.controls if isinstance(c, ft.Button)]
         assert len(buttons) == 1
 
     def test_no_retry_button_without_on_retry(self) -> None:
         ctrl = error_state("err")
         col = ctrl.content
-        buttons = [c for c in col.controls if isinstance(c, ft.ElevatedButton)]
+        buttons = [c for c in col.controls if isinstance(c, ft.Button)]
         assert len(buttons) == 0
 
 

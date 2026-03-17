@@ -139,7 +139,7 @@ def build_debug_panel(*, gateway_client: Any = None) -> ft.Column:
         event_log_ref.append({"type": "event", "event": event_name, "payload": payload})
         _update_event_log()
 
-    call_btn = ft.ElevatedButton(
+    call_btn = ft.Button(
         t("debug.call", default="Call"),
         icon=ft.Icons.PLAY_ARROW,
         on_click=lambda e: _fire_async(_do_rpc_call),
@@ -213,7 +213,7 @@ def build_debug_panel(*, gateway_client: Any = None) -> ft.Column:
             ft.Text(t("debug.event_log", default="Event Log"), size=14, weight=ft.FontWeight.BOLD),
             ft.Container(
                 content=event_log_list,
-                border=ft.border.all(0.5, theme.colors.border),
+                border=ft.Border.all(0.5, theme.colors.border),
                 border_radius=8,
             ),
         ],

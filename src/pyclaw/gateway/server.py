@@ -11,6 +11,7 @@ import logging
 import time
 import uuid
 from collections.abc import Callable, Coroutine
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -84,9 +85,11 @@ class GatewayServer:
     """Central gateway server managing connections and method dispatch."""
 
     def __init__(self, *, auth_token: str | None = None, config_path: str | None = None) -> None:
-        self.app = FastAPI(title="pyclaw Gateway", docs_url=None, redoc_url=None)
-        self.auth_token = auth_token
-        self.config_path = config_path
+        self._startup_hooks: list[Callable[[], Coroutine[Any, Any, None]]] = []
+        self._shutdown_hooks: list[Callable[[], Coroutine[Any, Any, None]]] = []
+        self.app = FastAPI(title="pyclaw Gateway", docs_url=None, redoc_url=None, lifespan=self._lifespan)
+        self.auth_token: str | None = auth_token
+        self.config_path: str | None = config_path
         self.connections: list[GatewayConnection] = []
         self._handlers: dict[str, MethodHandler] = {}
         self._started_at: float = 0.0
@@ -95,6 +98,26 @@ class GatewayServer:
         self._config_watcher: Any = None
 
         self._setup_routes()
+
+    @asynccontextmanager
+    async def _lifespan(self, app: FastAPI):  # type: ignore[override]
+        del app
+        for hook in self._startup_hooks:
+            await hook()
+        try:
+            yield
+        finally:
+            for hook in reversed(self._shutdown_hooks):
+                try:
+                    await hook()
+                except Exception:
+                    logger.exception("Shutdown hook failed")
+
+    def add_startup_hook(self, hook: Callable[[], Coroutine[Any, Any, None]]) -> None:
+        self._startup_hooks.append(hook)
+
+    def add_shutdown_hook(self, hook: Callable[[], Coroutine[Any, Any, None]]) -> None:
+        self._shutdown_hooks.append(hook)
 
     def register_handler(self, method: str, handler: MethodHandler) -> None:
         self._handlers[method] = handler
@@ -133,9 +156,10 @@ class GatewayServer:
             finally:
                 self.connections.remove(conn)
 
-        @self.app.on_event("startup")
         async def _record_startup() -> None:
             self._started_at = time.time()
+
+        self.add_startup_hook(_record_startup)
 
     def reload_channel_health_config(self) -> None:
         """Hot-reload channelHealthCheckMinutes from config without full restart."""
@@ -280,13 +304,14 @@ def _start_config_watcher(server: GatewayServer, config_path: str | None) -> Non
                 watcher.check()
                 await asyncio.sleep(watcher._config.poll_interval_s)
 
-        @server.app.on_event("startup")
         async def _start_watcher() -> None:
             asyncio.create_task(_poll_loop())
 
-        @server.app.on_event("shutdown")
         async def _stop_watcher() -> None:
             watcher.stop()
+
+        server.add_startup_hook(_start_watcher)
+        server.add_shutdown_hook(_stop_watcher)
 
     except Exception:
         logger.debug("Config watcher init skipped", exc_info=True)

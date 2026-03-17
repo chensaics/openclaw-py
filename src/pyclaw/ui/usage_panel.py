@@ -253,7 +253,7 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
                     groups=bar_groups,
                     group_spacing=8,
                     max_y=max_tokens * 1.1 or 100,
-                    border=ft.border.all(0.5, theme.colors.border),
+                    border=ft.Border.all(0.5, theme.colors.border),
                     interactive=True,
                     left_axis=fch.ChartAxis(labels_size=32, show_labels=True),
                     bottom_axis=fch.ChartAxis(
@@ -273,7 +273,7 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
                     ft.Container(
                         content=bar_chart,
                         height=200,
-                        padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                        padding=ft.Padding.symmetric(horizontal=16, vertical=8),
                     ),
                 )
             if hourly_data and len(hourly_data) >= 24:
@@ -309,7 +309,7 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
                             ],
                             spacing=4,
                         ),
-                        padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                        padding=ft.Padding.symmetric(horizontal=16, vertical=8),
                     ),
                 )
             if chart_controls:
@@ -417,7 +417,7 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
         except Exception:
             pass
 
-    export_btn = ft.ElevatedButton(
+    export_btn = ft.Button(
         t("usage.export", default="Export"),
         icon=ft.Icons.COPY,
         on_click=lambda e: _fire_async(_export),
@@ -448,9 +448,9 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
                 t("usage.title", default="Usage"),
                 actions=[refresh_btn],
             ),
-            ft.Container(content=filter_row, padding=ft.padding.symmetric(horizontal=16, vertical=8)),
-            ft.Container(content=stats_row, padding=ft.padding.symmetric(horizontal=16, vertical=8)),
-            ft.Container(content=charts_expansion, padding=ft.padding.symmetric(horizontal=16, vertical=4)),
+            ft.Container(content=filter_row, padding=ft.Padding.symmetric(horizontal=16, vertical=8)),
+            ft.Container(content=stats_row, padding=ft.Padding.symmetric(horizontal=16, vertical=8)),
+            ft.Container(content=charts_expansion, padding=ft.Padding.symmetric(horizontal=16, vertical=4)),
             session_list,
         ],
         expand=True,

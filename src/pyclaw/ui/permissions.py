@@ -232,7 +232,7 @@ def build_permission_guard_panel(
                     ],
                     spacing=12,
                 ),
-                padding=ft.padding.symmetric(horizontal=8, vertical=6),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=6),
             )
         )
 
@@ -243,7 +243,7 @@ def build_permission_guard_panel(
 
     rows.append(ft.Container(height=12))
     rows.append(
-        ft.ElevatedButton(
+        ft.Button(
             "Grant Permissions & Continue",
             icon=ft.Icons.CHECK_CIRCLE,
             on_click=_handle_continue,

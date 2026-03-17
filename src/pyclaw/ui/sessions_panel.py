@@ -88,7 +88,7 @@ def build_sessions_panel(*, gateway_client: Any = None) -> ft.Column:
                         color=theme.colors.warning,
                         italic=True,
                     ),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=4),
+                    padding=ft.Padding.symmetric(horizontal=16, vertical=4),
                 )
             )
 
@@ -257,7 +257,7 @@ def build_sessions_panel(*, gateway_client: Any = None) -> ft.Column:
         [
             limit_field,
             active_min_field,
-            ft.ElevatedButton(
+            ft.Button(
                 t("channels.refresh", default="Refresh"),
                 icon=ft.Icons.REFRESH,
                 on_click=lambda e: _fire_async(_refresh),
@@ -273,7 +273,7 @@ def build_sessions_panel(*, gateway_client: Any = None) -> ft.Column:
                 t("sessions.title", default="Sessions"),
                 actions=[refresh_btn],
             ),
-            ft.Container(content=filter_row, padding=ft.padding.symmetric(horizontal=16, vertical=8)),
+            ft.Container(content=filter_row, padding=ft.Padding.symmetric(horizontal=16, vertical=8)),
             session_list,
         ],
         expand=True,

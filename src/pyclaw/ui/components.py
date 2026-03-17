@@ -36,7 +36,7 @@ def error_state(message: str, on_retry: Any = None) -> ft.Container:
                 ft.Text(message, size=14, color=ft.Colors.ERROR),
                 *(
                     [
-                        ft.ElevatedButton(
+                        ft.Button(
                             t("common.retry", default="Retry"),
                             on_click=lambda e: _fire_async(on_retry),
                         )
@@ -92,8 +92,8 @@ def page_header(
 
     return ft.Container(
         content=ft.Row(controls),
-        padding=ft.padding.symmetric(horizontal=16, vertical=8),
-        border=ft.border.only(bottom=ft.BorderSide(0.5, theme.colors.border)),
+        padding=ft.Padding.symmetric(horizontal=16, vertical=8),
+        border=ft.Border.only(bottom=ft.BorderSide(0.5, theme.colors.border)),
     )
 
 
@@ -133,7 +133,7 @@ def empty_state(
         ),
         expand=True,
         alignment=ft.Alignment(0, 0),
-        padding=ft.padding.all(32),
+        padding=ft.Padding.all(32),
     )
 
 
@@ -150,10 +150,10 @@ def card_tile(
     theme = get_theme()
     return ft.Container(
         content=content,
-        padding=ft.padding.all(12),
-        border_radius=ft.border_radius.all(theme.card_border_radius),
+        padding=ft.Padding.all(12),
+        border_radius=ft.BorderRadius.all(theme.card_border_radius),
         bgcolor=theme.colors.surface_container,
-        border=ft.border.all(0.5, theme.colors.border),
+        border=ft.Border.all(0.5, theme.colors.border),
         on_click=on_click,
         data=data,
         animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
@@ -171,8 +171,8 @@ def status_chip(
     return ft.Container(
         content=ft.Text(label, size=11, color=color, weight=ft.FontWeight.W_500),
         bgcolor=ft.Colors.with_opacity(0.15, color),
-        padding=ft.padding.symmetric(horizontal=8, vertical=3),
-        border_radius=ft.border_radius.all(8),
+        padding=ft.Padding.symmetric(horizontal=8, vertical=3),
+        border_radius=ft.BorderRadius.all(8),
     )
 
 
@@ -302,7 +302,7 @@ def expandable_section(
         size=20,
         color=theme.colors.muted,
     )
-    body = ft.Container(content=content, visible=initially_expanded, padding=ft.padding.all(12))
+    body = ft.Container(content=content, visible=initially_expanded, padding=ft.Padding.all(12))
 
     def _toggle(_e: ft.ControlEvent) -> None:
         expanded_state["value"] = not expanded_state["value"]
@@ -324,13 +324,13 @@ def expandable_section(
             ],
             spacing=8,
         ),
-        padding=ft.padding.symmetric(horizontal=12, vertical=10),
+        padding=ft.Padding.symmetric(horizontal=12, vertical=10),
         on_click=_toggle,
     )
 
     return ft.Container(
         content=ft.Column([header, body], spacing=0, tight=True),
-        border=ft.border.all(0.5, theme.colors.border),
+        border=ft.Border.all(0.5, theme.colors.border),
         border_radius=10,
     )
 
@@ -365,8 +365,8 @@ def quick_action_card(
             spacing=8,
             tight=True,
         ),
-        padding=ft.padding.all(12),
-        border=ft.border.all(0.5, theme.colors.border),
+        padding=ft.Padding.all(12),
+        border=ft.Border.all(0.5, theme.colors.border),
         border_radius=12,
         bgcolor=theme.colors.surface_container,
         on_click=on_click,

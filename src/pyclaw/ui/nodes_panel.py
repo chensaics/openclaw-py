@@ -77,7 +77,7 @@ def build_nodes_panel(*, gateway_client: Any = None) -> ft.Column:
                                 ),
                                 ft.Row(
                                     [
-                                        ft.ElevatedButton(
+                                        ft.Button(
                                             t("nodes.approve", default="Approve"),
                                             icon=ft.Icons.CHECK,
                                             on_click=lambda e, pid=pair_id: _fire_async(_approve_pair, pid),

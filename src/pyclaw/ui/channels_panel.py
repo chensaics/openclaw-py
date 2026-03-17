@@ -84,8 +84,8 @@ def _build_capability_badges(capabilities: dict[str, Any]) -> list[ft.Control]:
                             color=theme.colors.on_primary,
                         ),
                         bgcolor=theme.colors.primary,
-                        padding=ft.padding.symmetric(horizontal=5, vertical=2),
-                        border_radius=ft.border_radius.all(4),
+                        padding=ft.Padding.symmetric(horizontal=5, vertical=2),
+                        border_radius=ft.BorderRadius.all(4),
                     ),
                 )
             )
@@ -132,14 +132,14 @@ def _build_channel_tile(ch: dict[str, Any]) -> ft.Control:
             [
                 ft.Icon(icon, size=22, color=ch_color or color),
                 ft.Column(info_children, spacing=3, expand=True, tight=True),
-                ft.Container(width=10, height=10, border_radius=ft.border_radius.all(5), bgcolor=color),
+                ft.Container(width=10, height=10, border_radius=ft.BorderRadius.all(5), bgcolor=color),
             ],
             spacing=10,
         ),
-        padding=ft.padding.symmetric(horizontal=12, vertical=10),
-        border_radius=ft.border_radius.all(theme.card_border_radius),
+        padding=ft.Padding.symmetric(horizontal=12, vertical=10),
+        border_radius=ft.BorderRadius.all(theme.card_border_radius),
         bgcolor=theme.colors.surface_container,
-        border=ft.border.all(0.5, theme.colors.border),
+        border=ft.Border.all(0.5, theme.colors.border),
     )
 
 
@@ -155,7 +155,7 @@ def _stat_chip(value: str, label: str, color: str | None = None) -> ft.Control:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             tight=True,
         ),
-        padding=ft.padding.symmetric(horizontal=12, vertical=4),
+        padding=ft.Padding.symmetric(horizontal=12, vertical=4),
     )
 
 
@@ -270,7 +270,7 @@ def build_channels_panel(*, gateway_client: Any = None) -> ft.Column:
     col = ft.Column(
         controls=[
             header,
-            ft.Container(content=summary_row, padding=ft.padding.symmetric(horizontal=16)),
+            ft.Container(content=summary_row, padding=ft.Padding.symmetric(horizontal=16)),
             channel_list,
         ],
         expand=True,

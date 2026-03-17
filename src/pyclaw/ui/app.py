@@ -127,15 +127,15 @@ def _build_code_block(code: str, lang: str, theme) -> ft.Container:
                         font_family=theme.typography.mono_family,
                         size=13,
                     ),
-                    padding=ft.padding.only(left=12, right=12, bottom=8),
+                    padding=ft.Padding.only(left=12, right=12, bottom=8),
                 ),
             ],
             spacing=0,
         ),
         bgcolor=theme.colors.code_block_bg,
         border_radius=8,
-        border=ft.border.all(0.5, theme.colors.border),
-        padding=ft.padding.only(left=12, right=4, top=4, bottom=0),
+        border=ft.Border.all(0.5, theme.colors.border),
+        padding=ft.Padding.only(left=12, right=4, top=4, bottom=0),
     )
 
 
@@ -201,17 +201,17 @@ class ToolCallCard(ft.Container):
                         color=theme.colors.muted,
                     ),
                     bgcolor=theme.colors.surface_container_high,
-                    padding=ft.padding.all(6),
-                    border_radius=ft.border_radius.all(8),
+                    padding=ft.Padding.all(6),
+                    border_radius=ft.BorderRadius.all(8),
                 )
             )
 
         super().__init__(
             content=ft.Column(children, spacing=4, tight=True),
             bgcolor=theme.colors.surface_container,
-            padding=ft.padding.all(10),
-            border_radius=ft.border_radius.all(12),
-            border=ft.border.all(0.5, theme.colors.border),
+            padding=ft.Padding.all(10),
+            border_radius=ft.BorderRadius.all(12),
+            border=ft.Border.all(0.5, theme.colors.border),
         )
 
     def set_result(self, result: str) -> None:
@@ -235,8 +235,8 @@ class ToolCallCard(ft.Container):
                             color=theme.colors.muted,
                         ),
                         bgcolor=theme.colors.surface_container_high,
-                        padding=ft.padding.all(6),
-                        border_radius=ft.border_radius.all(8),
+                        padding=ft.Padding.all(6),
+                        border_radius=ft.BorderRadius.all(8),
                     )
                 )
 
@@ -368,14 +368,14 @@ class ChatMessage(ft.Container):
             bubble_content_controls.append(ft.Row(action_buttons, spacing=0, alignment=ft.MainAxisAlignment.END))
 
         bubble_radius = (
-            ft.border_radius.only(
+            ft.BorderRadius.only(
                 top_left=18,
                 top_right=18,
                 bottom_left=4,
                 bottom_right=18,
             )
             if is_user
-            else ft.border_radius.only(
+            else ft.BorderRadius.only(
                 top_left=18,
                 top_right=18,
                 bottom_left=18,
@@ -386,7 +386,7 @@ class ChatMessage(ft.Container):
         bubble = ft.Container(
             content=ft.Column(bubble_content_controls, spacing=2, tight=True),
             bgcolor=bg_color,
-            padding=ft.padding.symmetric(horizontal=16, vertical=12),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=12),
             border_radius=bubble_radius,
             shadow=ft.BoxShadow(
                 spread_radius=0,
@@ -415,7 +415,7 @@ class ChatMessage(ft.Container):
                 vertical_alignment=ft.CrossAxisAlignment.START,
                 spacing=8,
             ),
-            padding=ft.padding.symmetric(horizontal=8, vertical=2),
+            padding=ft.Padding.symmetric(horizontal=8, vertical=2),
             animate_opacity=ft.Animation(350, ft.AnimationCurve.EASE_OUT),
         )
 
@@ -549,7 +549,7 @@ class SessionSidebar(ft.Column):
                         spacing=6,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
-                    padding=ft.padding.symmetric(vertical=24),
+                    padding=ft.Padding.symmetric(vertical=24),
                     alignment=ft.Alignment(0, 0),
                 )
             )
@@ -573,7 +573,7 @@ class SessionSidebar(ft.Column):
                             weight=ft.FontWeight.BOLD,
                             color=theme.colors.muted,
                         ),
-                        padding=ft.padding.only(left=8, top=8, bottom=2),
+                        padding=ft.Padding.only(left=8, top=8, bottom=2),
                     )
                 )
             for s in items:
@@ -651,7 +651,7 @@ class SessionSidebar(ft.Column):
                         spacing=6,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
-                    padding=ft.padding.symmetric(vertical=24),
+                    padding=ft.Padding.symmetric(vertical=24),
                     alignment=ft.Alignment(0, 0),  # Fixed alignment
                 )
             )
@@ -735,7 +735,7 @@ class ChatView(ft.Column):
         self._messages_list = ft.ListView(
             expand=True,
             spacing=8,
-            padding=ft.padding.symmetric(horizontal=16, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=8),
             auto_scroll=True,
         )
         self._welcome_state = ft.Container(
@@ -789,8 +789,8 @@ class ChatView(ft.Column):
                             size=11,
                             color=theme.colors.muted,
                         ),
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        border=ft.border.all(0.5, theme.colors.border),
+                        padding=ft.Padding.symmetric(horizontal=10, vertical=6),
+                        border=ft.Border.all(0.5, theme.colors.border),
                         border_radius=8,
                     ),
                 ],
@@ -886,7 +886,7 @@ class ChatView(ft.Column):
         )
         bottom_bar = ft.Container(
             content=ft.Column([self._loading, self._progress_row, self._quick_action_bar, input_row], spacing=4),
-            padding=ft.padding.symmetric(horizontal=16, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=8),
         )
 
         chat_area = ft.Stack(
@@ -896,7 +896,7 @@ class ChatView(ft.Column):
                 ft.Container(
                     content=self._scroll_to_bottom_btn,
                     alignment=ft.Alignment(1, 1),
-                    padding=ft.padding.only(bottom=8, right=8),
+                    padding=ft.Padding.only(bottom=8, right=8),
                 ),
             ],
             expand=True,
@@ -1075,9 +1075,9 @@ class ChatView(ft.Column):
                 spacing=4,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.symmetric(horizontal=16, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=8),
             bgcolor=theme.colors.surface_container,
-            border_radius=ft.border_radius.all(8),
+            border_radius=ft.BorderRadius.all(8),
         )
         self._plan_progress.visible = True
         self._safe_update(self._plan_progress)
@@ -1353,7 +1353,7 @@ class SettingsView(ft.Column):
                     height=36,
                     border_radius=20,
                     bgcolor=color,
-                    border=ft.border.all(
+                    border=ft.Border.all(
                         3 if color == "#6366f1" else 1.5,
                         theme.colors.on_surface if color == "#6366f1" else theme.colors.border,
                     ),
@@ -1695,7 +1695,7 @@ class SettingsView(ft.Column):
         for swatch in self._color_swatches.controls:
             if isinstance(swatch, ft.Container):
                 is_selected = swatch.data == color
-                swatch.border = ft.border.all(
+                swatch.border = ft.Border.all(
                     3 if is_selected else 1.5,
                     theme.colors.on_surface if is_selected else theme.colors.border,
                 )
@@ -1938,7 +1938,7 @@ class PyClawApp:
                     size=10,
                     color=get_theme().colors.muted,
                 ),
-                padding=ft.padding.only(top=8, bottom=8),
+                padding=ft.Padding.only(top=8, bottom=8),
             ),
             trailing=ft.IconButton(
                 icon=ft.Icons.FLASH_ON,
@@ -2000,7 +2000,7 @@ class PyClawApp:
                 ],
                 spacing=4,
             ),
-            padding=ft.padding.all(8),
+            padding=ft.Padding.all(8),
         )
         self._gw_indicator = gw_indicator
 
@@ -2269,7 +2269,7 @@ class PyClawApp:
             items.append(
                 ft.Container(
                     content=ft.Text(group_label, size=12, weight=ft.FontWeight.W_600, color=theme.colors.muted),
-                    padding=ft.padding.only(left=16, top=12, bottom=6),
+                    padding=ft.Padding.only(left=16, top=12, bottom=6),
                 )
             )
             items.extend(group_tiles)
@@ -2284,7 +2284,7 @@ class PyClawApp:
                                 size=16,
                                 weight=ft.FontWeight.BOLD,
                             ),
-                            padding=ft.padding.all(16),
+                            padding=ft.Padding.all(16),
                         ),
                         ft.Divider(height=1),
                         *items,
@@ -2293,7 +2293,7 @@ class PyClawApp:
                     scroll=ft.ScrollMode.AUTO,
                 ),
                 bgcolor=theme.colors.surface,
-                border_radius=ft.border_radius.only(top_left=16, top_right=16),
+                border_radius=ft.BorderRadius.only(top_left=16, top_right=16),
             ),
             open=True,
         )

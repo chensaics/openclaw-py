@@ -100,7 +100,7 @@ def build_logs_panel(*, gateway_client: Any = None) -> ft.Column:
                             level.upper(), size=9, color=theme.colors.on_primary, weight=ft.FontWeight.W_500
                         ),
                         bgcolor=theme.colors.primary,
-                        padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                        padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                         border_radius=4,
                     ),
                     ft.Text(subsystem or "-", size=10, color=theme.colors.muted, width=80),
@@ -178,7 +178,7 @@ def build_logs_panel(*, gateway_client: Any = None) -> ft.Column:
         except Exception:
             pass
 
-    export_btn = ft.ElevatedButton(
+    export_btn = ft.Button(
         t("logs.export", default="Export"),
         icon=ft.Icons.DOWNLOAD,
         on_click=lambda e: _fire_async(_export_logs),
@@ -212,7 +212,7 @@ def build_logs_panel(*, gateway_client: Any = None) -> ft.Column:
                 t("logs.title", default="Logs"),
                 actions=[refresh_btn],
             ),
-            ft.Container(content=toolbar, padding=ft.padding.symmetric(horizontal=16, vertical=8)),
+            ft.Container(content=toolbar, padding=ft.Padding.symmetric(horizontal=16, vertical=8)),
             log_list,
         ],
         expand=True,
@@ -249,7 +249,7 @@ def build_logs_panel(*, gateway_client: Any = None) -> ft.Column:
                         level.upper(), size=9, color=cur_theme.colors.on_primary, weight=ft.FontWeight.W_500
                     ),
                     bgcolor=cur_theme.colors.primary,
-                    padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                    padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                     border_radius=4,
                 ),
                 ft.Text(subsystem or "-", size=10, color=cur_theme.colors.muted, width=80),

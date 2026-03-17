@@ -75,7 +75,7 @@ def shimmer_chat_skeleton(item_count: int = 4) -> ft.Column:
         rows.append(
             ft.Container(
                 content=ft.Row(row_children, alignment=alignment),
-                padding=ft.padding.only(bottom=16),
+                padding=ft.Padding.only(bottom=16),
             )
         )
 
@@ -105,7 +105,7 @@ def shimmer_list_tile(count: int = 5) -> ft.Column:
                         ),
                     ],
                 ),
-                padding=ft.padding.symmetric(vertical=6, horizontal=16),
+                padding=ft.Padding.symmetric(vertical=6, horizontal=16),
             )
         )
     return ft.Column(tiles, spacing=0)

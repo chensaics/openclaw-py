@@ -230,13 +230,13 @@ def build_config_panel(
                         scroll=ft.ScrollMode.AUTO,
                     ),
                     width=160,
-                    border=ft.border.only(right=ft.BorderSide(0.5, theme.colors.border)),
+                    border=ft.Border.only(right=ft.BorderSide(0.5, theme.colors.border)),
                 ),
                 ft.Container(
                     content=ft.Column(
                         [
                             form_content,
-                            ft.ElevatedButton(
+                            ft.Button(
                                 t("config.save", default="Save"),
                                 icon=ft.Icons.SAVE,
                                 on_click=lambda e: _fire_async(_save_form_and_sync),

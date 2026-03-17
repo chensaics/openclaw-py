@@ -45,7 +45,7 @@ class ChatToolbar:
             options=self._build_options(provider),
             width=220,
             dense=True,
-            content_padding=ft.padding.symmetric(horizontal=8, vertical=4),
+            content_padding=ft.Padding.symmetric(horizontal=8, vertical=4),
         )
         self.model_dropdown.on_select = self._fire_model_change
 

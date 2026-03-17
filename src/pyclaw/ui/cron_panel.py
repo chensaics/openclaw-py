@@ -222,7 +222,7 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
                             ],
                             spacing=6,
                         ),
-                        padding=ft.padding.symmetric(horizontal=12, vertical=4),
+                        padding=ft.Padding.symmetric(horizontal=12, vertical=4),
                     )
                 )
             _safe_update(cron_history_list)
@@ -253,7 +253,7 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
     filter_enabled_dropdown.on_select = lambda e: _fire_async(_refresh)
     filter_enabled_dropdown.on_change = lambda e: _fire_async(_refresh)
 
-    add_btn = ft.ElevatedButton(
+    add_btn = ft.Button(
         t("cron.add", default="Add Job"),
         icon=ft.Icons.ADD,
         on_click=lambda e: _fire_async(_add_job, e),
@@ -274,7 +274,7 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
             ),
             ft.Container(
                 content=ft.Row([filter_enabled_dropdown, filter_name_field], spacing=12),
-                padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                padding=ft.Padding.symmetric(horizontal=16, vertical=8),
             ),
             cron_list,
             ft.Divider(height=1),
@@ -297,7 +297,7 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
             ft.Divider(height=1),
             ft.Container(
                 content=ft.Text(t("cron.history", default="Execution History"), size=14, weight=ft.FontWeight.BOLD),
-                padding=ft.padding.only(left=16, top=8, bottom=4),
+                padding=ft.Padding.only(left=16, top=8, bottom=4),
             ),
             cron_history_list,
         ],

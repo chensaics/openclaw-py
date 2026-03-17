@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openclaw-py"
-version = "0.1.4"
+version = "0.1.7"
 description = "Multi-channel AI gateway with extensible messaging integrations"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -122,7 +122,7 @@ dev = [
     "pytest-cov>=6",
     "ruff>=0.9",
     "mypy>=1.14",
-    "types-requests>=2.37",
+    "types-requests",
     "types-setuptools>=70",
     "types-PyYAML>=6.0",
 ]

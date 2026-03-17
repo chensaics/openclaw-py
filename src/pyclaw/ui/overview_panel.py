@@ -116,7 +116,7 @@ def build_overview_panel(
         if gw and getattr(gw, "connected", False):
             _fire_async(_fetch_status)
 
-    connect_btn = ft.ElevatedButton(
+    connect_btn = ft.Button(
         t("overview.connect", default="Connect"),
         icon=ft.Icons.LINK,
         on_click=lambda e: _fire_async(_handle_connect),

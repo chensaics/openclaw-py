@@ -161,16 +161,16 @@ def build_system_panel(
                     )
                 ],
             ),
-            ft.Container(content=system_info_col, padding=ft.padding.all(16)),
+            ft.Container(content=system_info_col, padding=ft.Padding.all(16)),
             ft.Divider(height=1),
             ft.Container(
                 content=ft.Row([backup_btn, doctor_btn], spacing=8),
-                padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                padding=ft.Padding.symmetric(horizontal=16, vertical=8),
             ),
             ft.Divider(height=1),
             ft.Container(
                 content=ft.Text("Logs", size=14, weight=ft.FontWeight.BOLD),
-                padding=ft.padding.only(left=16, top=8, bottom=4),
+                padding=ft.Padding.only(left=16, top=8, bottom=4),
             ),
             system_logs_list,
         ],

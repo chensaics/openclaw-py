@@ -51,13 +51,13 @@ def _build_image_preview(source: str, max_width: int, max_height: int) -> ft.Con
             width=max_width,
             height=max_height,
             fit=ft.ImageFit.CONTAIN,
-            border_radius=ft.border_radius.all(8),
+            border_radius=ft.BorderRadius.all(8),
         ),
         on_click=lambda e: _open_lightbox(e, source),
         tooltip=t("media.expand"),
         clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-        border_radius=ft.border_radius.all(8),
-        border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+        border_radius=ft.BorderRadius.all(8),
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
     )
 
 
@@ -85,10 +85,10 @@ def _build_audio_preview(source: str) -> ft.Control:
             ],
             spacing=8,
         ),
-        padding=ft.padding.all(8),
-        border_radius=ft.border_radius.all(8),
+        padding=ft.Padding.all(8),
+        border_radius=ft.BorderRadius.all(8),
         bgcolor=ft.Colors.SURFACE_CONTAINER,
-        border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
         width=300,
     )
 
@@ -103,7 +103,7 @@ def _build_video_preview(source: str, max_width: int, max_height: int) -> ft.Con
                     width=max_width,
                     height=max_height // 2,
                     bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH,
-                    border_radius=ft.border_radius.all(8),
+                    border_radius=ft.BorderRadius.all(8),
                 ),
                 ft.Container(
                     content=ft.Column(
@@ -120,8 +120,8 @@ def _build_video_preview(source: str, max_width: int, max_height: int) -> ft.Con
                 ),
             ]
         ),
-        border_radius=ft.border_radius.all(8),
-        border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+        border_radius=ft.BorderRadius.all(8),
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
         clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
     )
 

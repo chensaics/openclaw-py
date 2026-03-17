@@ -124,7 +124,7 @@ def build_skills_panel(
                 value=skill.get("apiKey", "") or "",
                 on_submit=lambda e, sid=skill_id: _fire_async(_set_api_key, sid, e.control.value),
             )
-            api_key_btn = ft.ElevatedButton(
+            api_key_btn = ft.Button(
                 t("skills.save_key", default="Save"),
                 on_click=lambda e, sid=skill_id: _fire_async(_set_api_key, sid, api_key_tf.value),
             )
@@ -440,7 +440,7 @@ def build_skills_panel(
             ),
             ft.Container(
                 content=ft.Row([search_field, refresh_btn], spacing=8),
-                padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                padding=ft.Padding.symmetric(horizontal=16, vertical=8),
             ),
             skill_list,
         ],
