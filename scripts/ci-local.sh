@@ -5,7 +5,7 @@
 # 用法:
 #   ./scripts/ci-local.sh           # 使用当前 Python
 #   PYTHON=python3.10 ./scripts/ci-local.sh
-#   ./scripts/ci-local.sh --install # 先 pip install -e ".[dev]" 再跑
+#   ./scripts/ci-local.sh --install # 先 pip install -e ".[dev,ui]" 再跑
 #
 # 多版本校验（与 CI matrix 一致）:
 #   ./scripts/run-ci-matrix.sh
@@ -28,9 +28,9 @@ echo "Python: $($PYTHON --version 2>&1)"
 echo ""
 
 if [ "$DO_INSTALL" = true ]; then
-  echo "=== 安装依赖 (pip install -e \".[dev]\") ==="
+  echo "=== 安装依赖 (pip install -e \".[dev,ui]\") ==="
   "$PYTHON" -m pip install --upgrade pip -q
-  "$PYTHON" -m pip install -e ".[dev]" -q
+  "$PYTHON" -m pip install -e ".[dev,ui]" -q
   echo ""
 fi
 
