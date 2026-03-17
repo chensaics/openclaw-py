@@ -524,7 +524,7 @@ class TestUsageAggregation:
         ]
         result = aggregate_usage(entries)
         assert result["total_input"] == 350
-        assert result["total_cost"] == 0.035
+        assert result["total_cost"] == pytest.approx(0.035)
         assert result["by_model"]["gpt-4o"]["count"] == 2
 
 

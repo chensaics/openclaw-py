@@ -1,6 +1,6 @@
 """Tests for enhanced pyclaw.cron.scheduler — every/once/at scheduling."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from pyclaw.cron.scheduler import CronJob, ScheduleType, parse_at_time
 
@@ -63,10 +63,10 @@ class TestParseAtTime:
         assert dt is not None
         assert dt.hour == 9
         assert dt.minute == 30
-        assert dt > datetime.now(UTC)
+        assert dt > datetime.now(timezone.utc)
 
     def test_time_only_tomorrow(self) -> None:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         past_time = f"{now.hour:02d}:{now.minute:02d}"
         dt = parse_at_time(past_time)
         if dt is not None:
