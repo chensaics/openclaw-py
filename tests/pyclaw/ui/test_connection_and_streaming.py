@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock
-
 import pytest
 
+# Must skip before importing any pyclaw.ui (app.py imports flet at module level).
+# CI installs only [dev], not [ui], so flet is missing; this avoids collection ERROR.
 ft = pytest.importorskip("flet")
+
+import asyncio
+from unittest.mock import AsyncMock
 
 from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_SLASH
 from pyclaw.ui.app import ChatMessage, ChatView, PyClawApp, SettingsView
