@@ -92,8 +92,8 @@
 | **publish-pypi** | 将包发布到 **PyPI**（需在仓库中配置 **PyPI Trusted Publisher** 和 `pypi` environment）。 |
 | **publish-docker** | 构建并推送 Docker 镜像到 Docker Hub 与 GHCR（需配置 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`）。 |
 
-- 若 **PyPI 没有出现新版本**：检查 Actions 里 `publish-pypi` 是否失败；若使用 Trusted Publisher，需在 [PyPI 账户的 Publishing 设置](https://pypi.org/manage/account/publishing/) 中添加对应 GitHub 仓库与 workflow。
-- 若 **GitHub Release 没有出现**：检查是否真的执行了 `git push origin v0.1.7`，以及 Actions 中 `release-notes` 是否成功。
+- 若 **PyPI 没有出现新版本**：检查 Actions 里 `publish-pypi` 是否失败；若使用 Trusted Publisher，需在 [PyPI 账户的 Publishing 设置](https://pypi.org/manage/account/publishing/) 中添加对应 GitHub 仓库与 workflow。**若 tag 已推送但 Release 未生成**：多半是 **preflight** 失败（例如测试因缺依赖失败），Release 与 PyPI 都不会执行；修好代码/工作流后需**重新触发**该 tag 的 Release 工作流（见下文「补发」）。
+- 若 **GitHub Release 没有出现**：检查是否真的执行了 `git push origin v0.1.7`，以及 Actions 中 `release-notes` 是否成功；若 preflight 失败，Release 不会创建。
 
 ---
 
@@ -105,7 +105,25 @@
 
 ---
 
-## 六、常用命令速查
+## 六、tag 已推送但 Release/PyPI 未生成时（补发）
+
+若 tag（如 `v0.1.7`）已推送到 GitHub，但 GitHub Release 或 PyPI 没有对应版本，通常是 **Release 工作流的 preflight 曾失败**（例如测试失败、缺依赖等）。修好原因后需要**重新触发**该 tag 的发布：
+
+1. **确保修复已合并并推送到默认分支**（如 `master`）。
+2. **删除远程 tag**（GitHub 上已有的 Release 若存在可先手动删掉）：
+   ```bash
+   git push origin :refs/tags/v0.1.7
+   ```
+3. **在要发版的提交上重新打 tag 并推送**（一般用当前 master 的 commit，且该 commit 的 `pyproject.toml` 中 `version` 已为该版本）：
+   ```bash
+   git tag -a v0.1.7 -m "Release v0.1.7"
+   git push origin v0.1.7
+   ```
+4. 推送后 Release 工作流会再次运行，preflight 通过后会自动创建 GitHub Release 并发布 PyPI。
+
+---
+
+## 七、常用命令速查
 
 ```bash
 # 1. 改版本号后提交
@@ -128,7 +146,7 @@ git tag -l
 
 ---
 
-## 七、参考
+## 八、参考
 
 - [PyPI: Publishing package distribution releases using GitHub Actions](https://docs.pypi.org/trusted-publishers/using-a-publisher/)
 - 本仓库 Release 工作流：`.github/workflows/release.yml`
