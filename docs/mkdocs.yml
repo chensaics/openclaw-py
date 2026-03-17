@@ -65,6 +65,7 @@ nav:
   - 帮助:
       - 故障排除: troubleshooting.md
       - 发布流程（Tag / Release / PyPI）: release-and-publish.md
+      - 本地与 CI 校验一致: ci-local.md
 
 markdown_extensions:
   - admonition

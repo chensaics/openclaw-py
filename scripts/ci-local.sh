@@ -1,20 +1,50 @@
 #!/usr/bin/env bash
-# 本地检查：ruff + mypy。pytest 由 pre-push 统一执行，避免与 pre-push 重复跑两遍。
+# 与 GitHub Actions CI 完全一致的本地校验（lint + typecheck + pytest）。
+# 推送前执行此脚本可最大程度避免「本地通过、远端失败」。
+#
+# 用法:
+#   ./scripts/ci-local.sh           # 使用当前 Python
+#   PYTHON=python3.10 ./scripts/ci-local.sh
+#   ./scripts/ci-local.sh --install # 先 pip install -e ".[dev]" 再跑
+#
+# 多版本校验（与 CI matrix 一致）:
+#   ./scripts/run-ci-matrix.sh
+
 set -e
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 [ -n "$ROOT" ] && cd "$ROOT"
 
-echo "=== 1. Ruff format ==="
-ruff format --check src tests
+PYTHON="${PYTHON:-python3}"
+DO_INSTALL=false
+for arg in "$@"; do
+  case "$arg" in
+    --install) DO_INSTALL=true ;;
+  esac
+done
 
-echo "=== 2. Ruff check ==="
-ruff check src tests
+echo "=== CI 本地校验（与 .github/workflows/ci.yml 一致）==="
+echo "Python: $($PYTHON --version 2>&1)"
+echo ""
 
-echo "=== 3. Mypy (与 CI typecheck job 一致，建议 Python 3.13) ==="
-mypy src/pyclaw
+if [ "$DO_INSTALL" = true ]; then
+  echo "=== 安装依赖 (pip install -e \".[dev]\") ==="
+  "$PYTHON" -m pip install --upgrade pip -q
+  "$PYTHON" -m pip install -e ".[dev]" -q
+  echo ""
+fi
 
-echo "=== 4. Pytest (由 pre-push 或 CI 统一执行，此处跳过避免重复) ==="
-echo "    push 时 pre-push 会跑全量测试；CI 会跑带 coverage 的测试。"
+echo "=== 1. Lint (ruff format + ruff check) ==="
+"$PYTHON" -m ruff format --check src tests
+"$PYTHON" -m ruff check src tests
+echo ""
 
-echo "=== 全部通过（ruff + mypy），可提交；push 前将跑 pytest）==="
+echo "=== 2. Type check (mypy) ==="
+"$PYTHON" -m mypy src/pyclaw
+echo ""
+
+echo "=== 3. Tests (与 CI 相同: pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/) ==="
+"$PYTHON" -m pytest --cov=pyclaw --cov-report=term-missing --cov-report=xml tests/
+echo ""
+
+echo "=== 全部通过（与 CI test job 一致）==="

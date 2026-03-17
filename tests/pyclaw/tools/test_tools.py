@@ -1,5 +1,6 @@
 """Tests for agent tools — file operations, exec, web, and registry."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -228,7 +229,11 @@ async def test_exec_failure():
 @pytest.mark.asyncio
 async def test_exec_timeout():
     tool = ExecTool(timeout=1)
-    result = await tool.execute("c1", {"command": "sleep 10"})
+    # Use current interpreter so it works on any platform (python vs python3, venv, etc.)
+    result = await tool.execute(
+        "c1",
+        {"command": f'"{sys.executable}" -c "import time; time.sleep(10)"'},
+    )
     assert result.is_error
     assert "timed out" in result.content[0]["text"].lower()
 

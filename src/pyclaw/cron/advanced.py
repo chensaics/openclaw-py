@@ -172,7 +172,7 @@ class IsolatedAgentRunner:
             result = await asyncio.wait_for(handler(task), timeout=timeout)
             execution.state = TaskState.COMPLETED
             execution.result = result
-        except TimeoutError:
+        except (TimeoutError, asyncio.TimeoutError):
             execution.state = TaskState.TIMEOUT
             execution.error = f"Task timed out after {timeout}s"
         except Exception as e:

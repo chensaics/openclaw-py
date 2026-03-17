@@ -1,7 +1,9 @@
 #!/bin/bash
-# Run full test suite before branch push; skip on tag push (release workflow runs tests).
+# Run same test invocation as CI before push; skip on tag push (release workflow runs tests).
 # Install: cp scripts/githooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+# 与 .github/workflows/ci.yml test job 的 pytest 保持一致，减少「本地过、远端挂」。
 # stdin: <remote> <url> <local_ref> <local_sha> <remote_ref> <remote_sha> per ref
+set -e
 skip_tests=0
 while read -r _ _ local_ref _ _ _; do
     case "$local_ref" in refs/tags/*) skip_tests=1; break ;; esac
@@ -10,14 +12,12 @@ if [ "$skip_tests" = 1 ]; then
     echo "Pre-push: skipping tests (tag push; release workflow will run tests)."
     exit 0
 fi
-echo "Running pre-push tests..."
-# 全量：默认。增量：export PYCLAW_PRE_PUSH_TEST_MODE=incremental
+PY="${PYTHON:-python3}"
+echo "Pre-push: running CI-equivalent tests ($PY)..."
+# 与 CI 相同：pytest --cov=pyclaw --cov-report=term-missing tests/；-x 首失败即停
 if [ "${PYCLAW_PRE_PUSH_TEST_MODE:-full}" = "incremental" ]; then
-  python3 scripts/pytest_scope.py run --mode incremental --base "${PYCLAW_TEST_BASE:-origin/master}" -- -x -q --tb=line
+  "$PY" scripts/pytest_scope.py run --mode incremental --base "${PYCLAW_TEST_BASE:-origin/master}" -- --cov=pyclaw --cov-report=term-missing -x --tb=line tests/
 else
-  python3 -m pytest tests/ -x -q --tb=line
+  "$PY" -m pytest --cov=pyclaw --cov-report=term-missing tests/ -x --tb=line
 fi
-if [ $? -ne 0 ]; then
-    echo "Tests failed. Push aborted."
-    exit 1
-fi
+echo "Pre-push: tests OK."

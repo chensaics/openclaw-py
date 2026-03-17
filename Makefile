@@ -1,4 +1,4 @@
-.PHONY: help install dev test lint test-full ci-check build-web build-desktop build-mobile build-all docker clean
+.PHONY: help install dev test lint test-full ci ci-matrix type-check ci-check build-web build-desktop build-mobile build-all docker clean
 
 PYTHON ?= python3
 FLET   ?= flet
@@ -14,7 +14,7 @@ install: ## Install project in development mode
 dev: ## Run Flet app in development mode
 	$(FLET) run flet_app.py
 
-test: ## Run all tests
+test: ## Run all tests (quick)
 	$(PYTHON) -m pytest tests/ -q
 
 test-full: ## Run all tests with coverage
@@ -27,7 +27,15 @@ lint: ## Run linters (ruff)
 type-check: ## Run type checker
 	$(PYTHON) -m mypy src/pyclaw
 
-ci-check: ## Run checks similar to CI (lint, type-check, basic security)
+# 与 GitHub Actions CI 完全一致（lint + typecheck + pytest 含 coverage），推送前建议执行
+ci: ## Run same checks as CI (lint + typecheck + pytest with coverage)
+	@bash scripts/ci-local.sh
+
+# 在多个 Python 版本上跑 CI 校验（与 CI matrix 一致，需安装 python3.10 … 3.14）
+ci-matrix: ## Run CI checks on all supported Python versions (3.10–3.14)
+	@bash scripts/run-ci-matrix.sh
+
+ci-check: ## Lint + type-check + secret scan (no pytest; use 'make ci' for full CI parity)
 	$(PYTHON) -m ruff check src/ tests/
 	$(PYTHON) -m ruff format --check src/ tests/
 	$(PYTHON) -m mypy src/pyclaw

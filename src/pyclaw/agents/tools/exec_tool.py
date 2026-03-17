@@ -177,7 +177,7 @@ class ExecTool(BaseTool):
 
             try:
                 stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-            except TimeoutError:
+            except (TimeoutError, asyncio.TimeoutError):
                 proc.kill()
                 await proc.wait()
                 emit_progress(

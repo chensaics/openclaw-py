@@ -158,7 +158,7 @@ async def with_timeout(
     """Run a coroutine with a timeout, returning default on timeout."""
     try:
         return await asyncio.wait_for(coro, timeout=timeout_s)
-    except TimeoutError:
+    except (TimeoutError, asyncio.TimeoutError):
         return default
 
 

@@ -25,6 +25,20 @@ pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
+**与 CI 保持一致（推荐推送前执行）**：运行与 GitHub Actions 完全相同的 lint + typecheck + pytest（含 coverage）：
+
+```bash
+make ci
+```
+
+在多个 Python 版本上跑与 CI 一致的校验（需安装 python3.10～3.14）：
+
+```bash
+make ci-matrix
+```
+
+详见 [本地与 CI 校验一致说明](docs/ci-local.md)。
+
 仅运行冒烟测试：
 
 ```bash
