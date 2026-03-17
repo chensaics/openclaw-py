@@ -219,9 +219,9 @@ async def _stream_google(
     """Stream from the Google Gemini API."""
     import google.generativeai as genai
 
-    genai.configure(api_key=model.api_key or "not-set")  # type: ignore[attr-defined]
+    genai.configure(api_key=model.api_key or "not-set")
 
-    gemini_model = genai.GenerativeModel(model.model_id)  # type: ignore[attr-defined]
+    gemini_model = genai.GenerativeModel(model.model_id)
 
     # Convert messages to Gemini format
     system_text = ""

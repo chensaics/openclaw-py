@@ -92,6 +92,7 @@ class GatewayServer:
         self._started_at: float = 0.0
         self._channel_health_check_interval: float = 15.0  # minutes
         self._channel_health_monitor: Any = None
+        self._config_watcher: Any = None
 
         self._setup_routes()
 
@@ -272,7 +273,7 @@ def _start_config_watcher(server: GatewayServer, config_path: str | None) -> Non
 
         watcher.on_change(_on_change)
         watcher.start()
-        server._config_watcher = watcher  # type: ignore[attr-defined]
+        server._config_watcher = watcher
 
         async def _poll_loop() -> None:
             while watcher.is_running:

@@ -709,10 +709,19 @@ def _detect_cli_example_drifts(doc_text: str) -> list[dict[str, str]]:
     commands = _extract_pyclaw_commands(doc_text)
     if not commands:
         return []
+    import click
     from typer.main import get_command
 
     click_app = get_command(cli_app)
-    available = set(click_app.commands.keys())
+    # 检查是否有 commands 属性（对于 Group 类型）或者作为其他类型的处理
+    if hasattr(click_app, "commands"):
+        available = set(click_app.commands.keys())
+    elif isinstance(click_app, click.Command):
+        # 如果是单一命令而不是命令组，则可用命令集为空
+        available = set()
+    else:
+        available = set()
+
     drifts: list[dict[str, str]] = []
     for cmd in commands:
         parts = shlex.split(cmd)

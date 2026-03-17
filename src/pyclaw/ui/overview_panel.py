@@ -282,6 +282,6 @@ def build_overview_panel(
         _update_status_display()
         await _fetch_status()
 
-    panel.refresh = _refresh_panel  # type: ignore[attr-defined]
+    panel.refresh = _refresh_panel
 
     return panel

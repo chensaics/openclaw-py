@@ -278,6 +278,6 @@ def build_channels_panel(*, gateway_client: Any = None) -> ft.Column:
         horizontal_alignment=ft.CrossAxisAlignment.START,
     )
 
-    col.refresh = _refresh  # type: ignore[attr-defined]
-    col.update_channels = update_channels  # type: ignore[attr-defined]
+    col.refresh = _refresh
+    col.update_channels = update_channels
     return col

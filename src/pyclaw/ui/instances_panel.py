@@ -152,6 +152,6 @@ def build_instances_panel(*, gateway_client: Any = None) -> ft.Column:
         gateway_client.on_event("system.presence.changed", _handle_presence_changed)
         gateway_client.on_event("presence.update", _handle_presence_changed)
 
-    panel.refresh = _refresh  # type: ignore[attr-defined]
+    panel.refresh = _refresh
     _fire_async(_refresh)
     return panel

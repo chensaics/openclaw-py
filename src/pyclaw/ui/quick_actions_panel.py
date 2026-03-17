@@ -169,6 +169,6 @@ def build_quick_actions_panel(
     async def _refresh() -> None:
         await _status_check()
 
-    panel.refresh = _refresh  # type: ignore[attr-defined]
+    panel.refresh = _refresh
     _fire_async(_status_check)
     return panel

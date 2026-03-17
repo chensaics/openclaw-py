@@ -266,6 +266,6 @@ def build_logs_panel(*, gateway_client: Any = None) -> ft.Column:
         gateway_client.on_event("logs.new", _handle_log_event)
         gateway_client.on_event("log.entry", _handle_log_event)
 
-    panel.refresh = _refresh  # type: ignore[attr-defined]
+    panel.refresh = _refresh
     _fire_async(_refresh)
     return panel

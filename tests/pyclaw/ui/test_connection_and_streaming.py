@@ -37,7 +37,7 @@ async def test_overview_refresh_safe_without_page() -> None:
     panel = build_overview_panel(get_gateway_client=lambda: gw, get_connection_state=lambda: "connected")
     assert isinstance(panel, ft.Column)
     assert hasattr(panel, "refresh")
-    await panel.refresh()  # type: ignore[attr-defined]
+    await panel.refresh()
 
 
 def test_chat_message_can_skip_markdown_rendering() -> None:

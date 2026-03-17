@@ -175,5 +175,5 @@ def build_plans_panel(*, gateway_client: Any = None) -> ft.Column:
         expand=True,
     )
 
-    col.refresh = _refresh  # type: ignore[attr-defined]
+    col.refresh = _refresh
     return col

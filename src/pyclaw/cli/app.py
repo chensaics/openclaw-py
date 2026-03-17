@@ -77,10 +77,10 @@ def agent(
     deliver: bool = typer.Option(False, "--deliver", help="Deliver response to channel target."),
     output_json: bool = typer.Option(False, "--json", help="Output as JSON."),
     timeout: int = typer.Option(120, "--timeout", help="Timeout in seconds."),
-    provider: str = typer.Option("anthropic", help="LLM provider."),
-    model: str = typer.Option("claude-sonnet-4-6", help="Model ID."),
-    api_key: str | None = typer.Option(None, envvar="OPENAI_API_KEY", help="API key."),
-    base_url: str | None = typer.Option(None, help="Custom API base URL."),
+    provider: str = typer.Option("anthropic", "--provider", help="LLM provider."),
+    model: str = typer.Option("claude-sonnet-4-6", "--model", help="Model ID."),
+    api_key: str | None = typer.Option(None, "--api-key", envvar="OPENAI_API_KEY", help="API key."),
+    base_url: str | None = typer.Option(None, "--base-url", help="Custom API base URL."),
     agent_id: str = typer.Option("main", "--agent", help="Agent ID."),
 ) -> None:
     """Run a single agent turn with the given message."""
@@ -112,9 +112,9 @@ app.add_typer(gateway_app)
 @gateway_app.callback(invoke_without_command=True)
 def gateway_root(
     ctx: typer.Context,
-    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Port to listen on."),
-    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Address to bind to."),
-    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, "--port", help="Port to listen on."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, "--bind", help="Address to bind to."),
+    auth_token: str | None = typer.Option(None, "--auth-token", envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Start the gateway server (default) or manage it with subcommands."""
     if ctx.invoked_subcommand:
@@ -126,9 +126,10 @@ def gateway_root(
 
 @gateway_app.command("run")
 def gateway_run_cmd(
-    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Port to listen on."),
-    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Address to bind to."),
-    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
+    ctx: typer.Context,
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, "--port", help="Port to listen on."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, "--bind", help="Address to bind to."),
+    auth_token: str | None = typer.Option(None, "--auth-token", envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Start the pyclaw gateway server."""
     from pyclaw.cli.commands.gateway_cmd import gateway_run_command
@@ -552,10 +553,10 @@ app.add_typer(message_app)
 @message_app.command("send")
 def message_send_cmd(
     text: str = typer.Argument(..., help="Message text to send."),
-    channel: str = typer.Option("default", help="Target channel."),
-    recipient: str = typer.Option("", help="Recipient ID."),
-    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL, help="Gateway WebSocket URL."),
-    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
+    channel: str = typer.Option("default", "--channel", help="Target channel."),
+    recipient: str = typer.Option("", "--recipient", help="Recipient ID."),
+    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL, "--gateway-url", help="Gateway WebSocket URL."),
+    auth_token: str | None = typer.Option(None, "--auth-token", envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Send a message through the gateway."""
     from pyclaw.cli.commands.message_cmd import message_send
@@ -659,9 +660,9 @@ def service_stop_cmd(
 
 @app.command()
 def node(
-    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL_PATH, help="Gateway WebSocket URL."),
-    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
-    node_id: str = typer.Option("", help="Node identifier (defaults to hostname)."),
+    gateway_url: str = typer.Option(DEFAULT_GATEWAY_WS_URL_PATH, "--gateway-url", help="Gateway WebSocket URL."),
+    auth_token: str | None = typer.Option(None, "--auth-token", envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
+    node_id: str = typer.Option("", "--node-id", help="Node identifier (defaults to hostname)."),
 ) -> None:
     """Start a headless node host."""
     from pyclaw.cli.commands.node_cmd import node_run

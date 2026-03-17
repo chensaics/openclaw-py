@@ -280,6 +280,6 @@ def build_sessions_panel(*, gateway_client: Any = None) -> ft.Column:
         spacing=0,
     )
 
-    panel.refresh = _refresh  # type: ignore[attr-defined]
+    panel.refresh = _refresh
     _fire_async(_refresh)
     return panel

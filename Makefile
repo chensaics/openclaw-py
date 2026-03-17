@@ -1,4 +1,4 @@
-.PHONY: help install dev test lint build-web build-desktop build-mobile build-all docker clean
+.PHONY: help install dev test lint test-full ci-check build-web build-desktop build-mobile build-all docker clean
 
 PYTHON ?= python3
 FLET   ?= flet
@@ -17,8 +17,22 @@ dev: ## Run Flet app in development mode
 test: ## Run all tests
 	$(PYTHON) -m pytest tests/ -q
 
+test-full: ## Run all tests with coverage
+	$(PYTHON) -m pytest --cov=pyclaw --cov-report=term-missing tests/
+
 lint: ## Run linters (ruff)
 	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m ruff format --check src/ tests/
+
+type-check: ## Run type checker
+	$(PYTHON) -m mypy src/pyclaw
+
+ci-check: ## Run checks similar to CI (lint, type-check, basic security)
+	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m ruff format --check src/ tests/
+	$(PYTHON) -m mypy src/pyclaw
+	@echo "Checking for potential secrets in code..."
+	@find src/ tests/ -name "*.py" -type f -exec python scripts/check_secrets.py {} \;
 
 # ─── Desktop Builds ──────────────────────────────────────────────
 

@@ -9,9 +9,9 @@ from pyclaw.constants.runtime import DEFAULT_GATEWAY_BIND, DEFAULT_GATEWAY_PORT
 
 
 def gateway_command(
-    port: int = typer.Option(DEFAULT_GATEWAY_PORT, help="Port to listen on."),
-    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, help="Address to bind to."),
-    auth_token: str | None = typer.Option(None, envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
+    port: int = typer.Option(DEFAULT_GATEWAY_PORT, "--port", help="Port to listen on."),
+    bind: str = typer.Option(DEFAULT_GATEWAY_BIND, "--bind", help="Address to bind to."),
+    auth_token: str | None = typer.Option(None, "--auth-token", envvar=AUTH_TOKEN_ENV_VARS, help="Auth token."),
 ) -> None:
     """Start the pyclaw gateway server."""
     import uvicorn

@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml README.md ./
 COPY src/ src/
+COPY skills/ skills/
 
 # [docker] extra excludes llamacpp/mlx (need C++ compilers) and
 # whatsapp/neonize (protobuf version conflict with google-generativeai)

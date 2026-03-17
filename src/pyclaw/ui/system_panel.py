@@ -179,5 +179,5 @@ def build_system_panel(
         scroll=ft.ScrollMode.AUTO,
     )
 
-    col.refresh = _refresh  # type: ignore[attr-defined]
+    col.refresh = _refresh
     return col

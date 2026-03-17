@@ -4,11 +4,24 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Protocol, cast
 
 from pyclaw.mcp.types import McpServerConfig, McpToolInfo
 
 logger = logging.getLogger(__name__)
+
+
+class TransportProtocol(Protocol):
+    """协议类定义传输层的接口"""
+
+    @property
+    def is_connected(self) -> bool: ...
+
+    async def connect(self) -> None: ...
+
+    async def disconnect(self) -> None: ...
+
+    async def send(self, method: str, params: Any) -> Any: ...
 
 
 class McpClient:
@@ -16,7 +29,7 @@ class McpClient:
 
     def __init__(self, config: McpServerConfig) -> None:
         self._config = config
-        self._transport: Any = None
+        self._transport: TransportProtocol | None = None
         self._tools: list[McpToolInfo] = []
         self._initialized = False
 
@@ -53,7 +66,11 @@ class McpClient:
         else:
             raise ValueError(f"MCP server '{self._config.name}': must specify 'command' or 'url'")
 
-        await self._transport.connect()
+        # mypy (pre-commit mirror) 可能在此处将 transport 推断为 object，显式 cast 保持稳定
+        transport = self._transport
+        if transport is None:
+            raise RuntimeError(f"MCP server '{self._config.name}' transport not initialized")
+        await cast(TransportProtocol, transport).connect()
         await self._initialize()
         await self._discover_tools()
 
@@ -65,17 +82,23 @@ class McpClient:
         self._tools.clear()
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
-        if not self._transport:
+        transport = self._transport
+        if transport is None:
             raise RuntimeError(f"MCP server '{self._config.name}' not connected")
 
         result = await asyncio.wait_for(
-            self._transport.send("tools/call", {"name": tool_name, "arguments": arguments}),
+            transport.send("tools/call", {"name": tool_name, "arguments": arguments}),
             timeout=self._config.tool_timeout,
         )
         return result
 
     async def _initialize(self) -> None:
-        result = await self._transport.send(
+        # 确保在调用此方法前 transport 已连接
+        transport = self._transport
+        if transport is None:
+            raise RuntimeError(f"MCP server '{self._config.name}' transport not initialized")
+
+        result = await transport.send(
             "initialize",
             {
                 "protocolVersion": "2024-11-05",
@@ -90,10 +113,15 @@ class McpClient:
         )
         self._initialized = True
 
-        await self._transport.send("notifications/initialized", None)
+        await transport.send("notifications/initialized", None)
 
     async def _discover_tools(self) -> None:
-        result = await self._transport.send("tools/list", {})
+        # 确保在调用此方法前 transport 已连接
+        transport = self._transport
+        if transport is None:
+            raise RuntimeError(f"MCP server '{self._config.name}' transport not initialized")
+
+        result = await transport.send("tools/list", {})
 
         tools_data = result.get("tools", []) if isinstance(result, dict) else []
         self._tools = [

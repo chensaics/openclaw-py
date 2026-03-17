@@ -1137,7 +1137,7 @@ class ChatView(ft.Column):
 
             page = self._progress_bar.page
             if page:
-                page.run_task(_hide_after_delay)  # type: ignore[attr-defined]
+                page.run_task(_hide_after_delay)
             else:
                 self._progress_row.visible = False
                 self._progress_bar.visible = False

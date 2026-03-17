@@ -122,6 +122,9 @@ dev = [
     "pytest-cov>=6",
     "ruff>=0.9",
     "mypy>=1.14",
+    "types-requests>=2.37",
+    "types-setuptools>=70",
+    "types-PyYAML>=6.0",
 ]
 
 [project.scripts]
@@ -180,7 +183,7 @@ fail_under = 40
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
-    "if __name__",
+    "if __name",
     "@abstractmethod",
 ]
 
@@ -207,7 +210,7 @@ module = [
     "pyclaw.gateway.server",
     "pyclaw.gateway.openai_compat",
 ]
-disable_error_code = ["untyped-decorator"]
+disable_error_code = ["call-overload"]
 
 [[tool.mypy.overrides]]
 module = [
