@@ -45,7 +45,7 @@ pyclaw logs [--follow]
 
 3. **检查 Python 版本**:
    ```bash
-   python --version  # 需要 3.12+
+   python --version  # 需要 3.10+
    ```
 
 4. **查看日志**:

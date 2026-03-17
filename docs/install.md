@@ -6,7 +6,7 @@
 
 ## 系统要求
 
-- **Python**: 3.12 或更高版本
+- **Python**: 3.10 或更高版本
 - **操作系统**: macOS、Linux、Windows（WSL2 推荐）
 - **LLM API Key**: OpenAI / Anthropic / Google Gemini / Ollama 等任一即可
 

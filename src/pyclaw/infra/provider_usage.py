@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def _fetch_openai_usage(api_key: str) -> ProviderUsageSnapshot:
 
     import httpx
 
-    today = datetime.now(UTC)
+    today = datetime.now(timezone.utc)
     start = today.replace(day=1).strftime("%Y-%m-%d")
     end = today.strftime("%Y-%m-%d")
     headers = {"Authorization": f"Bearer {api_key}"}

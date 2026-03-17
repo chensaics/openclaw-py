@@ -92,7 +92,7 @@ pyclaw connects your AI assistant to **25 messaging channels** (Telegram, Discor
 
 ### Requirements
 
-- Python >= 3.12
+- Python >= 3.10
 - An LLM API key (OpenAI, Anthropic, Google Gemini, Ollama, or any OpenAI-compatible provider)
 
 ### Install
@@ -661,7 +661,7 @@ openclaw-py/
 
 | Layer | Technology |
 |-------|-----------|
-| Language | Python 3.12+ |
+| Language | Python 3.10+ |
 | Web framework | FastAPI + Uvicorn |
 | WebSocket | websockets |
 | HTTP client | httpx |

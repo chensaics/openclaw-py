@@ -46,7 +46,7 @@ def _compute_delay(attempt: int, config: RetryConfig) -> float:
     return cast(float, max(0.0, jittered) / 1000.0)
 
 
-async def retry_async[T](
+async def retry_async(
     fn: Callable[[], Awaitable[T]],
     *,
     config: RetryConfig | None = None,

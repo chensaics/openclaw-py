@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import zipfile
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -41,7 +41,7 @@ def backup_export(
         raise typer.Exit(1)
 
     if not output:
-        datestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        datestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         output = f"pyclaw-backup-{datestamp}.zip"
 
     output_path = Path(output)
@@ -76,7 +76,7 @@ def backup_export(
 
         manifest: dict[str, Any] = {
             "version": 1,
-            "createdAt": datetime.now(UTC).isoformat(),
+            "createdAt": datetime.now(timezone.utc).isoformat(),
             "files": included_count,
         }
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))

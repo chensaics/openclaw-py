@@ -206,9 +206,9 @@ def build_cron_panel(*, gateway_client: Any = None) -> ft.Column:
                 }.get(status, theme.colors.muted)
                 started = rec.get("startedAt", rec.get("started_at", ""))
                 if isinstance(started, int | float):
-                    from datetime import UTC, datetime
+                    from datetime import datetime, timezone
 
-                    started = datetime.fromtimestamp(started, tz=UTC).strftime("%Y-%m-%d %H:%M:%S")
+                    started = datetime.fromtimestamp(started, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                 else:
                     started = str(started)[:19] if started else "-"
                 cron_history_list.controls.append(

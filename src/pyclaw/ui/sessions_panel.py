@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +53,7 @@ def build_sessions_panel(*, gateway_client: Any = None) -> ft.Column:
             p = Path(path_str)
             if p.exists():
                 mtime = p.stat().st_mtime
-                dt = datetime.fromtimestamp(mtime, tz=UTC)
+                dt = datetime.fromtimestamp(mtime, tz=timezone.utc)
                 return dt.strftime("%Y-%m-%d %H:%M")
         except Exception:
             pass

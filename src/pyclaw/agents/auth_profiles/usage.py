@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import cast
 
 from pyclaw.agents.auth_profiles.types import (
@@ -18,7 +18,7 @@ _PERMANENT_REASONS: set[str] = {"auth_permanent", "billing"}
 
 
 def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _ensure_stats(store: AuthProfileStore, profile_id: str) -> ProfileUsageStats:
@@ -34,7 +34,7 @@ def is_profile_in_cooldown(store: AuthProfileStore, profile_id: str) -> bool:
         return False
     try:
         cooldown_end = datetime.fromisoformat(stats.cooldown_until)
-        return datetime.now(UTC) < cooldown_end
+        return datetime.now(timezone.utc) < cooldown_end
     except ValueError:
         return False
 
@@ -71,8 +71,8 @@ def mark_auth_profile_cooldown(
     stats = _ensure_stats(store, profile_id)
     if duration_ms is None:
         duration_ms = calculate_auth_profile_cooldown_ms(stats)
-    cooldown_end = datetime.now(UTC).timestamp() + duration_ms / 1000
-    stats.cooldown_until = datetime.fromtimestamp(cooldown_end, tz=UTC).isoformat()
+    cooldown_end = datetime.now(timezone.utc).timestamp() + duration_ms / 1000
+    stats.cooldown_until = datetime.fromtimestamp(cooldown_end, tz=timezone.utc).isoformat()
 
 
 def calculate_auth_profile_cooldown_ms(stats: ProfileUsageStats) -> int:
@@ -95,7 +95,7 @@ def clear_auth_profile_cooldown(
 
 def clear_expired_cooldowns(store: AuthProfileStore) -> int:
     """Clear all expired cooldowns, return count cleared."""
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     cleared = 0
     for _pid, stats in store.usage_stats.items():
         if stats.cooldown_until and stats.cooldown_until != "permanent":

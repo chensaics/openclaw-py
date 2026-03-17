@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any, cast
 
 import typer
@@ -89,7 +89,7 @@ def scan_status(*, output_json: bool = False, deep: bool = False) -> StatusSumma
                         SessionStatus(
                             agent_id=agent_dir.name,
                             key=session_file.stem,
-                            updated_at=datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+                            updated_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
                             age=age,
                         )
                     )
@@ -115,7 +115,7 @@ def _probe_gateway(port: int) -> bool:
 
 
 def _format_age(mtime: float) -> str:
-    delta = datetime.now(UTC).timestamp() - mtime
+    delta = datetime.now(timezone.utc).timestamp() - mtime
     if delta < 60:
         return f"{int(delta)}s"
     if delta < 3600:

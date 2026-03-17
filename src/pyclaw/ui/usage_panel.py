@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -78,7 +78,7 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
             p = Path(path_str)
             if p.exists():
                 mtime = p.stat().st_mtime
-                dt = datetime.fromtimestamp(mtime, tz=UTC)
+                dt = datetime.fromtimestamp(mtime, tz=timezone.utc)
                 return dt.strftime("%Y-%m-%d %H:%M")
         except Exception:
             pass
@@ -359,7 +359,7 @@ def build_usage_panel(*, gateway_client: Any = None) -> ft.Column:
                     tokens = s.get("tokens", s.get("totalTokens", "-"))
                     updated = s.get("updated", s.get("updatedAt", _format_updated(path_str)))
                     if isinstance(updated, int | float):
-                        updated = datetime.fromtimestamp(updated, tz=UTC).strftime("%Y-%m-%d %H:%M")
+                        updated = datetime.fromtimestamp(updated, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
                     session_key = Path(path_str).name if path_str else key or "-"
 
                     def _make_session_click(sess: dict) -> Any:

@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -247,7 +247,7 @@ def build_bootstrap(
     if config.include_datetime:
         from datetime import datetime
 
-        now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         parts.append(f"\nCurrent date: {now}")
 
     if config.include_model_info and model:

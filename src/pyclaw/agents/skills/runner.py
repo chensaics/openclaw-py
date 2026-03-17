@@ -9,7 +9,7 @@ import re
 import shlex
 import shutil
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -332,7 +332,7 @@ def _run_incident_triage(payload: dict[str, Any]) -> dict[str, Any]:
                 "define_verification_signals",
             ],
         ),
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
 

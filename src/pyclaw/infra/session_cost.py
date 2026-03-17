@@ -410,7 +410,7 @@ def aggregate_usage_daily(*, days: int = 7, path: Path | None = None) -> list[di
                 out = int(row.get("output_tokens", 0) or 0)
                 raw_total = row.get("total_tokens") or (inp + out)
                 total_tokens = int(raw_total)
-                d = dt.datetime.fromtimestamp(ts, tz=dt.UTC).strftime("%Y-%m-%d")
+                d = dt.datetime.fromtimestamp(ts, tz=dt.timezone.utc).strftime("%Y-%m-%d")
                 daily[d] += total_tokens
 
     dates = sorted(daily.keys())
@@ -443,7 +443,7 @@ def aggregate_usage_hourly(*, days: int = 7, path: Path | None = None) -> list[i
                 out = int(row.get("output_tokens", 0) or 0)
                 raw_total = row.get("total_tokens") or (inp + out)
                 total_tokens = int(raw_total)
-                hour = dt.datetime.fromtimestamp(ts, tz=dt.UTC).hour
+                hour = dt.datetime.fromtimestamp(ts, tz=dt.timezone.utc).hour
                 hourly[hour] += total_tokens
 
     return hourly

@@ -55,7 +55,7 @@ def _parse_date_from_path(file_path: str) -> float | None:
     import datetime
 
     try:
-        dt = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), tzinfo=datetime.UTC)
+        dt = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), tzinfo=datetime.timezone.utc)
         return dt.timestamp()
     except ValueError:
         return None

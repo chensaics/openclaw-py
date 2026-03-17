@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC
+from datetime import timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -42,7 +42,11 @@ def create_logs_handlers() -> dict[str, MethodHandler]:
 
                 entries: list[dict[str, Any]] = []
                 for line in tail:
-                    ts = datetime.now(UTC).isoformat() if not local_time else datetime.now().astimezone().isoformat()
+                    ts = (
+                        datetime.now(timezone.utc).isoformat()
+                        if not local_time
+                        else datetime.now().astimezone().isoformat()
+                    )
                     entries.append({"time": ts, "line": line})
                 await conn.send_ok("logs.tail", {"lines": entries, "count": len(entries), "path": str(log_path)})
             else:

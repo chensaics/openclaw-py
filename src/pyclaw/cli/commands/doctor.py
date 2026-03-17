@@ -92,8 +92,8 @@ def _check_system_info(info: list[str]) -> None:
 
 def _check_python_version(issues: list[str], info: list[str]) -> None:
     v = sys.version_info
-    if v < (3, 12):
-        issues.append(f"Python 3.12+ required, found {v.major}.{v.minor}.{v.micro}")
+    if v < (3, 10):
+        issues.append(f"Python 3.10+ required, found {v.major}.{v.minor}.{v.micro}")
 
 
 def _check_config(issues: list[str], warnings: list[str], info: list[str]) -> None:

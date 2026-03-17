@@ -149,7 +149,7 @@ def safe_json_dumps(obj: Any, **kwargs: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
-async def with_timeout[T](
+async def with_timeout(
     coro: Coroutine[Any, Any, T],
     timeout_s: float,
     *,
@@ -167,7 +167,7 @@ async def with_timeout[T](
 # ---------------------------------------------------------------------------
 
 
-async def run_with_concurrency[T](
+async def run_with_concurrency(
     tasks: list[Coroutine[Any, Any, T]],
     *,
     max_concurrent: int = 5,

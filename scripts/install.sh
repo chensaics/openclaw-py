@@ -10,7 +10,7 @@ set -euo pipefail
 
 REPO="chensaics/openclaw-py"
 MIN_PYTHON_MAJOR=3
-MIN_PYTHON_MINOR=12
+MIN_PYTHON_MINOR=10
 EXTRAS=""
 VERSION=""
 FROM_SOURCE=false
@@ -33,7 +33,7 @@ _info "pyclaw installer"
 
 # --- Check Python ---
 PYTHON=""
-for cmd in python3.13 python3.12 python3 python; do
+for cmd in python3.14 python3.13 python3.12 python3.11 python3.10 python3 python; do
     if command -v "$cmd" &>/dev/null; then
         ver=$("$cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || true)
         if [[ -n "$ver" ]]; then
@@ -52,9 +52,9 @@ done
 if [[ -z "$PYTHON" ]]; then
     _error "Python >= ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR} is required but not found.
 Install it:
-  macOS:   brew install python@3.12
-  Ubuntu:  sudo apt install python3.12 python3.12-venv
-  Fedora:  sudo dnf install python3.12"
+  macOS:   brew install python@3.13
+  Ubuntu:  sudo apt install python3.10 python3.10-venv
+  Fedora:  sudo dnf install python3.10"
 fi
 
 _ok "Found $PYTHON ($("$PYTHON" --version 2>&1))"

@@ -6,7 +6,7 @@
 
 ## 前置条件
 
-- **Python 3.12** 或更高版本（运行 `python --version` 确认）
+- **Python 3.10** 或更高版本（运行 `python --version` 确认）
 - 一个 **LLM API Key**（OpenAI、Anthropic、Google Gemini、Ollama 等均可）
 
 ## 安装

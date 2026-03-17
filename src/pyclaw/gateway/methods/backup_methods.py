@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC
+from datetime import timezone
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def create_backup_handlers() -> dict[str, MethodHandler]:
             await conn.send_error("backup.export", "no_data", "No pyclaw data found")
             return
 
-        datestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        datestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         output_path = state_dir / f"pyclaw-backup-{datestamp}.zip"
 
         count = 0
@@ -46,7 +46,7 @@ def create_backup_handlers() -> dict[str, MethodHandler]:
 
             manifest = {
                 "version": 1,
-                "createdAt": datetime.now(UTC).isoformat(),
+                "createdAt": datetime.now(timezone.utc).isoformat(),
                 "files": count,
             }
             zf.writestr("manifest.json", json.dumps(manifest, indent=2))

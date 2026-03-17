@@ -16,7 +16,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
@@ -139,7 +139,7 @@ def sanitize_content(text: str) -> str:
 
 def inject_time_context(system_prompt: str) -> str:
     """Inject current time context into the system prompt."""
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     time_str = now.strftime("%Y-%m-%d %H:%M UTC (%A)")
     if "Current date" not in system_prompt and "current date" not in system_prompt:
         return f"{system_prompt}\n\nCurrent date and time: {time_str}"

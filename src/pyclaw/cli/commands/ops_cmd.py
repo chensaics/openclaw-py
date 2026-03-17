@@ -7,7 +7,7 @@ import json
 import re
 import subprocess
 from dataclasses import asdict, dataclass
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -98,7 +98,7 @@ def ops_release_gate_command(
 
     report = {
         "milestone": "M3",
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "version": version_target,
         "checks": [asdict(c) for c in checks],
         "failed_required": [c.name for c in checks if c.required and not c.passed],
@@ -179,7 +179,7 @@ def ops_client_baseline_check_command(*, output_json: bool) -> None:
 
     report = {
         "milestone": "M2",
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "checks": [asdict(c) for c in checks],
         "failed_required": [c.name for c in checks if c.required and not c.passed],
         "manual_checks_pending": [
@@ -209,7 +209,7 @@ def ops_upstream_snapshot_command(
 
     target = (Path.cwd() / tracker_path).resolve()
     target.parent.mkdir(parents=True, exist_ok=True)
-    now = datetime.now(UTC).strftime("%Y-%m-%d")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     block = (
         "\n\n---\n\n"
         f"### Snapshot {now}\n\n"
@@ -222,7 +222,7 @@ def ops_upstream_snapshot_command(
 
     payload = {
         "milestone": "M4",
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "tracker_path": str(target),
         "window_start": start.isoformat(),
         "window_end": end.isoformat(),

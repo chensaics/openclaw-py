@@ -32,13 +32,13 @@ Write-Info "pyclaw installer for Windows"
 
 # --- Check Python ---
 $python = $null
-foreach ($cmd in @("python3.13", "python3.12", "python3", "python", "py")) {
+foreach ($cmd in @("python3.14", "python3.13", "python3.12", "python3.11", "python3.10", "python3", "python", "py")) {
     try {
         $ver = & $cmd -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
         if ($ver) {
             $parts = $ver.Split(".")
             $verNum = [int]$parts[0] * 100 + [int]$parts[1]
-            if ($verNum -ge 312) {
+            if ($verNum -ge 310) {
                 $python = $cmd
                 break
             }
@@ -47,7 +47,7 @@ foreach ($cmd in @("python3.13", "python3.12", "python3", "python", "py")) {
 }
 
 if (-not $python) {
-    Write-Err "Python >= 3.12 is required. Install from https://python.org/downloads/"
+    Write-Err "Python >= 3.10 is required. Install from https://python.org/downloads/"
 }
 
 $pyver = & $python --version 2>&1

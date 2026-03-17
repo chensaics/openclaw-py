@@ -16,7 +16,7 @@ import time
 import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
@@ -310,7 +310,7 @@ def parse_at_time(at: str) -> datetime | None:
     # ISO 8601
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
         try:
-            return datetime.strptime(at, fmt).replace(tzinfo=UTC)
+            return datetime.strptime(at, fmt).replace(tzinfo=timezone.utc)
         except ValueError:
             continue
 
@@ -320,7 +320,7 @@ def parse_at_time(at: str) -> datetime | None:
     m = re.match(r"^(\d{1,2}):(\d{2})$", at)
     if m:
         hour, minute = int(m.group(1)), int(m.group(2))
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
         if target <= now:
             target += timedelta(days=1)

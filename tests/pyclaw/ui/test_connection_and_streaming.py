@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+ft = pytest.importorskip("flet")
+
 from pyclaw.constants.runtime import DEFAULT_GATEWAY_WS_URL_SLASH
 from pyclaw.ui.app import ChatMessage, ChatView, PyClawApp, SettingsView
 from pyclaw.ui.config_panel import _coerce_config_value
 from pyclaw.ui.gateway_client import GatewayClient
 from pyclaw.ui.overview_panel import build_overview_panel
-
-ft = pytest.importorskip("flet")
 
 
 def test_gateway_client_emits_connection_states() -> None:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -340,7 +340,7 @@ def browser_lifecycle_audit_command(*, output_json: bool) -> None:
                 "profile": item.stem,
                 "path": str(item),
                 "size": stat.st_size,
-                "modifiedAt": datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
+                "modifiedAt": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
             }
         )
 
