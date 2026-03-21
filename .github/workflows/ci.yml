@@ -11,6 +11,13 @@ on:
 permissions:
   contents: read
 
+env:
+  PYCLAW_CACHE_ROOT: /tmp/openclaw-py-cache
+  RUFF_CACHE_DIR: /tmp/openclaw-py-cache/ruff
+  MYPY_CACHE_DIR: /tmp/openclaw-py-cache/mypy
+  PYTEST_CACHE_DIR: /tmp/openclaw-py-cache/pytest
+  PYTEST_ADDOPTS: -o cache_dir=/tmp/openclaw-py-cache/pytest
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -110,11 +117,13 @@ jobs:
 
       - name: Lint
         run: |
+          rm -rf "$RUFF_CACHE_DIR"
           ruff format --check src tests
           ruff check src tests
 
       - name: Test with coverage
         run: |
+          rm -rf "$PYTEST_CACHE_DIR"
           # 默认：全量。在仓库 Variables 中设置 PYCLAW_CI_INCREMENTAL=true 可对 PR 启用增量（缩短时间，偶有漏测风险）
           if [ "${{ vars.PYCLAW_CI_INCREMENTAL }}" = "true" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
             python scripts/pytest_scope.py run --mode incremental --base "${{ github.event.pull_request.base.sha }}" \
@@ -162,7 +171,9 @@ jobs:
           pip install -e ".[dev,ui]"
 
       - name: Type check
-        run: mypy src/pyclaw
+        run: |
+          rm -rf "$MYPY_CACHE_DIR"
+          mypy src/pyclaw
 
   # ── Security scan ─────────────────────────────────────────────────
   security:
@@ -224,6 +235,8 @@ jobs:
 
       - name: Run UI smoke + UI gateway contract tests
         run: |
+          rm -rf "$PYTEST_CACHE_DIR/ui-smoke"
+          export PYTEST_ADDOPTS="-o cache_dir=$PYTEST_CACHE_DIR/ui-smoke"
           pytest -q tests/pyclaw/ui/test_ui_components.py tests/pyclaw/ui/test_connection_and_streaming.py tests/pyclaw/contracts/test_ui_gateway_contract.py tests/pyclaw/ui/e2e/test_ui_web_smoke.py
 
   ui-e2e-nightly:
@@ -255,4 +268,6 @@ jobs:
         env:
           PYCLAW_RUN_UI_E2E: "true"
         run: |
+          rm -rf "$PYTEST_CACHE_DIR/ui-e2e"
+          export PYTEST_ADDOPTS="-o cache_dir=$PYTEST_CACHE_DIR/ui-e2e"
           pytest -q tests/pyclaw/ui/e2e/test_ui_web_smoke.py

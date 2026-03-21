@@ -1,15 +1,18 @@
-"""Subagent type definitions."""
+"""Subagent type definitions using Pydantic for consistency with orchestration module."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from pydantic import BaseModel, Field
 
 from pyclaw.constants.runtime import STATUS_ABORTED, STATUS_COMPLETED, STATUS_FAILED, STATUS_PENDING, STATUS_RUNNING
 
 
 class SubagentState(str, Enum):
+    """Status of a subagent."""
+
     PENDING = STATUS_PENDING
     RUNNING = STATUS_RUNNING
     COMPLETED = STATUS_COMPLETED
@@ -17,8 +20,7 @@ class SubagentState(str, Enum):
     ABORTED = STATUS_ABORTED
 
 
-@dataclass
-class SubagentConfig:
+class SubagentConfig(BaseModel):
     """Configuration for spawning a subagent."""
 
     session_id: str = ""
@@ -30,17 +32,18 @@ class SubagentConfig:
     workspace_dir: str = ""
     max_depth: int = 3
     current_depth: int = 0
-    tools_enabled: list[str] = field(default_factory=list)
-    tools_disabled: list[str] = field(default_factory=list)
+    tools_enabled: list[str] = Field(default_factory=list)
+    tools_disabled: list[str] = Field(default_factory=list)
     notify_parent: bool = False
     channel: str = ""
     chat_id: str = ""
     label: str = ""
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    system_prompt: str | None = Field(None)  # NEW: Custom system prompt override
+    tool_context: dict[str, Any] = Field(default_factory=dict)  # NEW: Additional context for tools
 
 
-@dataclass
-class SubagentMeta:
+class SubagentMeta(BaseModel):
     """Metadata about a subagent run."""
 
     session_id: str = ""
@@ -49,15 +52,14 @@ class SubagentMeta:
     model: str = ""
     duration_ms: int = 0
     depth: int = 0
-    token_usage: dict[str, int] = field(default_factory=dict)
+    token_usage: dict[str, int] = Field(default_factory=dict)
 
 
-@dataclass
-class SubagentResult:
+class SubagentResult(BaseModel):
     """Result of a subagent execution."""
 
     state: SubagentState = SubagentState.COMPLETED
     output: str = ""
-    meta: SubagentMeta = field(default_factory=SubagentMeta)
+    meta: SubagentMeta = Field(default_factory=SubagentMeta)
     error: str | None = None
-    payloads: list[dict[str, Any]] = field(default_factory=list)
+    payloads: list[dict[str, Any]] = Field(default_factory=list)

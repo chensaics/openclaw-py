@@ -28,6 +28,7 @@ async def run_subagent(
         model=model,
         workspace_dir=workspace_dir,
         current_depth=current_depth,
+        system_prompt=None,
     )
 
     return await mgr.spawn(config)

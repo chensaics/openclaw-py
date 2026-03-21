@@ -12,6 +12,13 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  PYCLAW_CACHE_ROOT: /tmp/openclaw-py-cache
+  RUFF_CACHE_DIR: /tmp/openclaw-py-cache/ruff
+  MYPY_CACHE_DIR: /tmp/openclaw-py-cache/mypy
+  PYTEST_CACHE_DIR: /tmp/openclaw-py-cache/pytest
+  PYTEST_ADDOPTS: -o cache_dir=/tmp/openclaw-py-cache/pytest
+
 jobs:
   # ── Preflight: lint + test + build ────────────────────────────────
   preflight:
@@ -44,14 +51,19 @@ jobs:
 
       - name: Lint
         run: |
+          rm -rf "$RUFF_CACHE_DIR"
           ruff format --check src tests
           ruff check src tests
 
       - name: Type check
-        run: mypy src/pyclaw
+        run: |
+          rm -rf "$MYPY_CACHE_DIR"
+          mypy src/pyclaw
 
       - name: Test
-        run: pytest tests/
+        run: |
+          rm -rf "$PYTEST_CACHE_DIR"
+          pytest tests/
 
       - name: Build package
         run: |

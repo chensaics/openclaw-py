@@ -36,11 +36,8 @@ classifiers = [
 ]
 dependencies = [
     # HTTP / WebSocket / async
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.34",
-    "websockets>=14",
     "httpx>=0.28",
-    "uvloop>=0.21; sys_platform != 'win32'",
+    # uvloop 仅 Linux/macOS 有 wheel，web(Pyodide) 无；桌面构建见 [tool.flet.linux/macos].dependencies；服务端可选 pip install uvloop
     # CLI
     "typer>=0.15",
     "rich>=13",
@@ -53,7 +50,8 @@ dependencies = [
     "apscheduler>=3.10",
     # AI / LLM (core)
     "openai>=1.60",
-    "anthropic>=0.42",
+    "flet>=0.82.2",
+    "flet-web>=0.82.2",
 ]
 
 [project.urls]
@@ -64,6 +62,13 @@ Issues = "https://github.com/chensaics/openclaw-py/issues"
 Changelog = "https://github.com/chensaics/openclaw-py/releases"
 
 [project.optional-dependencies]
+# Gateway server dependencies (keep out of base deps for Pyodide/web build)
+server = [
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+    "websockets>=14",
+]
+
 # Messaging channel SDKs
 channels = [
     "aiogram>=3.17",
@@ -81,6 +86,14 @@ ui = [
     "flet>=0.81",
     "pystray>=0.19",
     "Pillow>=11",
+]
+# 服务端在 Linux/macOS 上可选装 uvloop 以提升 asyncio 性能（主依赖未包含，因 Flet web 构建无 uvloop wheel）
+perf = [
+    "uvloop>=0.21; sys_platform != 'win32'",
+]
+server_standard = [
+    "openclaw-py[server]",
+    "uvicorn[standard]>=0.34",
 ]
 # Media & automation
 media = [
@@ -113,13 +126,14 @@ office = [
 ]
 # Everything (except platform-specific: whatsapp, llamacpp, mlx)
 all = [
-    "openclaw-py[channels,ui,media,voice,gemini,matrix,office]",
+    "openclaw-py[channels,ui,media,voice,gemini,matrix,office,server]",
 ]
 # Docker: excludes llamacpp/mlx (C++ compilers) and whatsapp (protobuf conflict)
 docker = [
-    "openclaw-py[channels,ui,media,voice,gemini,matrix,office]",
+    "openclaw-py[channels,ui,media,voice,gemini,matrix,office,server]",
 ]
 dev = [
+    "openclaw-py[server]",
     "pytest>=8",
     "pytest-asyncio>=0.25",
     "pytest-cov>=6",
@@ -168,8 +182,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["F841", "SIM"]
-"tests/pyclaw/ui/test_connection_and_streaming.py" = ["E402"]  # importorskip("flet") must run before pyclaw.ui imports
+"tests/**" = ["F841", "SIM", "F821", "F811", "E402"]
 "src/pyclaw/ui/*" = ["B008"]
 "src/pyclaw/cli/*" = ["B008", "E402"]
 
@@ -193,10 +206,28 @@ exclude_lines = [
 
 [tool.flet]
 module = "flet_app"
-project = "OpenClaw"
+project = "OpenClaw-py"
 org = "ai.openclaw"
 product = "OpenClaw"
-description = "Multi-channel AI gateway"
+description = "Multi-channel AI Assistant"
+company = "Chen Sai"
+copyright = "Copyright (C) 2023-2026 by Chen Sai"
+
+[tool.flet.app]
+path = "."   # 入口 flet_app.py 在仓库根目录，非 src/
+
+# Web 构建不需要 desktop/uvloop；桌面构建时追加
+[tool.flet.web]
+dependencies = [
+    "flet-web>=0.82.2",
+]
+
+[tool.flet.linux]
+dependencies = ["flet-desktop-light>=0.82.2", "uvloop>=0.21"]
+[tool.flet.windows]
+dependencies = ["flet-desktop-light>=0.82.2"]
+[tool.flet.macos]
+dependencies = ["flet-desktop-light>=0.82.2", "uvloop>=0.21"]
 
 [tool.mypy]
 python_version = "3.10"

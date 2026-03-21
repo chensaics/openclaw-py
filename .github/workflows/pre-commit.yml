@@ -17,6 +17,14 @@ on:
 permissions:
   contents: read
 
+env:
+  PYCLAW_CACHE_ROOT: /tmp/openclaw-py-cache
+  RUFF_CACHE_DIR: /tmp/openclaw-py-cache/ruff
+  MYPY_CACHE_DIR: /tmp/openclaw-py-cache/mypy
+  PYTEST_CACHE_DIR: /tmp/openclaw-py-cache/pytest
+  PYTEST_ADDOPTS: -o cache_dir=/tmp/openclaw-py-cache/pytest
+  PRE_COMMIT_HOME: /tmp/openclaw-py-cache/pre-commit
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -36,6 +44,7 @@ jobs:
 
       - name: Run pre-commit checks
         run: |
+          rm -rf "$RUFF_CACHE_DIR" "$MYPY_CACHE_DIR" "$PYTEST_CACHE_DIR" "$PRE_COMMIT_HOME"
           python -m pip install --upgrade pip
           pip install pre-commit
           pre-commit run --all-files

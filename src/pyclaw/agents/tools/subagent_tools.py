@@ -94,6 +94,7 @@ class SessionsSpawnTool(BaseTool):
         config = SubagentConfig(
             prompt=prompt,
             model=arguments.get("model", ""),
+            system_prompt=None,
         )
 
         try:

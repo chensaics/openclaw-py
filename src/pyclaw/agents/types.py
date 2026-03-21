@@ -43,6 +43,10 @@ class ToolResult:
     def text(cls, text: str, is_error: bool = False) -> ToolResult:
         return cls(content=[{"type": "text", "text": text}], is_error=is_error)
 
+    @classmethod
+    def json(cls, data: dict[str, Any], is_error: bool = False) -> ToolResult:
+        return cls(content=[{"type": "json", "json": data}], is_error=is_error)
+
 
 @dataclass
 class ModelConfig:

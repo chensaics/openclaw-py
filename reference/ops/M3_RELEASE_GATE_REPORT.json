@@ -1,6 +1,6 @@
 {
   "milestone": "M3",
-  "generated_at": "2026-03-17T23:29:34.325578+00:00",
+  "generated_at": "2026-03-21T10:16:04.243767+00:00",
   "version": "1.2.3",
   "checks": [
     {
@@ -30,7 +30,7 @@
     {
       "name": "artifacts_present",
       "passed": true,
-      "detail": "artifacts=1 in /tmp/pytest-of-cs/pytest-21/test_ops_release_gate_enforces0/dist",
+      "detail": "artifacts=1 in /tmp/pytest-of-cs/pytest-31/test_ops_release_gate_enforces0/dist",
       "required": true
     },
     {
@@ -42,7 +42,7 @@
     {
       "name": "sha256_archive_generated",
       "passed": true,
-      "detail": "/tmp/pytest-of-cs/pytest-21/test_ops_release_gate_enforces0/dist/SHA256SUMS.txt",
+      "detail": "/tmp/pytest-of-cs/pytest-31/test_ops_release_gate_enforces0/dist/SHA256SUMS.txt",
       "required": true
     },
     {
@@ -64,7 +64,7 @@
   ],
   "release_notes": "notes",
   "rollback_notes": "rollback",
-  "artifacts_dir": "/tmp/pytest-of-cs/pytest-21/test_ops_release_gate_enforces0/dist",
-  "sha256_file": "/tmp/pytest-of-cs/pytest-21/test_ops_release_gate_enforces0/dist/SHA256SUMS.txt",
+  "artifacts_dir": "/tmp/pytest-of-cs/pytest-31/test_ops_release_gate_enforces0/dist",
+  "sha256_file": "/tmp/pytest-of-cs/pytest-31/test_ops_release_gate_enforces0/dist/SHA256SUMS.txt",
   "decision": "hold"
 }

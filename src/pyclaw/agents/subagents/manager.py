@@ -13,6 +13,7 @@ from pyclaw.agents.subagents.types import (
     SubagentResult,
     SubagentState,
 )
+from pyclaw.agents.types import AgentTool
 
 
 class SubagentManager:
@@ -168,15 +169,17 @@ class SubagentManager:
         return list(reversed(self._completed[-limit:]))
 
     async def _run_default(self, entry: _SubagentEntry) -> SubagentResult:
-        """Default subagent runner using the standard agent loop."""
+        """Default subagent runner using the standard agent loop with tool filtering."""
         from pyclaw.agents.runner import run_agent
         from pyclaw.agents.session import SessionManager
         from pyclaw.agents.types import ModelConfig
+        from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
 
         config = entry.config
         entry.cancel_event = asyncio.Event()
 
-        from pyclaw.config.defaults import DEFAULT_MODEL, DEFAULT_PROVIDER
+        # Build tool registry for this run
+        from pyclaw.agents.tools.registry import create_default_tools
 
         model_config = ModelConfig(
             provider=config.provider or DEFAULT_PROVIDER,
@@ -184,14 +187,17 @@ class SubagentManager:
         )
 
         session = SessionManager.in_memory()
+        tool_registry = create_default_tools(enable_subagents=False)
 
         output_parts: list[str] = []
+
         async for event in run_agent(
             prompt=config.prompt,
             session=session,
             model=model_config,
-            tools=[],
-            system_prompt=f"You are a subagent (depth={config.current_depth}). Complete the task concisely.",
+            tools=self._filter_tools(tool_registry.all(), config),
+            system_prompt=config.system_prompt
+            or f"You are a subagent (depth={config.current_depth}). Complete tasks concisely.",
             abort_event=entry.cancel_event,
         ):
             if entry.cancel_event.is_set():
@@ -214,6 +220,34 @@ class SubagentManager:
                 depth=config.current_depth,
             ),
         )
+
+    def _filter_tools(
+        self,
+        available_tools: list[AgentTool],
+        config: SubagentConfig,
+    ) -> list[AgentTool]:
+        """Filter tool registry based on SubagentConfig policies.
+
+        Args:
+            available_tools: Complete tool list with all available tools.
+            config: SubagentConfig with tools_enabled and tools_disabled.
+
+        Returns:
+            Filtered list of tools for the subagent.
+        """
+
+        # Start with all tools
+        tools = list(available_tools)
+
+        # Apply tools_enabled (whitelist)
+        if config.tools_enabled:
+            tools = [t for t in tools if t.name in config.tools_enabled]
+
+        # Apply tools_disabled (blacklist)
+        if config.tools_disabled:
+            tools = [t for t in tools if t.name not in config.tools_disabled]
+
+        return tools
 
     async def _run_with_runner(
         self, entry: _SubagentEntry, runner: Callable[..., AsyncGenerator[Any, None]]
@@ -247,11 +281,21 @@ class SubagentManager:
 
 
 class _SubagentEntry:
-    __slots__ = ("session_id", "config", "state", "cancel_event", "steering_instructions")
+    __slots__ = (
+        "session_id",
+        "config",
+        "state",
+        "cancel_event",
+        "steering_instructions",
+        "future",
+    )  # NEW: Track Future for async spawn
 
-    def __init__(self, session_id: str, config: SubagentConfig, state: SubagentState) -> None:
+    def __init__(
+        self, session_id: str, config: SubagentConfig, state: SubagentState, future: asyncio.Future | None = None
+    ) -> None:
         self.session_id = session_id
         self.config = config
         self.state = state
         self.cancel_event: asyncio.Event | None = None
         self.steering_instructions: list[str] = []
+        self.future = future

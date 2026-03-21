@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 class RoleStatus(str, Enum):
     """Status of a role in the orchestration manifest."""
+
     PLANNED = "planned"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -20,12 +21,14 @@ class RoleStatus(str, Enum):
 
 class ToolPolicy(BaseModel):
     """Tool access policy for roles."""
+
     allow: list[str] = Field(default_factory=list)
     deny: list[str] = Field(default_factory=list)
 
 
 class RoleConfig(BaseModel):
     """Configuration for a single role in the orchestration manifest."""
+
     role_id: str = Field(...)
     name: str = Field(...)
     responsibility: str = Field(...)
@@ -38,6 +41,7 @@ class RoleConfig(BaseModel):
 
 class SpawnPolicy(BaseModel):
     """Spawn policy for controlling subagent creation."""
+
     max_parallel: int = 4
     max_depth: int = 5
     timeout_seconds: int = 300
@@ -45,6 +49,7 @@ class SpawnPolicy(BaseModel):
 
 class OrchestrationManifest(BaseModel):
     """Complete orchestration manifest for task delegation."""
+
     version: str = "1.0"
     task_id: str
     goal: str
