@@ -2,54 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://www.pyclaw.cn/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/RPD_CLIENT_DESIGN/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/api-reference/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/architecture/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/ci-local/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/concepts/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/configuration/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
+    </url>
+    <url>
+         <loc>https://www.pyclaw.cn/flet-build/</loc>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/install/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/quickstart/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/release-and-publish/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/testing-incremental/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/troubleshooting/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
+    </url>
+    <url>
+         <loc>https://www.pyclaw.cn/plans/2026-03-21-runtime-agent-orchestration-design/</loc>
+         <lastmod>2026-03-21</lastmod>
     </url>
     <url>
          <loc>https://www.pyclaw.cn/release_notes/release-notes/</loc>
-         <lastmod>2026-03-17</lastmod>
+         <lastmod>2026-03-21</lastmod>
+    </url>
+    <url>
+         <loc>https://www.pyclaw.cn/superpowers/plans/2026-03-21-flexible-agent-orchestration/</loc>
+         <lastmod>2026-03-21</lastmod>
     </url>
 </urlset>
